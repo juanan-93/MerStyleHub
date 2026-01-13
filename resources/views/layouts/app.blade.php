@@ -1,36 +1,59 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ $title ?? 'MerStyleHub' }}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tabler Icons (opcional para iconos) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    
+    @stack('styles')
+</head>
+<body style="background-color: #ECE9E2;">
+    
+    <!-- Header/Navbar Superior -->
+    @include('layouts.partials.header')
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        @include('layouts.partials.sidebar')
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-            @include('layouts.navigation')
-
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
+        <!-- Contenido Principal -->
+        <main class="flex-grow-1">
+            <!-- Breadcrumbs -->
+            @if(trim($__env->yieldContent('breadcrumbs')))
+                <div class="bg-white border-bottom">
+                    <div class="container-fluid py-3">
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-0">
+                                @yield('breadcrumbs')
+                            </ol>
+                        </nav>
                     </div>
-                </header>
-            @endisset
+                </div>
+            @endif
 
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
-        </div>
-    </body>
+            <!-- Contenido de la página -->
+            <div class="container-fluid p-4">
+                @yield('content')
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    @include('layouts.partials.footer')
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery (para DataTables y SweetAlert) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    @stack('scripts')
+    @yield('scripts')
+</body>
 </html>
