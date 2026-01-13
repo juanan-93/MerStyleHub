@@ -9,23 +9,23 @@
 @endsection
 
 @push('styles')
-<style>
-    .stat-card {
-        background: linear-gradient(135deg, var(--color-white) 0%, var(--color-light) 100%);
-    }
-    
-    .stat-card .stat-number {
-        color: var(--color-primary);
-        font-weight: 700;
-        font-size: 2rem;
-    }
-    
-    .stat-card .stat-label {
-        color: var(--color-secondary);
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-</style>
+    <style>
+        .stat-card {
+            background: linear-gradient(135deg, var(--color-white) 0%, var(--color-light) 100%);
+        }
+        
+        .stat-card .stat-number {
+            color: var(--color-primary);
+            font-weight: 700;
+            font-size: 2rem;
+        }
+        
+        .stat-card .stat-label {
+            color: var(--color-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -197,49 +197,49 @@
 @endsection
 
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Gráfica de Ventas
-        const ctx = document.getElementById('chartVentas');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                    datasets: [{
-                        label: 'Ventas',
-                        data: [12, 19, 3, 5, 2, 3, 8],
-                        borderColor: '#A08A7A',
-                        backgroundColor: 'rgba(160, 138, 122, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#A08A7A',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gráfica de Ventas
+            const ctx = document.getElementById('chartVentas');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+                        datasets: [{
+                            label: 'Ventas',
+                            data: [12, 19, 3, 5, 2, 3, 8],
+                            borderColor: '#A08A7A',
+                            backgroundColor: 'rgba(160, 138, 122, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#A08A7A',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)'
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
                             }
                         }
                     }
-                }
-            });
-        }
-    });
-</script>
+                });
+            }
+        });
+    </script>
 @endpush

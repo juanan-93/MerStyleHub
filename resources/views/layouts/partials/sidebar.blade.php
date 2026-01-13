@@ -9,8 +9,8 @@
         <ul class="nav flex-column">
             <!-- Dashboard -->
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded {{ request()->routeIs('home') ? 'active' : '' }}" 
-                   href="{{ route('home') }}" 
+                <a class="nav-link d-flex align-items-center rounded {{ request()->routeIs('dashboardAdmin.index') ? 'active' : '' }}" 
+                   href="{{ route('dashboardAdmin.index') }}" 
                    data-bs-toggle="tooltip" 
                    data-bs-placement="right" 
                    title="{{ __('Dashboard') }}"
