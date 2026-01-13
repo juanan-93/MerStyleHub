@@ -1,16 +1,15 @@
-<footer class="bg-white border-top mt-auto">
-    <div class="container-fluid py-3">
+<footer class="bg-white border-top mt-5">
+    <div class="container-fluid py-4">
         <div class="row">
-            <div class="col-md-6 text-center text-md-start">
-                <p class="mb-0 small" style="color: #A08A7A;">
-                    &copy; {{ date('Y') }} MerStyleHub. {{ __('All rights reserved') }}.
+            <!-- Información -->
+            <div class="mb-3 mb-md-0">
+                <p class="text-muted small mb-0">
+                    Plataforma de gestión completa para tu negocio de moda y estilo MerStyleHub.
                 </p>
             </div>
-            <div class="col-md-6 text-center text-md-end">
-                <p class="mb-0 small" style="color: #A08A7A;">
-                    {{ __('Version') }} 1.0.0
-                </p>
-            </div>
+            
+            <!-- Copyright -->
+           
         </div>
     </div>
 </footer>
