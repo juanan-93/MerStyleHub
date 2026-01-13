@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg sticky-top bg-white border-bottom py-2">
+<nav class="navbar navbar-expand-lg sticky-top bg-white border-bottom" style="padding: 0.65rem 0rem;">
     <div class="container-fluid">
         <!-- Botón Toggle Sidebar (Mobile - Offcanvas) -->
         <button class="btn btn-link text-decoration-none me-2 d-lg-none" 

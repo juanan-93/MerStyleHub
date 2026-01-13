@@ -1,6 +1,6 @@
 <div class="d-flex flex-column h-100 bg-white">
     <!-- Logo -->
-    <div class="p-3 border-bottom text-center">
+    <div class="p-3 border-bottom text-center d-none d-lg-block">
         <img src="{{ asset('images/logos/logoheader.png') }}" alt="Logo" height="50" class="img-fluid">
     </div>
     
