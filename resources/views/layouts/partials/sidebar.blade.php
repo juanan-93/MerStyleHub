@@ -23,7 +23,7 @@
             <!-- Clientes -->
             <li class="nav-item mb-1">
                 <a class="nav-link d-flex align-items-center rounded" 
-                   href="#" 
+                   href="{{ route('users.index') }}" 
                    title="{{ __('Clientes') }}"
                    style="color: var(--color-secondary);">
                     <i class="ti ti-users sidebar-icon" style="font-size: 1.25rem;"></i>
