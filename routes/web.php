@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardAdminController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CalendarController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -22,6 +23,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/admin/users', [UserController::class, 'store'])->name('users.store');
 });
+
+//Calendar
+Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
 
 
 //Dashboard Admin Route

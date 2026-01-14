@@ -15,6 +15,8 @@
                 <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
                     <a href="{{ route('login') }}" class="btn btn-primary btn-lg px-4 gap-3">Iniciar Sesión</a>
                     <a href="{{ route('register') }}" class="btn btn-outline-secondary btn-lg px-4">Registro</a>
+                    <a href="{{ route('calendar.index') }}" class="btn btn-primary">Reservar cita</a>
+
                 </div>
             </div>
         </div>
