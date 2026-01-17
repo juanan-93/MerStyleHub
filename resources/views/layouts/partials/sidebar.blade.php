@@ -31,14 +31,14 @@
                 </a>
             </li>
             
-            <!-- Productos -->
+            <!--Calendario -->
             <li class="nav-item mb-1">
                 <a class="nav-link d-flex align-items-center rounded" 
-                   href="#" 
-                   title="{{ __('Productos') }}"
+                   href="{{ route('admin_appointments.index') }}" 
+                   title="{{ __('appointments') }}"
                    style="color: var(--color-secondary);">
-                    <i class="ti ti-package sidebar-icon" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2">{{ __('Productos') }}</span>
+                    <i class="ti ti-calendar sidebar-icon" style="font-size: 1.25rem;"></i>
+                    <span class="ms-2">{{ __('appointments') }}</span>
                 </a>
             </li>
             
