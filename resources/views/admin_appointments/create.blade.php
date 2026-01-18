@@ -125,9 +125,9 @@
                                 </div>
                             </div>
 
-                            <!-- Botón de guardar -->
-                            <div class="text-end mt-4 pt-3 border-top">
-                                <button type="button" class="btn btn-outline-secondary btn-sm me-2 px-3">{{ __('Cancelar') }}</button>
+                            <!-- Botones de acción -->
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                                <a href="{{ route('admin_appointments.index') }}" class="btn btn-outline-secondary px-3">{{ __('Cancelar') }}</a>
                                 <button type="submit" class="btn btn-primary-custom px-4 shadow-sm">
                                     <i class="ti ti-check me-1"></i> {{ __('Guardar Configuración') }}
                                 </button>
