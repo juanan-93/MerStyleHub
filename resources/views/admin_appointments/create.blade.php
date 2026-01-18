@@ -7,6 +7,139 @@
     </li>
 @endsection
 
+@section('content')
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="mb-0 fw-bold text-primary-custom">
+                            <i class="ti ti-calendar-plus me-2"></i>{{ __('Configurar Disponibilidad') }}
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <form action="{{ route('admin_appointments.store') }}" method="POST">
+                            @csrf
+                            <div class="row g-4">
+                                <!-- Left Column: Settings -->
+                                <div class="col-md-5">
+                                    <div class="params-section p-3 h-100">
+                                        <h6 class="fw-bold mb-3 text-secondary">{{ __('Parámetros de la Cita') }}</h6>
+                                        
+                                        <!-- Duración de la reunión -->
+                                        <div class="mb-3">
+                                            <label for="meetingDuration" class="form-label-custom small">{{ __('Duración (minutos)') }}</label>
+                                            <select class="form-select border-0 shadow-sm" name="duration" id="meetingDuration">
+                                                <option value="10" selected>10 min</option>
+                                                <option value="15">15 min</option>
+                                                <option value="20">20 min</option>
+                                                <option value="30" >30 min</option>
+                                                <option value="45">45 min</option>
+                                                <option value="60">60 min</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Tipo de reunión -->
+                                        <div class="mb-3">
+                                            <label for="meetingType" class="form-label-custom small">{{ __('Categoría') }}</label>
+                                            <select class="form-select border-0 shadow-sm" name="category" id="meetingType">
+                                                <option value="standard">{{ __('Reunión Estándar') }}</option>
+                                                <option value="custom">{{ __('Reunión Personalizada') }}</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Franja horaria -->
+                                        <div class="mb-0">
+                                            <label class="form-label-custom small">{{ __('Horario de Atención') }}</label>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text"><i class="ti ti-clock-play"></i></span>
+                                                        <select class="form-select" name="start_time" id="startTime">
+                                                            @for ($hour = 8; $hour <= 21; $hour++)
+                                                                @for ($minute = 0; $minute < 60; $minute += 30)
+                                                                    <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}">
+                                                                        {{ sprintf('%02d:%02d', $hour, $minute) }}
+                                                                    </option>
+                                                                @endfor
+                                                            @endfor
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="input-group input-group-sm">
+                                                        <span class="input-group-text"><i class="ti ti-clock-stop"></i></span>
+                                                        <select class="form-select" name="end_time" id="endTime">
+                                                            @for ($hour = 8; $hour <= 21; $hour++)
+                                                                @for ($minute = 0; $minute < 60; $minute += 30)
+                                                                    <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}" {{ $hour == 18 ? 'selected' : '' }}>
+                                                                        {{ sprintf('%02d:%02d', $hour, $minute) }}
+                                                                    </option>
+                                                                @endfor
+                                                            @endfor
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Botones: modo de selección -->
+                                        <div class="mt-3 d-flex gap-2">
+                                            <button type="button" id="selectRangeBtn" class="btn btn-outline-primary btn-sm flex-grow-1">
+                                                <i class="ti ti-calendar-range me-1"></i>{{ __('Rango') }}
+                                            </button>
+                                            <button type="button" id="selectCustomBtn" class="btn btn-outline-secondary btn-sm flex-grow-1">
+                                                <i class="ti ti-hand-click me-1"></i>{{ __('Selección Libre') }}
+                                            </button>
+                                            <button type="button" id="selectWeekdaysBtn" class="btn btn-outline-success btn-sm flex-grow-1">
+                                                <i class="ti ti-briefcase me-1"></i>{{ __('Laborables') }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column: Calendar -->
+                                <div class="col-md-7">
+                                    <div class="calendar-section h-100">
+                                        <label class="form-label fw-bold mb-3 d-flex justify-content-between align-items-center text-secondary">
+                                            {{ __('Días Disponibles') }}
+                                            <span class="badge badge-primary-custom" style="font-size: 0.7rem;">
+                                                {{ __('Selección Múltiple') }}
+                                            </span>
+                                        </label>
+                                        <div class="calendar-wrapper">
+                                            <input type="text" id="datepicker" name="dates" class="form-control d-none" placeholder="Select dates">
+                                            <input type="hidden" id="selectionType" name="selection_type" value="range">
+                                        </div>
+                                        <div class="mt-3 d-flex gap-3 justify-content-center small text-muted">
+                                            <div class="d-flex align-items-center">
+                                                <span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background-color: var(--color-primary);"></span>
+                                                {{ __('Seleccionado') }}
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background-color: var(--color-border);"></span>
+                                                {{ __('Libre') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botón de guardar -->
+                            <div class="text-end mt-4 pt-3 border-top">
+                                <button type="button" class="btn btn-outline-secondary btn-sm me-2 px-3">{{ __('Cancelar') }}</button>
+                                <button type="submit" class="btn btn-primary-custom px-4 shadow-sm">
+                                    <i class="ti ti-check me-1"></i> {{ __('Guardar Configuración') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
 @push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
@@ -265,9 +398,10 @@
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Inicializar Select2 en cada select — si está dentro de un input-group usar ese parent
+            // Inicializar Select2 en cada select
             $('.form-select').each(function() {
                 const $this = $(this);
                 const parent = $this.closest('.input-group');
@@ -279,21 +413,37 @@
                 });
             });
 
-            const availableDates = ['2026-01-20', '2026-01-21', '2026-01-22']; // Fechas con disponibilidad
+            // Estado global del modo de selección
+            let currentMode = 'range'; // 'range', 'custom' o 'weekdays'
+            let selectedDates = [];
             
-            flatpickr("#datepicker", {
-                mode: "multiple",
+            const availableDates = ['2026-01-20', '2026-01-21', '2026-01-22'];
+            
+            const fp = flatpickr("#datepicker", {
+                mode: "range",
                 dateFormat: "Y-m-d",
                 inline: true,
                 monthSelectorType: "static",
+                locale: "es",
                 minDate: new Date(),
                 prevArrow: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>',
                 nextArrow: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>',
                 onChange: function(selectedDates, dateStr, instance) {
-                    console.log('Fechas seleccionadas:', selectedDates);
+                    if (currentMode === 'custom' || currentMode === 'weekdays') {
+                        // En modo custom o weekdays, guardar el formato para múltiples fechas
+                        if (selectedDates.length > 0) {
+                            const datesArray = selectedDates.map(d => {
+                                const year = d.getFullYear();
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const day = String(d.getDate()).padStart(2, '0');
+                                return `${year}-${month}-${day}`;
+                            });
+                            // Guardar la lista de fechas separadas por coma
+                            document.getElementById('datepicker').value = datesArray.join(',');
+                        }
+                    }
                 },
-                onDayCreate: function(dObj, dStr, fp, dayElem) {
-                    // Añadir indicador de disponibilidad
+                onDayCreate: function(dObj, dStr, fpInstance, dayElem) {
                     if (availableDates.includes(dStr)) {
                         const indicator = document.createElement('div');
                         indicator.className = 'availability-indicator';
@@ -301,123 +451,139 @@
                     }
                 }
             });
+
+            // Botón: cambiar a modo Rango
+            document.getElementById('selectRangeBtn')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentMode = 'range';
+                document.getElementById('selectionType').value = 'range';
+                fp.set('mode', 'range');
+                fp.clear();
+                
+                // Cambiar estilos de los botones
+                document.getElementById('selectRangeBtn').classList.add('btn-primary');
+                document.getElementById('selectRangeBtn').classList.remove('btn-outline-primary');
+                document.getElementById('selectCustomBtn').classList.remove('btn-secondary');
+                document.getElementById('selectCustomBtn').classList.add('btn-outline-secondary');
+                document.getElementById('selectWeekdaysBtn').classList.remove('btn-success');
+                document.getElementById('selectWeekdaysBtn').classList.add('btn-outline-success');
+                
+                Swal.fire({
+                    title: 'Modo Rango',
+                    text: 'Selecciona el primer y último día del rango.',
+                    icon: 'info',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
+
+            // Botón: cambiar a modo Selección Libre (custom)
+            document.getElementById('selectCustomBtn')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentMode = 'custom';
+                document.getElementById('selectionType').value = 'custom';
+                fp.set('mode', 'multiple');
+                fp.clear();
+                
+                // Cambiar estilos de los botones
+                document.getElementById('selectRangeBtn').classList.remove('btn-primary');
+                document.getElementById('selectRangeBtn').classList.add('btn-outline-primary');
+                document.getElementById('selectCustomBtn').classList.add('btn-secondary');
+                document.getElementById('selectCustomBtn').classList.remove('btn-outline-secondary');
+                document.getElementById('selectWeekdaysBtn').classList.remove('btn-success');
+                document.getElementById('selectWeekdaysBtn').classList.add('btn-outline-success');
+                
+                Swal.fire({
+                    title: 'Selección Libre',
+                    text: 'Haz clic en los días que desees seleccionar.',
+                    icon: 'info',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
+
+            // Botón: seleccionar todos los días laborables del mes actual
+            document.getElementById('selectWeekdaysBtn')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                try {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    // Obtener fecha actual del calendario o usar hoy
+                    const currentDate = fp.selectedDates[0] || new Date();
+                    const year = currentDate.getFullYear();
+                    const month = currentDate.getMonth();
+                    const lastDay = new Date(year, month + 1, 0).getDate();
+                    const weekdayDates = [];
+                    
+                    // Generar todos los días laborables del mes (solo futuros o hoy)
+                    for (let d = 1; d <= lastDay; d++) {
+                        const date = new Date(year, month, d);
+                        date.setHours(0, 0, 0, 0);
+                        const dayOfWeek = date.getDay();
+                        
+                        // Excluir sábados (6), domingos (0) y fechas pasadas
+                        if (dayOfWeek !== 0 && dayOfWeek !== 6 && date >= today) {
+                            weekdayDates.push(date);
+                        }
+                    }
+
+                    if (weekdayDates.length > 0) {
+                        // Cambiar a modo multiple para mostrar todos los días laborables seleccionados
+                        currentMode = 'weekdays';
+                        document.getElementById('selectionType').value = 'weekdays';
+                        fp.set('mode', 'multiple');
+                        
+                        // Establecer todos los días laborables como seleccionados
+                        fp.setDate(weekdayDates, true);
+                        
+                        // Crear el formato string para envío (con todas las fechas)
+                        const datesArray = weekdayDates.map(d => {
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        });
+                        document.getElementById('datepicker').value = datesArray.join(',');
+                        
+                        // Actualizar estilos de botones - SOLO el botón Laborables debe estar activo
+                        document.getElementById('selectRangeBtn').classList.remove('btn-primary');
+                        document.getElementById('selectRangeBtn').classList.add('btn-outline-primary');
+                        document.getElementById('selectCustomBtn').classList.remove('btn-secondary');
+                        document.getElementById('selectCustomBtn').classList.add('btn-outline-secondary');
+                        document.getElementById('selectWeekdaysBtn').classList.add('btn-success');
+                        document.getElementById('selectWeekdaysBtn').classList.remove('btn-outline-success');
+                        
+                        Swal.fire({
+                            title: '¡Días laborables seleccionados!',
+                            text: `Se seleccionó un total de ${weekdayDates.length} días laborables del mes.`,
+                            icon: 'success',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'Sin días laborables',
+                            text: 'No hay días laborables en el mes seleccionado.',
+                            icon: 'warning',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error:', err);
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Ocurrió un error al seleccionar los días laborables.',
+                        icon: 'error',
+                        timer: 2000
+                    });
+                }
+            });
+
+            // Inicializar con modo range por defecto
+            document.getElementById('selectRangeBtn').classList.add('btn-primary');
+            document.getElementById('selectRangeBtn').classList.remove('btn-outline-primary');
         });
     </script>
 @endpush
-
-@section('content')
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <h5 class="mb-0 fw-bold text-primary-custom">
-                        <i class="ti ti-calendar-plus me-2"></i>{{ __('Configurar Disponibilidad') }}
-                    </h5>
-                </div>
-                <div class="card-body p-4">
-                    <form>
-                        <div class="row g-4">
-                            <!-- Left Column: Settings -->
-                            <div class="col-md-5">
-                                <div class="params-section p-3 h-100">
-                                    <h6 class="fw-bold mb-3 text-secondary">{{ __('Parámetros de la Cita') }}</h6>
-                                    
-                                    <!-- Duración de la reunión -->
-                                    <div class="mb-3">
-                                        <label for="meetingDuration" class="form-label-custom small">{{ __('Duración (minutos)') }}</label>
-                                        <select class="form-select border-0 shadow-sm" id="meetingDuration">
-                                            <option value="15">15 min</option>
-                                            <option value="20">20 min</option>
-                                            <option value="30" selected>30 min</option>
-                                            <option value="45">45 min</option>
-                                            <option value="60">60 min</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Tipo de reunión -->
-                                    <div class="mb-3">
-                                        <label for="meetingType" class="form-label-custom small">{{ __('Categoría') }}</label>
-                                        <select class="form-select border-0 shadow-sm" id="meetingType">
-                                            <option value="standard">{{ __('Reunión Estándar') }}</option>
-                                            <option value="custom">{{ __('Reunión Personalizada') }}</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Franja horaria -->
-                                    <div class="mb-0">
-                                        <label class="form-label-custom small">{{ __('Horario de Atención') }}</label>
-                                        <div class="row g-2">
-                                            <div class="col-6">
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text"><i class="ti ti-clock-play"></i></span>
-                                                    <select class="form-select" id="startTime">
-                                                        @for ($hour = 8; $hour <= 21; $hour++)
-                                                            @for ($minute = 0; $minute < 60; $minute += 30)
-                                                                <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}">
-                                                                    {{ sprintf('%02d:%02d', $hour, $minute) }}
-                                                                </option>
-                                                            @endfor
-                                                        @endfor
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="col-6">
-                                                <div class="input-group input-group-sm">
-                                                    <span class="input-group-text"><i class="ti ti-clock-stop"></i></span>
-                                                    <select class="form-select" id="endTime">
-                                                        @for ($hour = 8; $hour <= 21; $hour++)
-                                                            @for ($minute = 0; $minute < 60; $minute += 30)
-                                                                <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}" {{ $hour == 18 ? 'selected' : '' }}>
-                                                                    {{ sprintf('%02d:%02d', $hour, $minute) }}
-                                                                </option>
-                                                            @endfor
-                                                        @endfor
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Right Column: Calendar -->
-                            <div class="col-md-7">
-                                <div class="calendar-section h-100">
-                                    <label class="form-label fw-bold mb-3 d-flex justify-content-between align-items-center text-secondary">
-                                        {{ __('Días Disponibles') }}
-                                        <span class="badge badge-primary-custom" style="font-size: 0.7rem;">
-                                            {{ __('Selección Múltiple') }}
-                                        </span>
-                                    </label>
-                                    <div class="calendar-wrapper">
-                                        <input type="text" id="datepicker" class="form-control d-none" placeholder="Select dates">
-                                    </div>
-                                    <div class="mt-3 d-flex gap-3 justify-content-center small text-muted">
-                                        <div class="d-flex align-items-center">
-                                            <span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background-color: var(--color-primary);"></span>
-                                            {{ __('Seleccionado') }}
-                                        </div>
-                                        <div class="d-flex align-items-center">
-                                            <span class="d-inline-block rounded-circle me-1" style="width: 8px; height: 8px; background-color: var(--color-border);"></span>
-                                            {{ __('Libre') }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Botón de guardar -->
-                        <div class="text-end mt-4 pt-3 border-top">
-                            <button type="button" class="btn btn-outline-secondary btn-sm me-2 px-3">{{ __('Cancelar') }}</button>
-                            <button type="submit" class="btn btn-primary-custom px-4 shadow-sm">
-                                <i class="ti ti-check me-1"></i> {{ __('Guardar Configuración') }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection

@@ -10,6 +10,21 @@
 @section('content')
 <div class="row g-4">
     <div class="col-12">
+
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                <i class="ti ti-check me-2"></i> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                <i class="ti ti-exclamation-circle me-2"></i> {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white">
                 <a href="{{ route('admin_appointments.create') }}"
@@ -24,9 +39,11 @@
                     <table id="appointmentsTable" class="table align-middle table-hover mb-0">
                         <thead style="background:#ECE9E2;color:#343434;">
                             <tr>
-                                <th>{{ __('Name') }}</th>
-                                <th class="d-none d-md-table-cell">{{ __('Duration') }}</th>
-                                <th class="d-none d-lg-table-cell">{{ __('Created') }}</th>
+                                <th>{{ __('Fecha / Rango') }}</th>
+                                <th class="d-none d-md-table-cell">{{ __('Tipo') }}</th>
+                                <th class="d-none d-lg-table-cell">{{ __('Horario') }}</th>
+                                <th class="d-none d-lg-table-cell">{{ __('Categoría') }}</th>
+                                <th>{{ __('Duración') }}</th>
                                 <th class="text-end" style="width: 140px;">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
@@ -35,25 +52,6 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de confirmación -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title" id="deleteConfirmLabel" style="color: var(--color-secondary);">{{ __('Delete Appointment') }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" style="color: var(--color-secondary);">
-                {{ __('Are you sure you want to delete this appointment availability? This action cannot be undone.') }}
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">{{ __('Delete') }}</button>
             </div>
         </div>
     </div>
@@ -266,134 +264,139 @@
             });
 
             // Datos de ejemplo (reemplazar con datos de la API)
-            const appointmentsData = [
-                {
-                    id: 1,
-                    name: 'Consulta General',
-                    duration: '30 minutos',
-                    created: '15 ene 2026'
-                },
-                {
-                    id: 2,
-                    name: 'Revisión Completa',
-                    duration: '60 minutos',
-                    created: '14 ene 2026'
-                },
-                {
-                    id: 3,
-                    name: 'Seguimiento',
-                    duration: '45 minutos',
-                    created: '10 ene 2026'
-                },
-                {
-                    id: 4,
-                    name: 'Consulta Rápida',
-                    duration: '15 minutos',
-                    created: '13 ene 2026'
-                },
-                {
-                    id: 5,
-                    name: 'Evaluación Inicial',
-                    duration: '90 minutos',
-                    created: '12 ene 2026'
-                },
-                {
-                    id: 6,
-                    name: 'Control Post-Operatorio',
-                    duration: '30 minutos',
-                    created: '11 ene 2026'
-                },
-                {
-                    id: 7,
-                    name: 'Asesoría Estética',
-                    duration: '45 minutos',
-                    created: '09 ene 2026'
-                },
-                {
-                    id: 8,
-                    name: 'Tratamiento Facial',
-                    duration: '60 minutos',
-                    created: '08 ene 2026'
-                },
-                {
-                    id: 9,
-                    name: 'Limpieza Profunda',
-                    duration: '45 minutos',
-                    created: '07 ene 2026'
-                },
-                {
-                    id: 10,
-                    name: 'Consulta Dermatológica',
-                    duration: '30 minutos',
-                    created: '06 ene 2026'
-                },
-                {
-                    id: 11,
-                    name: 'Peeling Químico',
-                    duration: '60 minutos',
-                    created: '05 ene 2026'
-                },
-                {
-                    id: 12,
-                    name: 'Masaje Terapéutico',
-                    duration: '75 minutos',
-                    created: '04 ene 2026'
-                },
-                {
-                    id: 13,
-                    name: 'Microdermoabrasión',
-                    duration: '45 minutos',
-                    created: '03 ene 2026'
-                },
-                {
-                    id: 14,
-                    name: 'Inyección de Botox',
-                    duration: '30 minutos',
-                    created: '02 ene 2026'
-                },
-                {
-                    id: 15,
-                    name: 'Rellenos Dérmicos',
-                    duration: '45 minutos',
-                    created: '01 ene 2026'
-                }
-            ];
+            // Datos reales desde el controlador agrupados por batch_id
+            const appointmentsData = @json($availabilities);
 
-            // Llenar tabla con datos
-            const data = appointmentsData.map(appointment => [
-                appointment.name,
-                appointment.duration,
-                appointment.created,
-                `
-                    <div class="text-end">
-                        <a href="/admin/appointments/${appointment.id}/edit" class="btn btn-sm btn-outline-secondary rounded-circle" title="Editar">
-                            <i class="ti ti-pencil"></i>
-                        </a>
-                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle btn-delete" title="Eliminar" data-id="${appointment.id}">
-                            <i class="ti ti-trash"></i>
-                        </button>
-                    </div>
-                `
-            ]);
+            // Mapear los datos para la tabla
+            const data = appointmentsData.map(item => {
+                const dateDisplay = item.start_date === item.end_date 
+                    ? item.start_date 
+                    : `Del ${item.start_date} al ${item.end_date} (${item.total_days} días)`;
+
+                // Mostrar el tipo de selección en español
+                let typeLabel = 'Rango';
+                let typeBadgeColor = 'bg-primary';
+                if (item.selection_type === 'custom') {
+                    typeLabel = 'Libre';
+                    typeBadgeColor = 'bg-warning text-dark';
+                } else if (item.selection_type === 'weekdays') {
+                    typeLabel = 'Laborables';
+                    typeBadgeColor = 'bg-success';
+                }
+
+                // Enlace de edición usando route() de Laravel con placeholder para el JS
+                let editUrl = '#';
+                if (item.batch_id) {
+                    editUrl = "{{ route('admin_appointments.edit', ':id') }}".replace(':id', item.batch_id);
+                }
+
+                const startTime = item.start_time ? item.start_time.substring(0, 5) : '--:--';
+                const endTime = item.end_time ? item.end_time.substring(0, 5) : '--:--';
+
+                return [
+                    dateDisplay,
+                    `<span class="badge ${typeBadgeColor}">${typeLabel}</span>`,
+                    `${startTime} - ${endTime}`,
+                    item.category ? item.category.toUpperCase() : 'ESTÁNDAR',
+                    item.duration + ' min',
+                    `
+                        <div class="text-end">
+                            <a href="${editUrl}" 
+                               class="btn btn-sm btn-outline-secondary rounded-circle ${!item.batch_id ? 'disabled opacity-50' : ''}" 
+                               style="${!item.batch_id ? 'pointer-events: none;' : ''}"
+                               title="${item.batch_id ? 'Editar' : 'Sin identificador de lote (registro antiguo)'}">
+                                <i class="ti ti-pencil"></i>
+                            </a>
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-secondary rounded-circle btn-delete ${!item.batch_id ? 'disabled opacity-50' : ''}" 
+                                    style="${!item.batch_id ? 'pointer-events: none;' : ''}"
+                                    title="${item.batch_id ? 'Eliminar' : 'Sin identificador de lote (registro antiguo)'}" 
+                                    data-batch="${item.batch_id || ''}">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    `
+                ];
+            });
 
             table.rows.add(data).draw();
 
-            // Manejo de eliminación
-            let deleteId = null;
-            const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
-
+            // Manejo de eliminación con SweetAlert2
             document.addEventListener('click', function(e) {
                 if (e.target.closest('.btn-delete')) {
-                    deleteId = e.target.closest('.btn-delete').getAttribute('data-id');
-                    deleteModal.show();
-                }
-            });
+                    const deleteBatchId = e.target.closest('.btn-delete').getAttribute('data-batch');
+                    
+                    if (!deleteBatchId) {
+                        mostrarNotificacion('Error', 'No se puede eliminar este registro (sin identificador)', 'error');
+                        return;
+                    }
 
-            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-                if (deleteId) {
-                    mostrarNotificacion('Eliminado', 'La cita ha sido eliminada correctamente', 'success');
-                    deleteModal.hide();
-                    // Aquí iría la llamada AJAX para eliminar
+                    // Mostrar confirmación con SweetAlert2
+                    Swal.fire({
+                        title: '¿Eliminar disponibilidad?',
+                        text: 'Esta acción no se puede deshacer. Se eliminarán todos los días del rango seleccionado.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#A08A7A',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Mostrar loading
+                            Swal.fire({
+                                title: 'Eliminando...',
+                                text: 'Por favor espera',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            // Realizar petición de eliminación
+                            const deleteUrl = `{{ url('admin/appointments/batch') }}/${deleteBatchId}`;
+                            fetch(deleteUrl, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: '¡Eliminado!',
+                                        text: 'La disponibilidad ha sido eliminada correctamente',
+                                        confirmButtonColor: '#A08A7A',
+                                        timer: 2000,
+                                        timerProgressBar: true
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: 'No se pudo eliminar la disponibilidad',
+                                        confirmButtonColor: '#A08A7A'
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Ocurrió un error al procesar la solicitud',
+                                    confirmButtonColor: '#A08A7A'
+                                });
+                            });
+                        }
+                    });
                 }
             });
         });
