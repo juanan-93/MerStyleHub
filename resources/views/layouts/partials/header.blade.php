@@ -43,37 +43,44 @@
                 
                 <!-- User Dropdown -->
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" style="color: var(--color-secondary);">
-                        <div class="rounded-circle" style="width: 32px; height: 32px; background-color: var(--color-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.85rem;">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                        </div>
-                        <span class="d-none d-lg-inline">{{ Auth::user()->name }}</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li>
-                            <h6 class="dropdown-header">{{ Auth::user()->email }}</h6>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                                <i class="ti ti-user me-2"></i>Mi Perfil
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="ti ti-settings me-2"></i>Configuración
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" class="m-0">
-                                @csrf
-                                <button type="submit" class="dropdown-item text-danger">
-                                    <i class="ti ti-logout me-2"></i>Cerrar Sesión
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
+                    @auth
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" style="color: var(--color-secondary);">
+                            <div class="rounded-circle" style="width: 32px; height: 32px; background-color: var(--color-primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.85rem;">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                            </div>
+                            <span class="d-none d-lg-inline">{{ Auth::user()->name }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">{{ Auth::user()->email }}</h6>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                    <i class="ti ti-user me-2"></i>Mi Perfil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="ti ti-settings me-2"></i>Configuración
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="ti ti-logout me-2"></i>Cerrar Sesión
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    @else
+                        <a class="nav-link d-flex align-items-center gap-2" href="{{ route('login') }}" style="color: var(--color-secondary);">
+                            <i class="ti ti-login fs-4"></i>
+                            <span>{{ __('Iniciar Sesión') }}</span>
+                        </a>
+                    @endauth
                 </li>
             </ul>
         </div>

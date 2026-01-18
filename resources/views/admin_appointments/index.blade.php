@@ -11,14 +11,7 @@
 <div class="row g-4">
     <div class="col-12">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-sm-center">
-                <div>
-                    <h5 class="mb-0" style="color:#343434;">{{ __('Appointment Availability') }}</h5>
-                    <small style="color:#A08A7A;">
-                        {{ __('Manage your appointment availability') }}
-                    </small>
-                </div>
-
+            <div class="card-header bg-white">
                 <a href="{{ route('admin_appointments.create') }}"
                    class="btn"
                    style="background:#A08A7A;border-color:#A08A7A;color:#fff;">
