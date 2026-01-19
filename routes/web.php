@@ -27,7 +27,10 @@ Route::middleware(['auth'])->group(function () {
 
 //Calendar
 Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.index');
-
+//Ruta para reservar citas
+Route::get('/calendar/available-dates', [CalendarController::class, 'getAvailableDates'])->name('calendar.available_dates');
+Route::get('/calendar/available-slots/{date}', [CalendarController::class, 'getAvailableSlots'])->name('calendar.available_slots');
+Route::post('/calendar/book', [CalendarController::class, 'book'])->name('calendar.book');
 
 //Dashboard Admin Route
 Route::middleware('auth')->group(function () {
@@ -43,5 +46,6 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/appointments/batch/{batch_id}', [AppointmentAvailabilityController::class, 'updateBatch'])->name('admin_appointments.updateBatch');
     Route::delete('/admin/appointments/batch/{batch_id}', [AppointmentAvailabilityController::class, 'destroyBatch'])->name('admin_appointments.destroyBatch');
 });
+
 
 require __DIR__.'/auth.php';
