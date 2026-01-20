@@ -8,6 +8,7 @@ class AppointmentAvailability extends Model
 {
     protected $fillable = [
         'batch_id',
+        'title',
         'date',
         'start_time',
         'end_time',

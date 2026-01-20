@@ -10,9 +10,9 @@ class AppointmentAvailabilityController extends Controller
 {
     public function index()
     {
-        $availabilities = AppointmentAvailability::select('batch_id', 'category', 'start_time', 'end_time', 'duration', 'selection_type')
+        $availabilities = AppointmentAvailability::select('batch_id', 'title', 'category', 'duration', 'selection_type')
             ->selectRaw('MIN(date) as start_date, MAX(date) as end_date, COUNT(*) as total_days')
-            ->groupBy('batch_id', 'category', 'start_time', 'end_time', 'duration', 'selection_type')
+            ->groupBy('batch_id', 'title', 'category', 'duration', 'selection_type')
             ->get();
 
         return view('admin_appointments.index', compact('availabilities'));
@@ -26,68 +26,35 @@ class AppointmentAvailabilityController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'dates' => 'required',
+            'title' => 'required|string|max:255',
             'duration' => 'required|integer',
             'category' => 'required',
-            'start_time' => 'required',
-            'end_time' => 'required',
             'selection_type' => 'required|in:range,custom,weekdays',
+            'schedule_data' => 'required|json',
         ]);
 
-        $datesStr = str_replace(' a ', ' to ', $request->dates);
         $batchId = (string) Str::uuid();
-        $selectionType = $request->selection_type ?? 'range'; // Usar el valor del formulario
+        $selectionType = $request->selection_type;
+        $scheduleData = json_decode($request->schedule_data, true);
 
-        // Procesar fechas según el tipo de selección
-        if ($selectionType === 'custom' || $selectionType === 'weekdays') {
-            // Limpiar prefijo CUSTOM: si existe y separar por comas
-            $cleanDates = str_replace('CUSTOM:', '', $datesStr);
-            $customDates = explode(',', $cleanDates);
-            
-            // Crear un registro por cada fecha seleccionada
-            foreach ($customDates as $date) {
-                $date = trim($date); // Limpiar espacios
-                if (!empty($date)) {
-                    AppointmentAvailability::create([
-                        'batch_id' => $batchId,
-                        'date' => $date,
-                        'duration' => $request->duration,
-                        'category' => $request->category,
-                        'start_time' => $request->start_time,
-                        'end_time' => $request->end_time,
-                        'selection_type' => $selectionType,
-                    ]);
-                }
-            }
-        } 
-        // Procesar fechas en formato RANGO:
-        elseif (str_contains($datesStr, ' to ')) {
-            $parts = explode(' to ', $datesStr);
-            $period = CarbonPeriod::create($parts[0], $parts[1]);
-            
-            foreach ($period as $date) {
+        // Procesar cada día con su horario (general o personalizado)
+        foreach ($scheduleData as $daySchedule) {
+            $date = $daySchedule['date'];
+            $startTime = $daySchedule['start_time'];
+            $endTime = $daySchedule['end_time'];
+
+            if (!empty($date) && !empty($startTime) && !empty($endTime)) {
                 AppointmentAvailability::create([
                     'batch_id' => $batchId,
-                    'date' => $date->format('Y-m-d'),
+                    'title' => $request->title,
+                    'date' => $date,
                     'duration' => $request->duration,
                     'category' => $request->category,
-                    'start_time' => $request->start_time,
-                    'end_time' => $request->end_time,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
                     'selection_type' => $selectionType,
                 ]);
             }
-        } 
-        // Fallback: una única fecha
-        else {
-            AppointmentAvailability::create([
-                'batch_id' => $batchId,
-                'date' => $datesStr,
-                'duration' => $request->duration,
-                'category' => $request->category,
-                'start_time' => $request->start_time,
-                'end_time' => $request->end_time,
-                'selection_type' => $selectionType,
-            ]);
         }
 
         return redirect()->route('admin_appointments.index')->with('success', 'Disponibilidad configurada correctamente.');
@@ -104,22 +71,24 @@ class AppointmentAvailabilityController extends Controller
         $availability = $availabilities->first();
         $selectionType = $availability->selection_type;
         
-        $minDate = $availabilities->min('date');
-        $maxDate = $availabilities->max('date');
-        $datesList = $availabilities->pluck('date')->toArray();
+        // Preparar datos de horarios por día
+        $scheduleData = $availabilities->map(function ($item) {
+            return [
+                'date' => $item->date->format('Y-m-d'),
+                'start_time' => substr($item->start_time, 0, 5),
+                'end_time' => substr($item->end_time, 0, 5),
+            ];
+        })->toArray();
 
-        // Determinar el formato de fechas según el tipo de selección
-        if ($selectionType === 'custom' || $selectionType === 'weekdays') {
-            // Para custom y weekdays, pasar array JSON de fechas y también el formato string (sin prefijo para evitar errores en flatpickr)
-            $dates = implode(',', $datesList);
-            $datesArray = json_encode($datesList);
-        } else {
-            // Para range y otros, mostrar el rango
-            $dates = ($minDate == $maxDate) ? $minDate : "$minDate to $maxDate";
-            $datesArray = json_encode([$minDate, $maxDate]);
-        }
+        $datesList = $availabilities->pluck('date')->map(fn($d) => $d->format('Y-m-d'))->toArray();
 
-        return view('admin_appointments.edit', compact('availability', 'dates', 'datesArray', 'batch_id', 'selectionType'));
+        return view('admin_appointments.edit', compact(
+            'availability', 
+            'batch_id', 
+            'selectionType', 
+            'scheduleData',
+            'datesList'
+        ));
     }
 
     public function updateBatch(Request $request, $batch_id)
@@ -129,70 +98,37 @@ class AppointmentAvailabilityController extends Controller
         }
 
         $request->validate([
-            'dates' => 'required',
+            'title' => 'required|string|max:255',
             'duration' => 'required|integer',
             'category' => 'required',
-            'start_time' => 'required',
-            'end_time' => 'required',
             'selection_type' => 'required|in:range,custom,weekdays',
+            'schedule_data' => 'required|json',
         ]);
 
         // Eliminamos el lote anterior para recrearlo con los nuevos datos/fechas
         AppointmentAvailability::where('batch_id', $batch_id)->delete();
 
-        $datesStr = str_replace(' a ', ' to ', $request->dates);
-        $selectionType = $request->selection_type ?? 'range'; // Usar el valor del formulario
+        $selectionType = $request->selection_type;
+        $scheduleData = json_decode($request->schedule_data, true);
 
-        // Procesar fechas según el tipo de selección
-        if ($selectionType === 'custom' || $selectionType === 'weekdays') {
-            // Limpiar prefijo CUSTOM: si existe y separar por comas
-            $cleanDates = str_replace('CUSTOM:', '', $datesStr);
-            $customDates = explode(',', $cleanDates);
-            
-            // Crear un registro por cada fecha seleccionada
-            foreach ($customDates as $date) {
-                $date = trim($date); // Limpiar espacios
-                if (!empty($date)) {
-                    AppointmentAvailability::create([
-                        'batch_id' => $batch_id,
-                        'date' => $date,
-                        'duration' => $request->duration,
-                        'category' => $request->category,
-                        'start_time' => $request->start_time,
-                        'end_time' => $request->end_time,
-                        'selection_type' => $selectionType,
-                    ]);
-                }
-            }
-        }
-        // Procesar fechas en formato RANGO:
-        elseif (str_contains($datesStr, ' to ')) {
-            $parts = explode(' to ', $datesStr);
-            $period = CarbonPeriod::create($parts[0], $parts[1]);
-            
-            foreach ($period as $date) {
+        // Procesar cada día con su horario
+        foreach ($scheduleData as $daySchedule) {
+            $date = $daySchedule['date'];
+            $startTime = $daySchedule['start_time'];
+            $endTime = $daySchedule['end_time'];
+
+            if (!empty($date) && !empty($startTime) && !empty($endTime)) {
                 AppointmentAvailability::create([
                     'batch_id' => $batch_id,
-                    'date' => $date->format('Y-m-d'),
+                    'title' => $request->title,
+                    'date' => $date,
                     'duration' => $request->duration,
                     'category' => $request->category,
-                    'start_time' => $request->start_time,
-                    'end_time' => $request->end_time,
+                    'start_time' => $startTime,
+                    'end_time' => $endTime,
                     'selection_type' => $selectionType,
                 ]);
             }
-        }
-        // Fallback: una única fecha
-        else {
-            AppointmentAvailability::create([
-                'batch_id' => $batch_id,
-                'date' => $datesStr,
-                'duration' => $request->duration,
-                'category' => $request->category,
-                'start_time' => $request->start_time,
-                'end_time' => $request->end_time,
-                'selection_type' => $selectionType,
-            ]);
         }
 
         return redirect()->route('admin_appointments.index')->with('success', 'Disponibilidad actualizada correctamente.');

@@ -39,9 +39,9 @@
                     <table id="appointmentsTable" class="table align-middle table-hover mb-0">
                         <thead style="background:#ECE9E2;color:#343434;">
                             <tr>
+                                <th>{{ __('Título') }}</th>
                                 <th>{{ __('Fecha / Rango') }}</th>
                                 <th class="d-none d-md-table-cell">{{ __('Tipo') }}</th>
-                                <th class="d-none d-lg-table-cell">{{ __('Horario') }}</th>
                                 <th class="d-none d-lg-table-cell">{{ __('Categoría') }}</th>
                                 <th>{{ __('Duración') }}</th>
                                 <th class="text-end" style="width: 140px;">{{ __('Actions') }}</th>
@@ -290,13 +290,13 @@
                     editUrl = "{{ route('admin_appointments.edit', ':id') }}".replace(':id', item.batch_id);
                 }
 
-                const startTime = item.start_time ? item.start_time.substring(0, 5) : '--:--';
-                const endTime = item.end_time ? item.end_time.substring(0, 5) : '--:--';
+                // Título del evento (o mostrar "Sin título" si no existe)
+                const eventTitle = item.title || '<span class="text-muted fst-italic">Sin título</span>';
 
                 return [
-                    dateDisplay,
+                    `<div class="fw-semibold">${eventTitle}</div>`,
+                    `<span class="small">${dateDisplay}</span>`,
                     `<span class="badge ${typeBadgeColor}">${typeLabel}</span>`,
-                    `${startTime} - ${endTime}`,
                     item.category ? item.category.toUpperCase() : 'ESTÁNDAR',
                     item.duration + ' min',
                     `
