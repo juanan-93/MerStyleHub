@@ -160,9 +160,14 @@
                             <h6 class="mb-0 fw-bold text-secondary">
                                 <i class="ti ti-clock-hour-4 me-2"></i>{{ __('Horario General') }}
                             </h6>
-                            <button type="button" id="applyToAllBtn" class="btn btn-sm btn-primary-custom">
-                                <i class="ti ti-copy me-1"></i>{{ __('Aplicar a todos') }}
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button type="button" id="applyToAllBtn" class="btn btn-sm btn-primary-custom">
+                                    <i class="ti ti-copy me-1"></i>{{ __('Aplicar a todos') }}
+                                </button>
+                                <button type="button" id="deselectAllBtn" class="btn btn-sm btn-outline-secondary">
+                                    <i class="ti ti-square me-1"></i>{{ __('Deseleccionar') }}
+                                </button>
+                            </div>
                         </div>
                         <div class="row g-3">
                             <div class="col-6">
@@ -586,6 +591,16 @@
             color: #999;
         }
 
+        /* Button group spacing */
+        .btn-group {
+            gap: 8px !important;
+            display: flex !important;
+        }
+
+        .btn-group .btn {
+            border-radius: 6px !important;
+        }
+
         /* Form control styling */
         .form-control {
             border: 1px solid var(--color-border);
@@ -604,6 +619,78 @@
         .form-select:focus {
             border-color: var(--color-primary);
             box-shadow: 0 0 0 3px rgba(160, 138, 122, 0.15);
+        }
+
+        /* Select2 Custom Styling - Corporativo */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid var(--color-border) !important;
+            border-radius: 8px !important;
+            height: auto !important;
+            padding: 0 !important;
+            background-color: var(--color-white) !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            padding: 8px 12px !important;
+            color: var(--color-secondary) !important;
+            line-height: 1.5 !important;
+            font-size: 0.9rem !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 100% !important;
+            right: 8px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: var(--color-primary) transparent transparent !important;
+            margin-top: -2px !important;
+        }
+
+        .select2-container--default.select2-container--open .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: var(--color-primary) !important;
+            box-shadow: 0 0 0 3px rgba(160, 138, 122, 0.15) !important;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--color-border) !important;
+            border-radius: 8px !important;
+            background-color: var(--color-white) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .select2-container--default .select2-results__option {
+            padding: 10px 12px !important;
+            color: var(--color-secondary) !important;
+            font-size: 0.9rem !important;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: rgba(160, 138, 122, 0.15) !important;
+            color: var(--color-primary) !important;
+        }
+
+        .select2-container--default .select2-results__option[aria-selected=true] {
+            background-color: rgba(160, 138, 122, 0.1) !important;
+            color: var(--color-primary) !important;
+            font-weight: 500 !important;
+        }
+
+        /* Select2 en input-group */
+        .input-group .select2-container {
+            flex: 1 !important;
+        }
+
+        .input-group .select2-container--default .select2-selection--single {
+            border-left: none !important;
+            border-radius: 0 8px 8px 0 !important;
+        }
+
+        /* Select2 tamaño pequeño para modal */
+        .select2-container--default.select2-sm .select2-selection--single .select2-selection__rendered {
+            padding: 6px 10px !important;
+            font-size: 0.85rem !important;
         }
     </style>
 @endpush
@@ -1051,6 +1138,17 @@
                         });
                     });
                     
+                    // Inicializar Select2 en los selectores de tiempo de este día
+                    $(div).find('.day-start-time, .day-end-time').each(function() {
+                        if (!$(this).hasClass('select2-hidden-accessible')) {
+                            $(this).select2({
+                                minimumResultsForSearch: Infinity,
+                                width: '100%',
+                                dropdownParent: $('#scheduleModal')
+                            });
+                        }
+                    });
+                    
                     // Event listeners para sincronizar cambios en los selects
                     div.querySelectorAll('.day-start-time, .day-end-time').forEach(select => {
                         select.addEventListener('change', function() {
@@ -1119,6 +1217,15 @@
                 // Event listener para el botón de eliminar
                 slotDiv.querySelector('.remove-slot-btn').addEventListener('click', function() {
                     removeTimeSlot(date, this.dataset.slot);
+                });
+                
+                // Inicializar Select2 en los nuevos selectores de tiempo
+                $(slotDiv).find('.day-start-time, .day-end-time').each(function() {
+                    $(this).select2({
+                        minimumResultsForSearch: Infinity,
+                        width: '100%',
+                        dropdownParent: $('#scheduleModal')
+                    });
                 });
                 
                 // Event listeners para sincronizar cambios en los selects
@@ -1399,14 +1506,26 @@
                 selectedSlots.forEach(checkbox => {
                     const date = checkbox.dataset.date;
                     const slotIndex = checkbox.dataset.slot;
-                    const timeSlot = document.querySelector(`.time-slot[data-slot-index="${slotIndex}"]`);
                     
-                    if (timeSlot) {
-                        const startSelect = timeSlot.querySelector('.day-start-time');
-                        const endSelect = timeSlot.querySelector('.day-end-time');
+                    // Buscar el contenedor del día específico
+                    const daySchedule = document.querySelector(`.day-schedule-item[data-date="${date}"]`);
+                    
+                    if (daySchedule) {
+                        // Buscar la franja específica dentro de ese día
+                        const timeSlot = daySchedule.querySelector(`.time-slot[data-slot-index="${slotIndex}"]`);
                         
-                        if (startSelect) startSelect.value = startTime;
-                        if (endSelect) endSelect.value = endTime;
+                        if (timeSlot) {
+                            const startSelect = timeSlot.querySelector(`.day-start-time[data-date="${date}"][data-slot="${slotIndex}"]`);
+                            const endSelect = timeSlot.querySelector(`.day-end-time[data-date="${date}"][data-slot="${slotIndex}"]`);
+                            
+                            // Usar Select2 para cambiar el valor y triggear el evento
+                            if (startSelect) {
+                                $(startSelect).val(startTime).trigger('change');
+                            }
+                            if (endSelect) {
+                                $(endSelect).val(endTime).trigger('change');
+                            }
+                        }
                     }
                 });
                 
@@ -1416,6 +1535,37 @@
                 Swal.fire({
                     title: '¡Horario aplicado!',
                     text: `Se ha aplicado el horario general a ${selectedSlots.length} franja(s)`,
+                    icon: 'success',
+                    confirmButtonColor: 'var(--color-primary)',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            });
+
+            // Deselect all checkboxes
+            document.getElementById('deselectAllBtn').addEventListener('click', function() {
+                const selectedSlots = document.querySelectorAll('.slot-checkbox:checked');
+                
+                if (selectedSlots.length === 0) {
+                    Swal.fire({
+                        title: 'Sin selección',
+                        text: 'No hay franjas horarias seleccionadas',
+                        icon: 'info',
+                        confirmButtonColor: 'var(--color-primary)',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+                
+                const count = selectedSlots.length;
+                selectedSlots.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                
+                Swal.fire({
+                    title: '¡Deseleccionado!',
+                    text: `Se han deseleccionado ${count} franja(s)`,
                     icon: 'success',
                     confirmButtonColor: 'var(--color-primary)',
                     timer: 1500,
@@ -1531,6 +1681,9 @@
                     return;
                 }
             });
+            
+            // Inicializar Select2 en todos los selectores
+            initializeSelect2();
 
             // Initialize UI
             currentMode = 'custom';
@@ -1538,5 +1691,32 @@
             updateButtonStyles();
             updateUI();
         });
+        
+        // Función para inicializar Select2
+        function initializeSelect2() {
+            // Selectores principales del formulario
+            $('#meetingDuration, #meetingType').select2({
+                minimumResultsForSearch: Infinity, // Sin búsqueda
+                width: '100%'
+            });
+            
+            // Selectores de tiempo generales del modal
+            $('#generalStartTime, #generalEndTime').select2({
+                minimumResultsForSearch: Infinity,
+                width: '100%',
+                dropdownParent: $('#scheduleModal')
+            });
+            
+            // Selectores dinámicos de tiempo en el modal
+            $('.day-start-time, .day-end-time').each(function() {
+                if (!$(this).hasClass('select2-hidden-accessible')) {
+                    $(this).select2({
+                        minimumResultsForSearch: Infinity,
+                        width: '100%',
+                        dropdownParent: $('#scheduleModal')
+                    });
+                }
+            });
+        }
     </script>
 @endpush
