@@ -145,7 +145,7 @@
 
     <!-- Modal para configurar horarios -->
     <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom" style="background: var(--color-light);">
                     <h5 class="modal-title fw-bold" id="scheduleModalLabel">
@@ -288,6 +288,8 @@
             background: var(--color-primary) !important;
             border-color: var(--color-primary) !important;
             color: var(--color-white) !important;
+            transform: scale(0.88) !important;
+            border-radius: 6px !important;
         }
 
         .flatpickr-day.startRange, .flatpickr-day.endRange {
@@ -373,8 +375,86 @@
         }
 
         .days-schedule-list {
-            max-height: 400px;
+            max-height: 600px;
             overflow-y: auto;
+        }
+
+        /* Month Accordion Styles */
+        .month-accordion {
+            margin-bottom: 15px;
+        }
+
+        .month-header {
+            background: var(--color-primary);
+            color: var(--color-white);
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            font-weight: 600;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(160, 138, 122, 0.25);
+        }
+
+        .month-header:hover {
+            background: #8B7669;
+            box-shadow: 0 4px 12px rgba(160, 138, 122, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .month-header.collapsed {
+            background: var(--color-light);
+            color: var(--color-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .month-header.collapsed:hover {
+            background: rgba(160, 138, 122, 0.1);
+            border-color: var(--color-primary);
+        }
+
+        .month-header .month-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .month-header .month-badge {
+            background: var(--color-white);
+            color: var(--color-primary);
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .month-header.collapsed .month-badge {
+            background: var(--color-primary);
+            color: var(--color-white);
+        }
+
+        .month-header .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .month-header:not(.collapsed) .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .month-body {
+            padding: 15px 10px;
+            background: var(--color-light);
+            border: 1px solid var(--color-border);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            margin-top: -5px;
         }
 
         .day-schedule-item {
@@ -410,6 +490,60 @@
         .day-schedule-item .input-group-text {
             padding: 0.25rem 0.5rem;
             font-size: 0.85rem;
+        }
+
+        /* Time slots styling */
+        .time-slot {
+            background: var(--color-light);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .time-slot:hover {
+            background: rgba(160, 138, 122, 0.1);
+        }
+        
+        /* Checkbox styling */
+        .form-check {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-top: 0;
+        }
+        
+        .form-check-input {
+            width: 18px;
+            height: 18px;
+            margin-top: 0;
+            border: 2px solid var(--color-border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            accent-color: var(--color-primary);
+        }
+        
+        .form-check-input:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(160, 138, 122, 0.15);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            box-shadow: inset 0 0 0 2px var(--color-white);
+        }
+
+        .add-slot-btn {
+            font-size: 0.8rem;
+            padding: 4px 10px;
+        }
+
+        .remove-slot-btn {
+            padding: 4px 8px;
+        }
+
+        .slots-container .time-slot:last-child {
+            margin-bottom: 0 !important;
         }
 
         /* Selected days badges */
@@ -519,9 +653,39 @@
                 }
             });
 
-            // Update selected dates
+            // Update selected dates - Sincroniza selectedDates con scheduleData
             function updateSelectedDates(dates) {
-                selectedDates = dates.map(d => formatDate(d));
+                const newSelectedDates = dates.map(d => formatDate(d));
+                
+                // Encontrar días que fueron deseleccionados
+                const removedDates = selectedDates.filter(d => !newSelectedDates.includes(d));
+                
+                // Encontrar días nuevos que fueron agregados
+                const addedDates = newSelectedDates.filter(d => !selectedDates.includes(d));
+                
+                // Actualizar selectedDates
+                selectedDates = newSelectedDates;
+                
+                // Eliminar de scheduleData los días deseleccionados
+                if (removedDates.length > 0) {
+                    scheduleData = scheduleData.filter(item => !removedDates.includes(item.date));
+                }
+                
+                // Para días nuevos, agregar horario por defecto si no existe
+                addedDates.forEach(date => {
+                    const existsInSchedule = scheduleData.some(s => s.date === date);
+                    if (!existsInSchedule) {
+                        scheduleData.push({
+                            date: date,
+                            start_time: '09:00',
+                            end_time: '18:00'
+                        });
+                    }
+                });
+                
+                // Actualizar el campo hidden del formulario
+                scheduleDataInput.value = JSON.stringify(scheduleData);
+                
                 updateUI();
             }
 
@@ -547,22 +711,31 @@
                 return date.toLocaleDateString('es-ES', options);
             }
 
-            // Get existing schedule for a date
+            // Get existing schedule for a date (todas las franjas)
             function getScheduleForDate(dateStr) {
-                return scheduleData.find(s => s.date === dateStr) || null;
+                const daySlots = scheduleData.filter(s => s.date === dateStr);
+                if (daySlots.length === 0) return null;
+                return {
+                    slots: daySlots.map(slot => ({
+                        start_time: slot.start_time,
+                        end_time: slot.end_time
+                    }))
+                };
             }
 
             // Update UI based on selected dates
             function updateUI() {
                 const hasDates = selectedDates.length > 0;
+                const hasScheduleData = scheduleData.length > 0;
                 
                 // Show/hide preview
                 selectedDaysPreview.style.display = hasDates ? 'block' : 'none';
                 
-                // Update badges (show max 5)
+                // Update badges (show max 5) - usar Set para evitar duplicados
                 selectedDaysBadges.innerHTML = '';
                 const maxShow = 5;
-                const datesToShow = selectedDates.slice(0, maxShow);
+                const uniqueDates = [...new Set(selectedDates)].sort();
+                const datesToShow = uniqueDates.slice(0, maxShow);
                 
                 datesToShow.forEach(date => {
                     const badge = document.createElement('span');
@@ -571,15 +744,18 @@
                     selectedDaysBadges.appendChild(badge);
                 });
                 
-                if (selectedDates.length > maxShow) {
+                if (uniqueDates.length > maxShow) {
                     const moreBadge = document.createElement('span');
                     moreBadge.className = 'badge bg-secondary';
-                    moreBadge.textContent = `+${selectedDates.length - maxShow} más`;
+                    moreBadge.textContent = `+${uniqueDates.length - maxShow} más`;
                     selectedDaysBadges.appendChild(moreBadge);
                 }
 
                 // Enable/disable buttons
                 openScheduleModalBtn.disabled = !hasDates;
+                
+                // Habilitar botón de guardar solo si hay datos válidos
+                submitBtn.disabled = !hasScheduleData;
             }
 
             // Mode buttons
@@ -686,11 +862,16 @@
                 }
             }
 
+            // Variable global para el modal
+            let modalInstance = null;
+
             // Open schedule modal
             openScheduleModalBtn.addEventListener('click', function() {
                 populateScheduleModal();
-                const modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
-                modal.show();
+                if (!modalInstance) {
+                    modalInstance = new bootstrap.Modal(document.getElementById('scheduleModal'));
+                }
+                modalInstance.show();
             });
 
             // Populate schedule modal with days
@@ -698,10 +879,84 @@
                 daysScheduleList.innerHTML = '';
                 daysCount.textContent = `${selectedDates.length} días`;
 
-                selectedDates.forEach((date, index) => {
-                    const existingSchedule = getScheduleForDate(date);
-                    const dayItem = createDayScheduleItem(date, index, existingSchedule);
-                    daysScheduleList.appendChild(dayItem);
+                // Agrupar fechas por mes
+                const datesByMonth = {};
+                selectedDates.forEach(date => {
+                    const dateObj = new Date(date + 'T00:00:00');
+                    const monthKey = dateObj.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
+                    const monthSort = dateObj.getFullYear() * 100 + dateObj.getMonth();
+                    if (!datesByMonth[monthKey]) {
+                        datesByMonth[monthKey] = {
+                            dates: [],
+                            sortKey: monthSort
+                        };
+                    }
+                    datesByMonth[monthKey].dates.push(date);
+                });
+
+                // Ordenar meses cronológicamente
+                const sortedMonths = Object.keys(datesByMonth).sort((a, b) => {
+                    return datesByMonth[a].sortKey - datesByMonth[b].sortKey;
+                });
+
+                // Renderizar días agrupados por mes con collapses
+                let globalIndex = 0;
+                sortedMonths.forEach((monthKey, monthIndex) => {
+                    const dates = datesByMonth[monthKey].dates;
+                    const collapseId = `month-collapse-${monthIndex}`;
+                    
+                    // Crear contenedor del acordeon
+                    const monthAccordion = document.createElement('div');
+                    monthAccordion.className = 'month-accordion';
+                    
+                    // Crear header del mes (botón colapsable)
+                    const monthHeader = document.createElement('button');
+                    monthHeader.className = 'month-header';
+                    monthHeader.type = 'button';
+                    monthHeader.setAttribute('data-bs-toggle', 'collapse');
+                    monthHeader.setAttribute('data-bs-target', `#${collapseId}`);
+                    monthHeader.setAttribute('aria-expanded', 'true');
+                    monthHeader.setAttribute('aria-controls', collapseId);
+                    
+                    monthHeader.innerHTML = `
+                        <div class="month-title">
+                            <i class="ti ti-calendar-month"></i>
+                            <span>${monthKey.charAt(0).toUpperCase() + monthKey.slice(1)}</span>
+                            <span class="month-badge">${dates.length} días</span>
+                        </div>
+                        <i class="ti ti-chevron-down toggle-icon"></i>
+                    `;
+                    
+                    // Crear body colapsable
+                    const monthCollapse = document.createElement('div');
+                    monthCollapse.className = 'collapse show';
+                    monthCollapse.id = collapseId;
+                    monthCollapse.setAttribute('data-bs-parent', '#daysScheduleList');
+                    
+                    const monthBody = document.createElement('div');
+                    monthBody.className = 'month-body';
+                    
+                    // Renderizar días del mes
+                    dates.forEach(date => {
+                        const existingSchedule = getScheduleForDate(date);
+                        const dayItem = createDayScheduleItem(date, globalIndex, existingSchedule);
+                        monthBody.appendChild(dayItem);
+                        globalIndex++;
+                    });
+                    
+                    monthCollapse.appendChild(monthBody);
+                    monthAccordion.appendChild(monthHeader);
+                    monthAccordion.appendChild(monthCollapse);
+                    daysScheduleList.appendChild(monthAccordion);
+                    
+                    // Event listener para cambiar clase collapsed
+                    monthCollapse.addEventListener('hidden.bs.collapse', function() {
+                        monthHeader.classList.add('collapsed');
+                    });
+                    
+                    monthCollapse.addEventListener('shown.bs.collapse', function() {
+                        monthHeader.classList.remove('collapsed');
+                    });
                 });
             }
 
@@ -714,35 +969,388 @@
                 const dayName = getDayName(date);
                 const displayDate = formatDateDisplay(date);
 
-                const startTimeValue = existingSchedule ? existingSchedule.start_time : generalStartTime.value;
-                const endTimeValue = existingSchedule ? existingSchedule.end_time : generalEndTime.value;
+                // Obtener franjas existentes o crear una por defecto
+                const existingSlots = existingSchedule && existingSchedule.slots ? existingSchedule.slots : 
+                    [{ start_time: generalStartTime.value, end_time: generalEndTime.value }];
+
+                let slotsHtml = '';
+                const showDeleteBtn = existingSlots.length > 1; // Solo mostrar botón eliminar si hay más de 1 franja
+                
+                existingSlots.forEach((slot, slotIndex) => {
+                    slotsHtml += `
+                        <div class="time-slot mb-2" data-slot-index="${slotIndex}">
+                            <div class="row align-items-center g-2">
+                                <div class="col-1">
+                                    <div class="form-check">
+                                        <input class="form-check-input slot-checkbox" type="checkbox" data-date="${date}" data-slot="${slotIndex}" id="slot_${date}_${slotIndex}">
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text"><i class="ti ti-clock-play"></i></span>
+                                        <select class="form-select day-start-time" data-date="${date}" data-slot="${slotIndex}">
+                                            ${generateTimeOptions(slot.start_time)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text"><i class="ti ti-clock-stop"></i></span>
+                                        <select class="form-select day-end-time" data-date="${date}" data-slot="${slotIndex}">
+                                            ${generateTimeOptions(slot.end_time)}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-3 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-slot-btn ${showDeleteBtn ? '' : 'd-none'}" data-date="${date}" data-slot="${slotIndex}">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
 
                 div.innerHTML = `
-                    <div class="row align-items-center g-2">
-                        <div class="col-12 col-md-4 mb-2 mb-md-0">
-                            <div class="day-label text-capitalize">${dayName}</div>
-                            <div class="day-date">${displayDate}</div>
-                        </div>
-                        <div class="col-6 col-md-4">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text"><i class="ti ti-clock-play"></i></span>
-                                <select class="form-select day-start-time" data-date="${date}">
-                                    ${generateTimeOptions(startTimeValue)}
-                                </select>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <div class="day-label text-capitalize">${dayName}</div>
+                                <div class="day-date">${displayDate}</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-primary-custom add-slot-btn" data-date="${date}">
+                                    <i class="ti ti-plus"></i> Añadir franja
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-day-btn" data-date="${date}">
+                                    <i class="ti ti-trash"></i> Eliminar registro
+                                </button>
                             </div>
                         </div>
-                        <div class="col-6 col-md-4">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text"><i class="ti ti-clock-stop"></i></span>
-                                <select class="form-select day-end-time" data-date="${date}">
-                                    ${generateTimeOptions(endTimeValue)}
-                                </select>
-                            </div>
+                        <div class="slots-container" data-date="${date}">
+                            ${slotsHtml}
                         </div>
                     </div>
                 `;
 
+                // Event listeners para botones de añadir/eliminar franjas
+                setTimeout(() => {
+                    const addBtn = div.querySelector('.add-slot-btn');
+                    addBtn.addEventListener('click', function() {
+                        addTimeSlot(date);
+                    });
+
+                    const removeDayBtn = div.querySelector('.remove-day-btn');
+                    removeDayBtn.addEventListener('click', function() {
+                        removeDay(date);
+                    });
+
+                    div.querySelectorAll('.remove-slot-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            removeTimeSlot(date, this.dataset.slot);
+                        });
+                    });
+                    
+                    // Event listeners para sincronizar cambios en los selects
+                    div.querySelectorAll('.day-start-time, .day-end-time').forEach(select => {
+                        select.addEventListener('change', function() {
+                            syncScheduleDataFromDOM();
+                        });
+                    });
+                }, 0);
+
                 return div;
+            }
+
+            // Añadir nueva franja horaria a un día
+            function addTimeSlot(date) {
+                const container = document.querySelector(`.slots-container[data-date="${date}"]`);
+                const slots = container.querySelectorAll('.time-slot');
+                
+                // Limitar a 5 franjas máximo
+                if (slots.length >= 5) {
+                    Swal.fire({
+                        title: '{{ __("Límite alcanzado") }}',
+                        text: '{{ __("No se pueden añadir más de 5 franjas horarias por día") }}',
+                        icon: 'warning',
+                        timer: 2500
+                    });
+                    return;
+                }
+
+                const newSlotIndex = slots.length;
+
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'time-slot mb-2';
+                slotDiv.dataset.slotIndex = newSlotIndex;
+                slotDiv.innerHTML = `
+                    <div class="row align-items-center g-2">
+                        <div class="col-1">
+                            <div class="form-check">
+                                <input class="form-check-input slot-checkbox" type="checkbox" data-date="${date}" data-slot="${newSlotIndex}" id="slot_${date}_${newSlotIndex}">
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="ti ti-clock-play"></i></span>
+                                <select class="form-select day-start-time" data-date="${date}" data-slot="${newSlotIndex}">
+                                    ${generateTimeOptions(generalStartTime.value)}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="ti ti-clock-stop"></i></span>
+                                <select class="form-select day-end-time" data-date="${date}" data-slot="${newSlotIndex}">
+                                    ${generateTimeOptions(generalEndTime.value)}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-3 text-end">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-slot-btn" data-date="${date}" data-slot="${newSlotIndex}">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(slotDiv);
+
+                // Event listener para el botón de eliminar
+                slotDiv.querySelector('.remove-slot-btn').addEventListener('click', function() {
+                    removeTimeSlot(date, this.dataset.slot);
+                });
+                
+                // Event listeners para sincronizar cambios en los selects
+                slotDiv.querySelector('.day-start-time').addEventListener('change', function() {
+                    syncScheduleDataFromDOM();
+                });
+                slotDiv.querySelector('.day-end-time').addEventListener('change', function() {
+                    syncScheduleDataFromDOM();
+                });
+                
+                // Actualizar scheduleData con el nuevo slot
+                scheduleData.push({
+                    date: date,
+                    start_time: generalStartTime.value || '09:00',
+                    end_time: generalEndTime.value || '18:00'
+                });
+                scheduleDataInput.value = JSON.stringify(scheduleData);
+                
+                // Actualizar estado del botón "Añadir franja"
+                updateAddSlotButtonState(date);
+                
+                // Actualizar visibilidad de botones eliminar (mostrar todos si hay más de 1)
+                updateRemoveSlotButtonsVisibility(date);
+                
+                updateUI();
+            }
+            
+            // Sincronizar scheduleData desde el DOM
+            function syncScheduleDataFromDOM() {
+                scheduleData = [];
+                selectedDates.forEach(date => {
+                    const container = document.querySelector(`.slots-container[data-date="${date}"]`);
+                    if (!container) return;
+                    
+                    const slots = container.querySelectorAll('.time-slot');
+                    slots.forEach(slot => {
+                        const startSelect = slot.querySelector('.day-start-time');
+                        const endSelect = slot.querySelector('.day-end-time');
+                        if (startSelect && endSelect) {
+                            scheduleData.push({
+                                date: date,
+                                start_time: startSelect.value,
+                                end_time: endSelect.value
+                            });
+                        }
+                    });
+                });
+                scheduleDataInput.value = JSON.stringify(scheduleData);
+                updateUI();
+            }
+            
+            // Actualizar visibilidad de los botones eliminar franja
+            function updateRemoveSlotButtonsVisibility(date) {
+                const container = document.querySelector(`.slots-container[data-date="${date}"]`);
+                if (!container) return;
+                
+                const slots = container.querySelectorAll('.time-slot');
+                const removeButtons = container.querySelectorAll('.remove-slot-btn');
+                
+                if (slots.length > 1) {
+                    // Mostrar todos los botones eliminar
+                    removeButtons.forEach(btn => btn.classList.remove('d-none'));
+                } else {
+                    // Ocultar todos los botones eliminar
+                    removeButtons.forEach(btn => btn.classList.add('d-none'));
+                }
+            }
+            
+            // Actualizar estado del botón "Añadir franja"
+            function updateAddSlotButtonState(date) {
+                const dayItem = document.querySelector(`.day-schedule-item[data-date="${date}"]`);
+                if (!dayItem) return;
+                
+                const addBtn = dayItem.querySelector('.add-slot-btn');
+                const container = dayItem.querySelector(`.slots-container[data-date="${date}"]`);
+                const slots = container.querySelectorAll('.time-slot');
+                
+                if (slots.length >= 5) {
+                    addBtn.disabled = true;
+                    addBtn.style.opacity = '0.5';
+                    addBtn.style.cursor = 'not-allowed';
+                } else {
+                    addBtn.disabled = false;
+                    addBtn.style.opacity = '1';
+                    addBtn.style.cursor = 'pointer';
+                }
+            }
+
+            // Eliminar franja horaria
+            function removeTimeSlot(date, slotIndex) {
+                const container = document.querySelector(`.slots-container[data-date="${date}"]`);
+                const slots = container.querySelectorAll('.time-slot');
+                
+                // Si es la última franja, eliminar el día completo
+                if (slots.length === 1) {
+                    removeDay(date);
+                    return;
+                }
+                
+                const slotToRemove = container.querySelector(`.time-slot[data-slot-index="${slotIndex}"]`);
+                slotToRemove.remove();
+
+                // Reindexar las franjas restantes
+                container.querySelectorAll('.time-slot').forEach((slot, index) => {
+                    slot.dataset.slotIndex = index;
+                    slot.querySelectorAll('[data-slot]').forEach(el => {
+                        el.dataset.slot = index;
+                    });
+                });
+                
+                // Actualizar botones de eliminar franja
+                container.querySelectorAll('.remove-slot-btn').forEach(btn => {
+                    btn.removeEventListener('click', arguments.callee);
+                    btn.addEventListener('click', function() {
+                        removeTimeSlot(date, this.dataset.slot);
+                    });
+                });
+                
+                // Actualizar estado del botón Añadir franja
+                updateAddSlotButtonState(date);
+                
+                // Actualizar visibilidad de botones eliminar
+                updateRemoveSlotButtonsVisibility(date);
+                
+                // Actualizar scheduleData
+                scheduleData = scheduleData.filter(item => item.date !== date);
+                const inputs = document.querySelectorAll(`.slots-container[data-date="${date}"] .time-slot`);
+                inputs.forEach(slot => {
+                    const startTime = slot.querySelector('.day-start-time').value;
+                    const endTime = slot.querySelector('.day-end-time').value;
+                    scheduleData.push({ date: date, start_time: startTime, end_time: endTime });
+                });
+                
+                // Actualizar el campo hidden del formulario
+                scheduleDataInput.value = JSON.stringify(scheduleData);
+                updateUI();
+            }
+            
+            // Eliminar día completo (registro) con todas sus franjas
+            function removeDay(date) {
+                Swal.fire({
+                    title: '¿Eliminar registro?',
+                    text: 'Se eliminará el día y todas sus franjas horarias',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: 'var(--color-primary)',
+                    cancelButtonColor: '#999'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Eliminar del DOM
+                        const dayItem = document.querySelector(`.day-schedule-item[data-date="${date}"]`);
+                        if (dayItem) {
+                            dayItem.remove();
+                        }
+                        
+                        // Eliminar de selectedDates
+                        selectedDates = selectedDates.filter(d => d !== date);
+                        
+                        // Eliminar de scheduleData
+                        scheduleData = scheduleData.filter(item => item.date !== date);
+                        
+                        // Si no hay más días, cerrar el modal correctamente
+                        if (selectedDates.length === 0) {
+                            daysScheduleList.innerHTML = '';
+                            daysCount.textContent = '0 días';
+                            
+                            // Limpiar el campo hidden del formulario
+                            scheduleDataInput.value = '[]';
+                            
+                            // Cerrar modal correctamente
+                            if (modalInstance) {
+                                modalInstance.hide();
+                            }
+                            
+                            // Limpiar Flatpickr completamente
+                            fp.clear();
+                            
+                            // Esperar a que el modal se cierre antes de mostrar mensaje
+                            const scheduleModal = document.getElementById('scheduleModal');
+                            scheduleModal.addEventListener('hidden.bs.modal', function onHidden() {
+                                scheduleModal.removeEventListener('hidden.bs.modal', onHidden);
+                                
+                                // Eliminar backdrop manualmente si queda
+                                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                                document.body.classList.remove('modal-open');
+                                document.body.style.overflow = '';
+                                document.body.style.paddingRight = '';
+                                
+                                // Destruir modal instance
+                                if (modalInstance) {
+                                    modalInstance.dispose();
+                                    modalInstance = null;
+                                }
+                                
+                                // Actualizar UI
+                                updateUI();
+                                
+                                Swal.fire({
+                                    title: 'Seleccione días',
+                                    text: 'Debe seleccionar al menos un día para configurar horarios',
+                                    icon: 'info',
+                                    confirmButtonColor: 'var(--color-primary)'
+                                });
+                            }, { once: true });
+                        } else {
+                            // Actualizar el campo hidden del formulario
+                            scheduleDataInput.value = JSON.stringify(scheduleData);
+                            
+                            // Actualizar Flatpickr con fechas válidas
+                            const datesToSet = selectedDates.map(dateStr => {
+                                const [year, month, day] = dateStr.split('-');
+                                return new Date(year, month - 1, day);
+                            });
+                            fp.setDate(datesToSet, false);
+                            
+                            // Actualizar modal si hay días restantes
+                            populateScheduleModal();
+                            
+                            // Actualizar UI
+                            updateUI();
+                            
+                            Swal.fire({
+                                title: 'Registro eliminado',
+                                icon: 'success',
+                                confirmButtonColor: 'var(--color-primary)',
+                                timer: 2000
+                            });
+                        }
+                    }
+                });
             }
 
             // Generate time options HTML
@@ -758,22 +1366,58 @@
                 return options;
             }
 
-            // Apply general schedule to all days
+            // Apply general schedule to selected slots
             document.getElementById('applyToAllBtn').addEventListener('click', function() {
                 const startTime = generalStartTime.value;
                 const endTime = generalEndTime.value;
-
-                document.querySelectorAll('.day-start-time').forEach(select => {
-                    select.value = startTime;
+                
+                // Validar que haya horarios definidos
+                if (!startTime || !endTime) {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Debe establecer un horario general antes de aplicar',
+                        icon: 'warning',
+                        confirmButtonColor: 'var(--color-primary)'
+                    });
+                    return;
+                }
+                
+                // Obtener todos los checkboxes marcados
+                const selectedSlots = document.querySelectorAll('.slot-checkbox:checked');
+                
+                if (selectedSlots.length === 0) {
+                    Swal.fire({
+                        title: 'Seleccione franjas',
+                        text: 'Marque al menos una franja horaria para aplicar el horario general',
+                        icon: 'info',
+                        confirmButtonColor: 'var(--color-primary)'
+                    });
+                    return;
+                }
+                
+                // Aplicar horario a las franjas seleccionadas
+                selectedSlots.forEach(checkbox => {
+                    const date = checkbox.dataset.date;
+                    const slotIndex = checkbox.dataset.slot;
+                    const timeSlot = document.querySelector(`.time-slot[data-slot-index="${slotIndex}"]`);
+                    
+                    if (timeSlot) {
+                        const startSelect = timeSlot.querySelector('.day-start-time');
+                        const endSelect = timeSlot.querySelector('.day-end-time');
+                        
+                        if (startSelect) startSelect.value = startTime;
+                        if (endSelect) endSelect.value = endTime;
+                    }
                 });
-                document.querySelectorAll('.day-end-time').forEach(select => {
-                    select.value = endTime;
-                });
-
+                
+                // Sincronizar scheduleData
+                syncScheduleDataFromDOM();
+                
                 Swal.fire({
-                    title: '{{ __("¡Horario aplicado!") }}',
-                    text: '{{ __("El horario general se ha aplicado a todos los días") }}',
+                    title: '¡Horario aplicado!',
+                    text: `Se ha aplicado el horario general a ${selectedSlots.length} franja(s)`,
                     icon: 'success',
+                    confirmButtonColor: 'var(--color-primary)',
                     timer: 1500,
                     showConfirmButton: false
                 });
@@ -783,35 +1427,59 @@
             document.getElementById('saveScheduleBtn').addEventListener('click', function() {
                 scheduleData = [];
                 let hasError = false;
-                
-                document.querySelectorAll('.day-schedule-item').forEach(item => {
-                    if (hasError) return;
-                    
-                    const date = item.dataset.date;
-                    const startTime = item.querySelector('.day-start-time').value;
-                    const endTime = item.querySelector('.day-end-time').value;
 
-                    if (startTime >= endTime) {
-                        Swal.fire({
-                            title: '{{ __("Error de horario") }}',
-                            text: `{{ __("La hora de fin debe ser posterior a la hora de inicio para el día") }} ${formatDateDisplay(date)}`,
-                            icon: 'error'
-                        });
-                        hasError = true;
+                // Recopilar datos por día (cada día puede tener múltiples franjas)
+                selectedDates.forEach(date => {
+                    const slotsContainer = document.querySelector(`.slots-container[data-date="${date}"]`);
+                    
+                    if (!slotsContainer) {
+                        console.error('No se encontró contenedor para fecha:', date);
                         return;
                     }
+                    
+                    const slots = slotsContainer.querySelectorAll('.time-slot');
+                    
+                    slots.forEach(slot => {
+                        const slotIndex = slot.dataset.slotIndex;
+                        const startSelect = slot.querySelector(`.day-start-time[data-slot="${slotIndex}"]`);
+                        const endSelect = slot.querySelector(`.day-end-time[data-slot="${slotIndex}"]`);
+                        
+                        if (!startSelect || !endSelect) {
+                            console.error('No se encontraron selectores para slot:', slotIndex);
+                            return;
+                        }
+                        
+                        const startTime = startSelect.value;
+                        const endTime = endSelect.value;
 
-                    scheduleData.push({
-                        date: date,
-                        start_time: startTime,
-                        end_time: endTime
+                        if (startTime >= endTime) {
+                            hasError = true;
+                            Swal.fire({
+                                title: '{{ __("Error en horarios") }}',
+                                text: `{{ __("La hora de inicio debe ser menor que la hora de fin en") }} ${formatDateDisplay(date)}`,
+                                icon: 'error'
+                            });
+                            return;
+                        }
+
+                        scheduleData.push({
+                            date: date,
+                            start_time: startTime,
+                            end_time: endTime
+                        });
                     });
                 });
 
-                if (!hasError && scheduleData.length === selectedDates.length) {
+                if (hasError) return;
+
+                if (scheduleData.length > 0) {
                     scheduleDataInput.value = JSON.stringify(scheduleData);
                     
-                    bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                    const modalElement = document.getElementById('scheduleModal');
+                    const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
 
                     Swal.fire({
                         title: '{{ __("¡Horarios configurados!") }}',
@@ -819,6 +1487,12 @@
                         icon: 'success',
                         timer: 2000,
                         showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        title: '{{ __("Error") }}',
+                        text: '{{ __("No se han configurado horarios") }}',
+                        icon: 'error'
                     });
                 }
             });
@@ -830,9 +1504,10 @@
                 if (!title) {
                     e.preventDefault();
                     Swal.fire({
-                        title: '{{ __("Error") }}',
-                        text: '{{ __("Por favor, introduce un título para el evento") }}',
-                        icon: 'error'
+                        title: 'Error',
+                        text: 'Por favor, introduce un título para el evento',
+                        icon: 'error',
+                        confirmButtonColor: 'var(--color-primary)'
                     });
                     return;
                 }
@@ -848,9 +1523,10 @@
                 if (currentScheduleData.length === 0) {
                     e.preventDefault();
                     Swal.fire({
-                        title: '{{ __("Error") }}',
-                        text: '{{ __("Por favor, configura los horarios antes de guardar") }}',
-                        icon: 'error'
+                        title: 'Horarios no configurados',
+                        text: 'Debe configurar al menos un día con horarios antes de guardar. Abre el modal de configuración y selecciona días con sus franjas horarias.',
+                        icon: 'error',
+                        confirmButtonColor: 'var(--color-primary)'
                     });
                     return;
                 }

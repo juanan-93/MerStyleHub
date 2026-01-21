@@ -37,6 +37,11 @@ class AppointmentAvailabilityController extends Controller
         $selectionType = $request->selection_type;
         $scheduleData = json_decode($request->schedule_data, true);
 
+        // Validar que schedule_data no esté vacío
+        if (empty($scheduleData) || !is_array($scheduleData)) {
+            return back()->withErrors(['schedule_data' => 'Debe configurar al menos un día con horarios antes de guardar.'])->withInput();
+        }
+
         // Procesar cada día con su horario (general o personalizado)
         foreach ($scheduleData as $daySchedule) {
             $date = $daySchedule['date'];
@@ -71,16 +76,32 @@ class AppointmentAvailabilityController extends Controller
         $availability = $availabilities->first();
         $selectionType = $availability->selection_type;
         
-        // Preparar datos de horarios por día
-        $scheduleData = $availabilities->map(function ($item) {
-            return [
-                'date' => $item->date->format('Y-m-d'),
+        // Preparar datos de horarios por día - Agrupados por fecha para manejar múltiples franjas
+        $scheduleDataGrouped = [];
+        foreach ($availabilities as $item) {
+            $date = $item->date->format('Y-m-d');
+            if (!isset($scheduleDataGrouped[$date])) {
+                $scheduleDataGrouped[$date] = [];
+            }
+            $scheduleDataGrouped[$date][] = [
                 'start_time' => substr($item->start_time, 0, 5),
                 'end_time' => substr($item->end_time, 0, 5),
             ];
-        })->toArray();
+        }
 
-        $datesList = $availabilities->pluck('date')->map(fn($d) => $d->format('Y-m-d'))->toArray();
+        // Convertir a formato plano para JavaScript
+        $scheduleData = [];
+        foreach ($scheduleDataGrouped as $date => $slots) {
+            foreach ($slots as $slot) {
+                $scheduleData[] = [
+                    'date' => $date,
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                ];
+            }
+        }
+
+        $datesList = array_keys($scheduleDataGrouped);
 
         return view('admin_appointments.edit', compact(
             'availability', 
@@ -105,11 +126,16 @@ class AppointmentAvailabilityController extends Controller
             'schedule_data' => 'required|json',
         ]);
 
-        // Eliminamos el lote anterior para recrearlo con los nuevos datos/fechas
-        AppointmentAvailability::where('batch_id', $batch_id)->delete();
-
         $selectionType = $request->selection_type;
         $scheduleData = json_decode($request->schedule_data, true);
+
+        // Validar que schedule_data no esté vacío
+        if (empty($scheduleData) || !is_array($scheduleData)) {
+            return back()->withErrors(['schedule_data' => 'Debe configurar al menos un día con horarios antes de guardar.'])->withInput();
+        }
+
+        // Eliminamos el lote anterior para recrearlo con los nuevos datos/fechas
+        AppointmentAvailability::where('batch_id', $batch_id)->delete();
 
         // Procesar cada día con su horario
         foreach ($scheduleData as $daySchedule) {

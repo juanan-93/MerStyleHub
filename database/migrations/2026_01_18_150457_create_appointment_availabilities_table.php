@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('appointment_availabilities', function (Blueprint $table) {
             $table->id();
+            $table->string('title')->nullable();
             $table->string('batch_id')->nullable(); // after() solo funciona en alter, no en create
             $table->date('date'); // El día (ej: 2026-01-20)
             $table->time('start_time'); // Hora inicio (ej: 08:00)
