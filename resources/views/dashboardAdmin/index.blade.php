@@ -25,221 +25,45 @@
             font-size: 0.9rem;
             font-weight: 500;
         }
+        .tabs-container .nav-tabs .nav-link { color: var(--color-secondary); }
+        .tabs-container .tab-pane { min-height: 220px; }
+        .placeholder-box { background: var(--color-light); border: 1px dashed var(--color-border, #D9D4CE); padding: 24px; border-radius: 8px; }
     </style>
 @endpush
 
 @section('content')
+    <div class="tabs-container">
+        {{-- Botones tabs  --}}
+        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Dashboard</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments" type="button" role="tab" aria-controls="appointments" aria-selected="false">Citas</button>
+            </li>
+        </ul>
 
-    <!-- Encabezado -->
-    <div class="mb-4">
-        <h1 class="h3 fw-bold mb-1" style="color: var(--color-secondary);">
-            Bienvenido, {{ Auth::user()->name }}
-        </h1>
-        <p class="text-muted">Aquí está el resumen de tu plataforma</p>
-    </div>
-
-    <!-- Tarjetas de Estadísticas -->
-    <div class="row mb-4">
-        <!-- Clientes -->
-        <div class="col-12 col-sm-6 col-md-3 mb-3">
-            <div class="card stat-card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-3 p-3" style="background-color: rgba(160, 138, 122, 0.1);">
-                                <i class="ti ti-users" style="font-size: 2rem; color: var(--color-primary);"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="stat-number">0</div>
-                            <div class="stat-label">Clientes</div>
-                        </div>
-                    </div>
-                </div>
+        {{-- Contenido  de los tabs--}}
+        <div class="tab-content p-3 border border-top-0 bg-white">
+            <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                @include('dashboardAdmin.details.dashboard')
             </div>
-        </div>
 
-        <!-- Productos -->
-        <div class="col-12 col-sm-6 col-md-3 mb-3">
-            <div class="card stat-card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-3 p-3" style="background-color: rgba(160, 138, 122, 0.1);">
-                                <i class="ti ti-package" style="font-size: 2rem; color: var(--color-primary);"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="stat-number">0</div>
-                            <div class="stat-label">Productos</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="tab-pane fade" id="appointments" role="tabpanel" aria-labelledby="appointments-tab">
+                @include('dashboardAdmin.details.calendar')
             </div>
-        </div>
 
-        <!-- Pedidos -->
-        <div class="col-12 col-sm-6 col-md-3 mb-3">
-            <div class="card stat-card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-3 p-3" style="background-color: rgba(160, 138, 122, 0.1);">
-                                <i class="ti ti-shopping-cart" style="font-size: 2rem; color: var(--color-primary);"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="stat-number">0</div>
-                            <div class="stat-label">Pedidos</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Ingresos -->
-        <div class="col-12 col-sm-6 col-md-3 mb-3">
-            <div class="card stat-card h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-3 p-3" style="background-color: rgba(160, 138, 122, 0.1);">
-                                <i class="ti ti-coin" style="font-size: 2rem; color: var(--color-primary);"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1 ms-3">
-                            <div class="stat-number">$0</div>
-                            <div class="stat-label">Ingresos</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
-
-    <!-- Gráficas -->
-    <div class="row mb-4">
-        <!-- Gráfica de Ventas -->
-        <div class="col-12 col-lg-8 mb-3">
-            <div class="card">
-                <div class="card-header border-bottom">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-chart-line me-2"></i>Ventas Este Mes
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <canvas id="chartVentas" style="max-height: 300px;"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Información -->
-        <div class="col-12 col-lg-4 mb-3">
-            <div class="card">
-                <div class="card-header border-bottom">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-info-circle me-2"></i>Información
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="text-muted mb-3">Bienvenido a MerStyleHub, tu plataforma de gestión completa.</p>
-                    
-                    <div class="mb-3">
-                        <small class="text-muted">Versión</small>
-                        <p class="mb-0">1.0.0</p>
-                    </div>
-                    
-                    <div>
-                        <small class="text-muted">Última actualización</small>
-                        <p class="mb-0">{{ now()->format('d/m/Y H:i') }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabla de Últimos Pedidos -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header border-bottom">
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-history me-2"></i>Últimos Pedidos
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead>
-                                <tr style="background-color: var(--color-light);">
-                                    <th>ID</th>
-                                    <th>Cliente</th>
-                                    <th>Fecha</th>
-                                    <th>Total</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="6" class="text-center py-5">
-                                        <p class="text-muted mb-0">No hay pedidos aún</p>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+  
 @endsection
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Gráfica de Ventas
-            const ctx = document.getElementById('chartVentas');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
-                        datasets: [{
-                            label: 'Ventas',
-                            data: [12, 19, 3, 5, 2, 3, 8],
-                            borderColor: '#A08A7A',
-                            backgroundColor: 'rgba(160, 138, 122, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointBackgroundColor: '#A08A7A',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)'
-                                }
-                            }
-                        }
-                    }
-                });
-            }
+        // Mantener la primera pestaña activa al cargar (Bootstrap ya lo hace si está marcada)
+        document.addEventListener('DOMContentLoaded', function () {
+            var tabs = document.querySelectorAll('#dashboardTabs button[data-bs-toggle="tab"]');
+            if (tabs.length) tabs[0].dispatchEvent(new Event('shown.bs.tab'));
         });
     </script>
 @endpush

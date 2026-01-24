@@ -168,7 +168,7 @@
                                     <span class="input-group-text"><i class="ti ti-clock-play"></i></span>
                                     <select class="form-select" id="generalStartTime">
                                         @for ($hour = 6; $hour <= 22; $hour++)
-                                            @for ($minute = 0; $minute < 60; $minute += 30)
+                                            @for ($minute = 0; $minute < 60; $minute += 15)
                                                 <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}" {{ $hour == 9 && $minute == 0 ? 'selected' : '' }}>
                                                     {{ sprintf('%02d:%02d', $hour, $minute) }}
                                                 </option>
@@ -183,7 +183,7 @@
                                     <span class="input-group-text"><i class="ti ti-clock-stop"></i></span>
                                     <select class="form-select" id="generalEndTime">
                                         @for ($hour = 6; $hour <= 22; $hour++)
-                                            @for ($minute = 0; $minute < 60; $minute += 30)
+                                            @for ($minute = 0; $minute < 60; $minute += 15)
                                                 <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}" {{ $hour == 18 && $minute == 0 ? 'selected' : '' }}>
                                                     {{ sprintf('%02d:%02d', $hour, $minute) }}
                                                 </option>
@@ -1446,7 +1446,7 @@
             function generateTimeOptions(selectedValue) {
                 let options = '';
                 for (let hour = 6; hour <= 22; hour++) {
-                    for (let minute = 0; minute < 60; minute += 30) {
+                    for (let minute = 0; minute < 60; minute += 15) {
                         const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
                         const selected = time === selectedValue ? 'selected' : '';
                         options += `<option value="${time}" ${selected}>${time}</option>`;
