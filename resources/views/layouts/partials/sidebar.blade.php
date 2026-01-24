@@ -45,11 +45,11 @@
             <!-- Pedidos -->
             <li class="nav-item mb-1">
                 <a class="nav-link d-flex align-items-center rounded" 
-                   href="#" 
-                   title="{{ __('Pedidos') }}"
+                   href="{{route('products.index')}}" 
+                   title="{{ __('Productos') }}"
                    style="color: var(--color-secondary);">
                     <i class="ti ti-shopping-cart sidebar-icon" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2">{{ __('Pedidos') }}</span>
+                    <span class="ms-2">{{ __('Productos') }}</span>
                 </a>
             </li>
 
