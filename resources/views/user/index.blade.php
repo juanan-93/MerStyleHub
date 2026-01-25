@@ -20,9 +20,7 @@
 
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0 fw-bold text-secondary">
-                    <i class="ti ti-users me-2"></i>{{ __('Listado de Usuarios') }}
-                </h5>
+                
                 <a href="{{ route('users.create') }}"
                    class="btn btn-primary-custom shadow-sm px-4">
                     <i class="ti ti-user-plus me-1"></i> {{ __('Crear Usuario') }}
@@ -86,16 +84,16 @@
                                     </td>
                                     <td>
                                         <div class="text-end">
-                                            <a href="#" 
-                                               class="btn btn-sm btn-outline-secondary rounded-circle" 
-                                               title="Ver">
-                                                <i class="ti ti-eye"></i>
-                                            </a>
-                                            <a href="#" 
+                                            <a href="{{ route('users.edit', $user->id) }}" 
                                                class="btn btn-sm btn-outline-secondary rounded-circle" 
                                                title="Editar">
                                                 <i class="ti ti-pencil"></i>
                                             </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-secondary rounded-circle btn-delete" 
+                                                    data-id="{{ $user->id }}">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -341,6 +339,59 @@
                     serverSide: false
                 });
             }
+
+            // Manejo de eliminación con SweetAlert2
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-delete')) {
+                    const userId = e.target.closest('.btn-delete').getAttribute('data-id');
+                    
+                    Swal.fire({
+                        title: '¿Eliminar usuario?',
+                        text: 'Esta acción no se puede deshacer.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#A08A7A',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar',
+                        reverseButtons: true
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Hacer petición DELETE
+                            fetch('{{ route('users.destroy', ':id') }}'.replace(':id', userId), {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: '¡Eliminado!',
+                                        text: 'El usuario ha sido eliminado correctamente.',
+                                        confirmButtonColor: '#A08A7A',
+                                        timer: 2000,
+                                        timerProgressBar: true
+                                    }).then(() => {
+                                        window.location.reload();
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'Ha ocurrido un error al eliminar el usuario.',
+                                    confirmButtonColor: '#A08A7A'
+                                });
+                            });
+                        }
+                    });
+                }
+            });
         });
     </script>
 @endpush

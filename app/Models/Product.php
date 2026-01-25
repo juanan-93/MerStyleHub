@@ -17,4 +17,10 @@ class Product extends Model
         'price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    // Relación con CustomerProfile
+    public function customerProfiles()
+    {
+        return $this->hasMany(CustomerProfile::class);
+    }
 }

@@ -15,4 +15,10 @@ class Colorimetry extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    // Relación con CustomerProfile
+    public function customerProfiles()
+    {
+        return $this->hasMany(CustomerProfile::class);
+    }
 }
