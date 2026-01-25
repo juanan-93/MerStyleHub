@@ -13,14 +13,14 @@ Route::get('/', function () {
 });
 
 //Authenticated Routes
-Route::middleware('auth')->group(function () {
+Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-//Create users
-Route::middleware(['auth'])->group(function () {
+//Create users Admin
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/admin/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/admin/users', [UserController::class, 'store'])->name('users.store');
@@ -37,12 +37,12 @@ Route::get('/calendar/available-slots/{date}', [CalendarController::class, 'getA
 Route::post('/calendar/book', [CalendarController::class, 'book'])->name('calendar.book');
 
 //Dashboard Admin Route
-Route::middleware('auth')->group(function () {
+Route::middleware('auth','role:admin')->group(function () {
    Route::get('/dashboardAdmin', [DashboardAdminController::class, 'index'])->name('dashboardAdmin.index');
 });
 
-//Appointment Availability Routes
-Route::middleware('auth')->group(function () {
+//Appointment Availability  Admin Routes
+Route::middleware('auth','role:admin')->group(function () {
     Route::get('/admin/appointments', [AppointmentAvailabilityController::class, 'index'])->name('admin_appointments.index');
     Route::get('/admin/appointments/create', [AppointmentAvailabilityController::class, 'create'])->name('admin_appointments.create');
     Route::post('/admin/appointments', [AppointmentAvailabilityController::class, 'store'])->name('admin_appointments.store');
@@ -51,8 +51,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/appointments/batch/{batch_id}', [AppointmentAvailabilityController::class, 'destroyBatch'])->name('admin_appointments.destroyBatch');
 });
 
-//Product Routes
-Route::middleware('auth')->group(function () {
+//Product Routes Admin
+Route::middleware('auth','role:admin')->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');

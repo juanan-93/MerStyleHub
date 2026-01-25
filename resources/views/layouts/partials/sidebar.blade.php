@@ -7,52 +7,53 @@
     <div class="p-3">
         
         <ul class="nav flex-column">
-            <!-- Dashboard -->
-            <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded {{ request()->routeIs('dashboardAdmin.index') ? 'active' : '' }}" 
-                   href="{{ route('dashboardAdmin.index') }}" 
-                   data-bs-toggle="tooltip" 
-                   data-bs-placement="right" 
-                   title="{{ __('Dashboard') }}"
-                   style="color: var(--color-secondary);">
-                    <i class="ti ti-home sidebar-icon" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2">{{ __('Dashboard') }}</span>
-                </a>
-            </li>
-            
-            <!-- Clientes -->
-            <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded" 
-                   href="{{ route('users.index') }}" 
-                   title="{{ __('Clientes') }}"
-                   style="color: var(--color-secondary);">
-                    <i class="ti ti-users sidebar-icon" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2">{{ __('Clientes') }}</span>
-                </a>
-            </li>
-            
-            <!--Calendario -->
-            <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded" 
-                   href="{{ route('admin_appointments.index') }}" 
-                   title="{{ __('appointments') }}"
-                   style="color: var(--color-secondary);">
-                    <i class="ti ti-calendar sidebar-icon" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2">{{ __('appointments') }}</span>
-                </a>
-            </li>
-            
-            <!-- Pedidos -->
-            <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded" 
-                   href="{{route('products.index')}}" 
-                   title="{{ __('Productos') }}"
-                   style="color: var(--color-secondary);">
-                    <i class="ti ti-shopping-cart sidebar-icon" style="font-size: 1.25rem;"></i>
-                    <span class="ms-2">{{ __('Productos') }}</span>
-                </a>
-            </li>
-
+            @role('admin')
+                <!-- Dashboard -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center rounded {{ request()->routeIs('dashboardAdmin.index') ? 'active' : '' }}" 
+                    href="{{ route('dashboardAdmin.index') }}" 
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="right" 
+                    title="{{ __('Dashboard') }}"
+                    style="color: var(--color-secondary);">
+                        <i class="ti ti-home sidebar-icon" style="font-size: 1.25rem;"></i>
+                        <span class="ms-2">{{ __('Dashboard') }}</span>
+                    </a>
+                </li>
+                
+                <!-- Clientes -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center rounded" 
+                    href="{{ route('users.index') }}" 
+                    title="{{ __('Clientes') }}"
+                    style="color: var(--color-secondary);">
+                        <i class="ti ti-users sidebar-icon" style="font-size: 1.25rem;"></i>
+                        <span class="ms-2">{{ __('Clientes') }}</span>
+                    </a>
+                </li>
+                
+                <!--Calendario -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center rounded" 
+                    href="{{ route('admin_appointments.index') }}" 
+                    title="{{ __('appointments') }}"
+                    style="color: var(--color-secondary);">
+                        <i class="ti ti-calendar sidebar-icon" style="font-size: 1.25rem;"></i>
+                        <span class="ms-2">{{ __('appointments') }}</span>
+                    </a>
+                </li>
+                
+                <!-- Pedidos -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center rounded" 
+                    href="{{route('products.index')}}" 
+                    title="{{ __('Productos') }}"
+                    style="color: var(--color-secondary);">
+                        <i class="ti ti-shopping-cart sidebar-icon" style="font-size: 1.25rem;"></i>
+                        <span class="ms-2">{{ __('Productos') }}</span>
+                    </a>
+                </li>
+            @endrole
             <!-- Separador -->
             <li class="nav-item my-2">
                 <hr class="text-secondary opacity-25">
