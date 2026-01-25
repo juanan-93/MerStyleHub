@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,12 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        //SEEDER PARA CREAR COLORIMETRÍAS
+        $this->call(ColorimetrySeeder::class);
         
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
         //SEEDER PARA CREAR ROLES
         $this->call(RolesAndPermissionsSeeder::class);
 
