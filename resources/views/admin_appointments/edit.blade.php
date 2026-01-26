@@ -217,6 +217,7 @@
                     </div>
                 </div>
                 <div class="modal-footer border-top">
+                    <div id="conflictWarning" class="text-danger fw-bold me-auto d-none small"></div>
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancelar') }}</button>
                     <button type="button" id="saveScheduleBtn" class="btn btn-primary-custom">
                         <i class="ti ti-check me-1"></i>{{ __('Confirmar Horarios') }}
@@ -699,6 +700,30 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script>
+        // Variable global para trackear conflictos activos
+        let activeConflicts = new Set();
+
+        // Función para actualizar el estado del botón Confirmar Horarios
+        function updateConfirmButton() {
+            const confirmBtn = document.getElementById('saveScheduleBtn');
+            const conflictWarning = document.getElementById('conflictWarning');
+            
+            if (activeConflicts.size > 0) {
+                confirmBtn.disabled = true;
+                confirmBtn.classList.add('opacity-50', 'pe-none');
+                if (conflictWarning) {
+                    conflictWarning.classList.remove('d-none');
+                    conflictWarning.textContent = `⚠️ ${activeConflicts.size} conflicto(s) detectado(s). Resuelve los conflictos para continuar.`;
+                }
+            } else {
+                confirmBtn.disabled = false;
+                confirmBtn.classList.remove('opacity-50', 'pe-none');
+                if (conflictWarning) {
+                    conflictWarning.classList.add('d-none');
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // Initial data from server
             const initialSelectionType = "{{ $selectionType }}";
@@ -959,6 +984,18 @@
                     modalInstance = new bootstrap.Modal(document.getElementById('scheduleModal'));
                 }
                 modalInstance.show();
+                
+                // Validar todas las franjas existentes después de que el modal se muestre
+                setTimeout(() => {
+                    console.log('Validando todas las franjas existentes...');
+                    document.querySelectorAll('.time-slot').forEach(slot => {
+                        const startSelect = slot.querySelector('.day-start-time');
+                        if (startSelect && startSelect.dataset.date) {
+                            console.log('Validando slot para fecha:', startSelect.dataset.date);
+                            validateTimeSlot(startSelect.dataset.date, startSelect);
+                        }
+                    });
+                }, 500);
             });
 
             // Populate schedule modal with days
@@ -1141,18 +1178,34 @@
                     // Inicializar Select2 en los selectores de tiempo de este día
                     $(div).find('.day-start-time, .day-end-time').each(function() {
                         if (!$(this).hasClass('select2-hidden-accessible')) {
-                            $(this).select2({
+                            const $select = $(this);
+                            $select.select2({
                                 minimumResultsForSearch: Infinity,
                                 width: '100%',
                                 dropdownParent: $('#scheduleModal')
                             });
+                            
+                            // Evento para Select2
+                            $select.on('select2:select', function(e) {
+                                console.log('Select2:select event fired', this.value);
+                                syncScheduleDataFromDOM();
+                                validateTimeSlot(this.dataset.date, this);
+                            });
+                            
+                            // Evento de cambio nativo
+                            $select.on('change', function(e) {
+                                console.log('Change event fired', this.value);
+                                syncScheduleDataFromDOM();
+                                validateTimeSlot(this.dataset.date, this);
+                            });
                         }
                     });
                     
-                    // Event listeners para sincronizar cambios en los selects
+                    // Event listeners para sincronizar cambios en los selects (backup)
                     div.querySelectorAll('.day-start-time, .day-end-time').forEach(select => {
                         select.addEventListener('change', function() {
                             syncScheduleDataFromDOM();
+                            validateTimeSlot(this.dataset.date, this);
                         });
                     });
                 }, 0);
@@ -1221,19 +1274,36 @@
                 
                 // Inicializar Select2 en los nuevos selectores de tiempo
                 $(slotDiv).find('.day-start-time, .day-end-time').each(function() {
-                    $(this).select2({
+                    const $select = $(this);
+                    $select.select2({
                         minimumResultsForSearch: Infinity,
                         width: '100%',
                         dropdownParent: $('#scheduleModal')
                     });
+                    
+                    // Evento para Select2
+                    $select.on('select2:select', function(e) {
+                        console.log('Select2:select event fired (new slot)', this.value);
+                        syncScheduleDataFromDOM();
+                        validateTimeSlot(date, this);
+                    });
+                    
+                    // Evento de cambio nativo
+                    $select.on('change', function(e) {
+                        console.log('Change event fired (new slot)', this.value);
+                        syncScheduleDataFromDOM();
+                        validateTimeSlot(date, this);
+                    });
                 });
                 
-                // Event listeners para sincronizar cambios en los selects
+                // Event listeners para sincronizar cambios en los selects (backup)
                 slotDiv.querySelector('.day-start-time').addEventListener('change', function() {
                     syncScheduleDataFromDOM();
+                    validateTimeSlot(date, this);
                 });
                 slotDiv.querySelector('.day-end-time').addEventListener('change', function() {
                     syncScheduleDataFromDOM();
+                    validateTimeSlot(date, this);
                 });
                 
                 // Actualizar scheduleData con el nuevo slot
@@ -1692,6 +1762,133 @@
             updateUI();
         });
         
+        // Función para validar conflictos de horario en tiempo real
+        function validateTimeSlot(date, selectElement) {
+            // Si selectElement es un elemento jQuery o Select2, obtener el elemento nativo
+            let element = selectElement;
+            if (selectElement.jquery) {
+                element = selectElement[0];
+            } else if (selectElement.tagName === 'SPAN') {
+                // Si es el span de Select2, buscar el select original
+                const container = selectElement.closest('.input-group');
+                if (container) {
+                    element = container.querySelector('select');
+                }
+            }
+            
+            const slot = element.closest('.time-slot');
+            if (!slot) {
+                console.warn('No se encontró el slot para el elemento:', element);
+                return;
+            }
+
+            const startSelect = slot.querySelector('.day-start-time');
+            const endSelect = slot.querySelector('.day-end-time');
+            
+            if (!startSelect || !endSelect) {
+                console.warn('No se encontraron los selectores de tiempo');
+                return;
+            }
+
+            const startTime = startSelect.value;
+            const endTime = endSelect.value;
+            
+            // Crear ID único para este slot
+            const slotId = `${date}-${startTime}-${endTime}`;
+
+            if (!startTime || !endTime) {
+                console.log('Esperando ambas horas para validar...');
+                // Remover este slot de conflictos si estaba
+                activeConflicts.delete(slotId);
+                updateConfirmButton();
+                return;
+            }
+
+            console.log('Validando conflicto:', { date, startTime, endTime, batch_id: '{{ $batch_id }}' });
+
+            fetch('{{ route("admin_appointments.checkConflicts") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ 
+                    date, 
+                    start_time: startTime, 
+                    end_time: endTime,
+                    batch_id: '{{ $batch_id }}' // Excluir el batch actual en edición
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta de validación:', data);
+                
+                // Eliminar advertencia previa si existe
+                const oldWarning = slot.querySelector('.conflict-warning');
+                if (oldWarning) oldWarning.remove();
+                slot.style.backgroundColor = '';
+
+                if (data.has_conflict) {
+                    // Agregar este slot a los conflictos activos
+                    activeConflicts.add(slotId);
+                    
+                    const warning = document.createElement('div');
+                    warning.className = 'conflict-warning alert alert-warning py-1 px-2 mt-2 mb-0 small';
+                    warning.innerHTML = `
+                        <i class="ti ti-alert-triangle me-1"></i>
+                        <strong>⚠️ Conflicto de horario detectado:</strong><br>
+                        ${data.conflicts.map(c => `<span class="ms-3">• <strong>${c.title}</strong> (${c.start_time} - ${c.end_time}, ${c.duration} min)</span>`).join('<br>')}
+                    `;
+                    slot.appendChild(warning);
+                    slot.style.backgroundColor = 'rgba(255, 193, 7, 0.15)';
+                    slot.style.border = '1px solid #ffc107';
+                    slot.style.borderRadius = '8px';
+                    slot.style.padding = '10px';
+                    
+                    // Notificación toast
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'warning',
+                        title: 'Conflicto de horario',
+                        text: `La franja ${startTime}-${endTime} ya está ocupada`,
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } else {
+                    // Remover este slot de los conflictos activos
+                    activeConflicts.delete(slotId);
+                    
+                    slot.style.border = '';
+                    slot.style.padding = '';
+                }
+                
+                // Actualizar el estado del botón
+                updateConfirmButton();
+            })
+            .catch(err => {
+                console.error('Error validando conflictos:', err);
+                // En caso de error, remover del set por seguridad
+                activeConflicts.delete(slotId);
+                updateConfirmButton();
+                
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Error al validar',
+                    text: 'No se pudo verificar el conflicto de horario',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        }
+
         // Función para inicializar Select2
         function initializeSelect2() {
             // Selectores principales del formulario

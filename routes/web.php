@@ -49,6 +49,7 @@ Route::middleware('auth','role:admin')->group(function () {
     Route::get('/admin/appointments/batch/{batch_id}/edit', [AppointmentAvailabilityController::class, 'edit'])->name('admin_appointments.edit');
     Route::put('/admin/appointments/batch/{batch_id}', [AppointmentAvailabilityController::class, 'updateBatch'])->name('admin_appointments.updateBatch');
     Route::delete('/admin/appointments/batch/{batch_id}', [AppointmentAvailabilityController::class, 'destroyBatch'])->name('admin_appointments.destroyBatch');
+    Route::post('/admin/appointments/check-conflicts', [AppointmentAvailabilityController::class, 'checkTimeConflicts'])->name('admin_appointments.checkConflicts');
 });
 
 //Product Routes Admin

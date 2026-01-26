@@ -42,6 +42,26 @@ class AppointmentAvailabilityController extends Controller
             return back()->withErrors(['schedule_data' => 'Debe configurar al menos un día con horarios antes de guardar.'])->withInput();
         }
 
+        // Validar que no haya conflictos de horario
+        $conflicts = [];
+        foreach ($scheduleData as $daySchedule) {
+            $date = $daySchedule['date'];
+            $startTime = $daySchedule['start_time'];
+            $endTime = $daySchedule['end_time'];
+
+            if (!empty($date) && !empty($startTime) && !empty($endTime)) {
+                if (AppointmentAvailability::hasTimeConflict($date, $startTime, $endTime)) {
+                    $conflicts[] = "Fecha {$date}: {$startTime} - {$endTime}";
+                }
+            }
+        }
+
+        if (!empty($conflicts)) {
+            return back()
+                ->withErrors(['schedule_data' => 'Existen conflictos de horario en: ' . implode(', ', $conflicts)])
+                ->withInput();
+        }
+
         // Procesar cada día con su horario (general o personalizado)
         foreach ($scheduleData as $daySchedule) {
             $date = $daySchedule['date'];
@@ -134,6 +154,26 @@ class AppointmentAvailabilityController extends Controller
             return back()->withErrors(['schedule_data' => 'Debe configurar al menos un día con horarios antes de guardar.'])->withInput();
         }
 
+        // Validar que no haya conflictos de horario (excluyendo el batch actual)
+        $conflicts = [];
+        foreach ($scheduleData as $daySchedule) {
+            $date = $daySchedule['date'];
+            $startTime = $daySchedule['start_time'];
+            $endTime = $daySchedule['end_time'];
+
+            if (!empty($date) && !empty($startTime) && !empty($endTime)) {
+                if (AppointmentAvailability::hasTimeConflict($date, $startTime, $endTime, $batch_id)) {
+                    $conflicts[] = "Fecha {$date}: {$startTime} - {$endTime}";
+                }
+            }
+        }
+
+        if (!empty($conflicts)) {
+            return back()
+                ->withErrors(['schedule_data' => 'Existen conflictos de horario en: ' . implode(', ', $conflicts)])
+                ->withInput();
+        }
+
         // Eliminamos el lote anterior para recrearlo con los nuevos datos/fechas
         AppointmentAvailability::where('batch_id', $batch_id)->delete();
 
@@ -164,5 +204,40 @@ class AppointmentAvailabilityController extends Controller
     {
         AppointmentAvailability::where('batch_id', $batch_id)->delete();
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Valida en tiempo real si hay conflictos de horario (endpoint AJAX)
+     */
+    public function checkTimeConflicts(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        $date = $request->date;
+        $startTime = $request->start_time;
+        $endTime = $request->end_time;
+        $batchId = $request->batch_id ?? null;
+
+        $conflicts = AppointmentAvailability::getConflicts($date, $startTime, $endTime, $batchId);
+
+        if ($conflicts->isNotEmpty()) {
+            return response()->json([
+                'has_conflict' => true,
+                'conflicts' => $conflicts->map(function($c) {
+                    return [
+                        'title' => $c->title,
+                        'start_time' => substr($c->start_time, 0, 5),
+                        'end_time' => substr($c->end_time, 0, 5),
+                        'duration' => $c->duration,
+                    ];
+                })
+            ]);
+        }
+
+        return response()->json(['has_conflict' => false]);
     }
 }
