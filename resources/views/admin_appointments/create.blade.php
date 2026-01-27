@@ -714,6 +714,13 @@
             }
         }
 
+        // Función para limpiar conflictos previos de un slot específico
+        function clearSlotConflicts(date) {
+            // Remover todos los conflictos de esta fecha del Set
+            const entriesToRemove = Array.from(activeConflicts).filter(entry => entry.startsWith(date + '-'));
+            entriesToRemove.forEach(entry => activeConflicts.delete(entry));
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             // State
             let currentMode = 'range';
@@ -1738,6 +1745,9 @@
         
         // Función para validar conflictos de horario en tiempo real
         function validateTimeSlot(date, selectElement) {
+            // LIMPIAR conflictos previos de esta fecha al inicio
+            clearSlotConflicts(date);
+
             // Si selectElement es un elemento jQuery o Select2, obtener el elemento nativo
             let element = selectElement;
             if (selectElement.jquery) {
@@ -1766,17 +1776,15 @@
 
             const startTime = startSelect.value;
             const endTime = endSelect.value;
-            
-            // Crear ID único para este slot
-            const slotId = `${date}-${startTime}-${endTime}`;
 
             if (!startTime || !endTime) {
                 console.log('Esperando ambas horas para validar...');
-                // Remover este slot de conflictos si estaba
-                activeConflicts.delete(slotId);
                 updateConfirmButton();
                 return;
             }
+            
+            // Crear ID único para este slot DESPUÉS de validar que existan ambas horas
+            const slotId = `${date}-${startTime}-${endTime}`;
 
             console.log('Validando conflicto:', { date, startTime, endTime });
 
@@ -1842,9 +1850,6 @@
             })
             .catch(err => {
                 console.error('Error validando conflictos:', err);
-                // En caso de error, remover del set por seguridad
-                activeConflicts.delete(slotId);
-                updateConfirmButton();
                 
                 Swal.fire({
                     toast: true,
