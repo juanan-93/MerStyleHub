@@ -7,7 +7,24 @@
     <div class="p-3">
         
         <ul class="nav flex-column">
+
+            @role('customer')
+            
+                <!-- Dashboard User -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center rounded" 
+                    href="{{ route('dashboardUser.index') }}" 
+                    title="{{ __('appointments') }}"
+                    style="color: var(--color-secondary);">
+                        <i class="ti ti-home sidebar-icon" style="font-size: 1.25rem;"></i>
+                        <span class="ms-2">{{ __('appointments') }}</span>
+                    </a>
+                </li>
+
+            @endrole
+
             @role('admin')
+
                 <!-- Dashboard -->
                 <li class="nav-item mb-1">
                     <a class="nav-link d-flex align-items-center rounded {{ request()->routeIs('dashboardAdmin.index') ? 'active' : '' }}" 
