@@ -60,10 +60,29 @@
 
 @push('scripts')
     <script>
-        // Mantener la primera pestaña activa al cargar (Bootstrap ya lo hace si está marcada)
         document.addEventListener('DOMContentLoaded', function () {
-            var tabs = document.querySelectorAll('#dashboardTabs button[data-bs-toggle="tab"]');
-            if (tabs.length) tabs[0].dispatchEvent(new Event('shown.bs.tab'));
+            // Verificar si hay un parámetro tab en la URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('tab');
+            
+            if (activeTab) {
+                // Activar el tab correspondiente
+                const tabButton = document.querySelector(`#dashboardTabs button[data-bs-target="#${activeTab}"]`);
+                if (tabButton) {
+                    const tab = new bootstrap.Tab(tabButton);
+                    tab.show();
+                }
+            }
+            
+            // Guardar el tab activo en la URL cuando cambia
+            document.querySelectorAll('#dashboardTabs button[data-bs-toggle="tab"]').forEach(function(tabBtn) {
+                tabBtn.addEventListener('shown.bs.tab', function(e) {
+                    const tabId = e.target.getAttribute('data-bs-target').replace('#', '');
+                    const url = new URL(window.location);
+                    url.searchParams.set('tab', tabId);
+                    window.history.replaceState({}, '', url);
+                });
+            });
         });
     </script>
 @endpush

@@ -40,6 +40,17 @@ Route::post('/calendar/book', [CalendarController::class, 'book'])->name('calend
 //Dashboard Admin Route
 Route::middleware('auth','role:admin')->group(function () {
    Route::get('/dashboardAdmin', [DashboardAdminController::class, 'index'])->name('dashboardAdmin.index');
+   
+   // Gestión de citas del calendario
+   Route::get('/dashboardAdmin/appointment/{id}', [DashboardAdminController::class, 'getAppointment'])->name('dashboardAdmin.getAppointment');
+   Route::put('/dashboardAdmin/appointment/{id}/status', [DashboardAdminController::class, 'updateAppointmentStatus'])->name('dashboardAdmin.updateStatus');
+   Route::put('/dashboardAdmin/appointment/{id}/move', [DashboardAdminController::class, 'moveAppointment'])->name('dashboardAdmin.moveAppointment');
+   Route::delete('/dashboardAdmin/appointment/{id}', [DashboardAdminController::class, 'deleteAppointment'])->name('dashboardAdmin.deleteAppointment');
+   Route::get('/dashboardAdmin/appointments/month', [DashboardAdminController::class, 'getMonthAppointments'])->name('dashboardAdmin.getMonthAppointments');
+   Route::get('/dashboardAdmin/appointments/slots', [DashboardAdminController::class, 'getAvailableSlots'])->name('dashboardAdmin.getAvailableSlots');
+   Route::get('/dashboardAdmin/appointments/dates', [DashboardAdminController::class, 'getAvailableDates'])->name('dashboardAdmin.getAvailableDates');
+   Route::post('/dashboardAdmin/appointments/block', [DashboardAdminController::class, 'blockSlot'])->name('dashboardAdmin.blockSlot');
+   Route::delete('/dashboardAdmin/appointments/unblock/{id}', [DashboardAdminController::class, 'unblockSlot'])->name('dashboardAdmin.unblockSlot');
 });
 
 //Appointment Availability  Admin Routes
