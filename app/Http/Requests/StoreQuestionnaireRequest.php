@@ -27,10 +27,11 @@ class StoreQuestionnaireRequest extends FormRequest
             'status' => 'required|in:active,inactive',
             'questions' => 'required|array|min:1',
             'questions.*.text' => 'required|string',
-            'questions.*.type' => 'required|in:test,text,select',
+            'questions.*.type' => 'required|in:test,text,select,file,info',
             'questions.*.required' => 'boolean',
-            'questions.*.options' => 'required_if:questions.*.type,test,select|array|min:2',
-            'questions.*.options.*' => 'required|string|max:255',
+            'questions.*.allow_other_option' => 'boolean',
+            'questions.*.options' => 'required_if:questions.*.type,test,select|array',
+            'questions.*.options.*' => 'nullable|string|max:255',
         ];
     }
 

@@ -56,6 +56,7 @@ class QuestionnaireController extends Controller
                     'type' => $questionData['type'],
                     'order' => $order,
                     'required' => $questionData['required'] ?? true,
+                    'allow_other_option' => isset($questionData['allow_other_option']) ? true : false,
                 ]);
 
                 // Crear opciones si es pregunta tipo test o select
@@ -129,6 +130,7 @@ class QuestionnaireController extends Controller
                             'type' => $questionData['type'],
                             'order' => $order,
                             'required' => $questionData['required'] ?? true,
+                            'allow_other_option' => isset($questionData['allow_other_option']) ? true : false,
                         ]);
                         $updatedQuestionIds[] = $question->id;
                     }
@@ -139,6 +141,7 @@ class QuestionnaireController extends Controller
                         'type' => $questionData['type'],
                         'order' => $order,
                         'required' => $questionData['required'] ?? true,
+                        'allow_other_option' => isset($questionData['allow_other_option']) ? true : false,
                     ]);
                     $updatedQuestionIds[] = $question->id;
                 }

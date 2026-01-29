@@ -6,17 +6,16 @@
     
     <div class="p-3">
         
-        <ul class="nav flex-column">
+        <ul class="nav flex-column sidebar-nav">
 
             @role('customer')
             
                 <!-- Dashboard User -->
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center rounded" 
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('dashboardUser.*') ? 'active' : '' }}" 
                     href="{{ route('dashboardUser.index') }}" 
-                    title="{{ __('appointments') }}"
-                    style="color: var(--color-secondary);">
-                        <i class="ti ti-home sidebar-icon" style="font-size: 1.25rem;"></i>
+                    title="{{ __('appointments') }}">
+                        <i class="ti ti-home sidebar-icon"></i>
                         <span class="ms-2">{{ __('appointments') }}</span>
                     </a>
                 </li>
@@ -27,61 +26,56 @@
 
                 <!-- Dashboard -->
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center rounded {{ request()->routeIs('dashboardAdmin.index') ? 'active' : '' }}" 
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('dashboardAdmin.*') ? 'active' : '' }}" 
                     href="{{ route('dashboardAdmin.index') }}" 
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="right" 
-                    title="{{ __('Dashboard') }}"
-                    style="color: var(--color-secondary);">
-                        <i class="ti ti-home sidebar-icon" style="font-size: 1.25rem;"></i>
+                    title="{{ __('Dashboard') }}">
+                        <i class="ti ti-home sidebar-icon"></i>
                         <span class="ms-2">{{ __('Dashboard') }}</span>
                     </a>
                 </li>
                 
                 <!-- Clientes -->
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center rounded" 
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('users.*') ? 'active' : '' }}" 
                     href="{{ route('users.index') }}" 
-                    title="{{ __('Clientes') }}"
-                    style="color: var(--color-secondary);">
-                        <i class="ti ti-users sidebar-icon" style="font-size: 1.25rem;"></i>
+                    title="{{ __('Clientes') }}">
+                        <i class="ti ti-users sidebar-icon"></i>
                         <span class="ms-2">{{ __('Clientes') }}</span>
                     </a>
                 </li>
                 
                 <!--Calendario -->
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center rounded" 
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('admin_appointments.*') ? 'active' : '' }}" 
                     href="{{ route('admin_appointments.index') }}" 
-                    title="{{ __('appointments') }}"
-                    style="color: var(--color-secondary);">
-                        <i class="ti ti-calendar sidebar-icon" style="font-size: 1.25rem;"></i>
-                        <span class="ms-2">{{ __('appointments') }}</span>
+                    title="{{ __('Citas') }}">
+                        <i class="ti ti-calendar sidebar-icon"></i>
+                        <span class="ms-2">{{ __('Citas') }}</span>
                     </a>
                 </li>
                 
-                <!-- Pedidos -->
+                <!-- Productos -->
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center rounded" 
-                    href="{{route('products.index')}}" 
-                    title="{{ __('Productos') }}"
-                    style="color: var(--color-secondary);">
-                        <i class="ti ti-shopping-cart sidebar-icon" style="font-size: 1.25rem;"></i>
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('products.*') ? 'active' : '' }}" 
+                    href="{{ route('products.index') }}" 
+                    title="{{ __('Productos') }}">
+                        <i class="ti ti-shopping-cart sidebar-icon"></i>
                         <span class="ms-2">{{ __('Productos') }}</span>
                     </a>
                 </li>
+                
                 <!-- Cuestionarios -->
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center rounded" 
-                    href="{{route('questionnaire.index')}}" 
-                    title="{{ __('Cuestionarios') }}"
-                    style="color: var(--color-secondary);">
-                        <i class="ti ti-clipboard-list sidebar-icon" style="font-size: 1.25rem;"></i>
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('questionnaire.*') ? 'active' : '' }}" 
+                    href="{{ route('questionnaire.index') }}" 
+                    title="{{ __('Cuestionarios') }}">
+                        <i class="ti ti-clipboard-list sidebar-icon"></i>
                         <span class="ms-2">{{ __('Cuestionarios') }}</span>
                     </a>
                 </li>
 
             @endrole
+            
             <!-- Separador -->
             <li class="nav-item my-2">
                 <hr class="text-secondary opacity-25">
@@ -89,26 +83,75 @@
             
             <!-- Reportes -->
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded" 
+                <a class="nav-link sidebar-link d-flex align-items-center rounded" 
                    href="#" 
-                   title="{{ __('Reportes') }}"
-                   style="color: var(--color-secondary);">
-                    <i class="ti ti-chart-bar sidebar-icon" style="font-size: 1.25rem;"></i>
+                   title="{{ __('Reportes') }}">
+                    <i class="ti ti-chart-bar sidebar-icon"></i>
                     <span class="ms-2">{{ __('Reportes') }}</span>
                 </a>
             </li>
             
             <!-- Configuración -->
             <li class="nav-item mb-1">
-                <a class="nav-link d-flex align-items-center rounded" 
+                <a class="nav-link sidebar-link d-flex align-items-center rounded" 
                    href="#" 
-                   title="{{ __('Configuración') }}"
-                   style="color: var(--color-secondary);">
-                    <i class="ti ti-settings sidebar-icon" style="font-size: 1.25rem;"></i>
+                   title="{{ __('Configuración') }}">
+                    <i class="ti ti-settings sidebar-icon"></i>
                     <span class="ms-2">{{ __('Configuración') }}</span>
                 </a>
             </li>
         </ul>
     </div>
 </div>
+
+<style>
+    /* Sidebar Navigation Styles */
+    .sidebar-nav .sidebar-link {
+        color: var(--color-secondary);
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+    
+    .sidebar-nav .sidebar-link .sidebar-icon {
+        font-size: 1.25rem;
+        transition: all 0.2s ease;
+    }
+    
+    /* Hover State */
+    .sidebar-nav .sidebar-link:hover {
+        background-color: var(--color-light);
+        color: var(--color-primary);
+        border-color: var(--color-border);
+    }
+    
+    .sidebar-nav .sidebar-link:hover .sidebar-icon {
+        color: var(--color-primary);
+        transform: scale(1.1);
+    }
+    
+    /* Active State */
+    .sidebar-nav .sidebar-link.active {
+        background-color: var(--color-primary);
+        color: var(--color-white) !important;
+        border-color: var(--color-primary);
+        font-weight: 500;
+        box-shadow: 0 2px 8px rgba(160, 138, 122, 0.3);
+    }
+    
+    .sidebar-nav .sidebar-link.active .sidebar-icon {
+        color: var(--color-white);
+    }
+    
+    .sidebar-nav .sidebar-link.active:hover {
+        background-color: #8f7668;
+        border-color: #8f7668;
+        color: var(--color-white) !important;
+    }
+    
+    .sidebar-nav .sidebar-link.active:hover .sidebar-icon {
+        color: var(--color-white);
+        transform: scale(1.1);
+    }
+</style>
 

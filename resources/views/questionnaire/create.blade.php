@@ -10,7 +10,7 @@
 @endsection
 
 @section('content')
-<form id="questionnaireForm" method="POST" action="#">
+<form id="questionnaireForm" method="POST" action="{{ route('questionnaire.store') }}" enctype="multipart/form-data">
     @csrf
     <div class="row g-4">
         {{-- Columna Principal --}}
@@ -48,24 +48,39 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="addQuestionDropdown">
                             <li>
+                                <a class="dropdown-item py-2" href="#" data-question-type="info">
+                                    <i class="ti ti-info-circle me-2" style="color: #fd7e14;"></i>
+                                    <span class="fw-medium">{{ __('Instrucciones') }}</span>
+                                    <small class="d-block text-muted ms-4">Texto informativo para el usuario</small>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
                                 <a class="dropdown-item py-2" href="#" data-question-type="test">
-                                    <i class="ti ti-list-check me-2" style="color: var(--color-primary);"></i>
+                                    <i class="ti ti-list-check me-2" style="color: #17a2b8;"></i>
                                     <span class="fw-medium">{{ __('Tipo Test') }}</span>
                                     <small class="d-block text-muted ms-4">Múltiples opciones de respuesta</small>
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="#" data-question-type="text">
-                                    <i class="ti ti-text-caption me-2" style="color: var(--color-primary);"></i>
+                                    <i class="ti ti-text-caption me-2" style="color: #28a745;"></i>
                                     <span class="fw-medium">{{ __('Tipo Texto') }}</span>
                                     <small class="d-block text-muted ms-4">Respuesta en área de texto</small>
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="#" data-question-type="select">
-                                    <i class="ti ti-select me-2" style="color: var(--color-primary);"></i>
+                                    <i class="ti ti-select me-2" style="color: #6f42c1;"></i>
                                     <span class="fw-medium">{{ __('Tipo Select') }}</span>
                                     <small class="d-block text-muted ms-4">Seleccionar de una lista</small>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="#" data-question-type="file">
+                                    <i class="ti ti-upload me-2" style="color: #e83e8c;"></i>
+                                    <span class="fw-medium">{{ __('Subir Archivo') }}</span>
+                                    <small class="d-block text-muted ms-4">Permite subir imágenes o documentos</small>
                                 </a>
                             </li>
                         </ul>
@@ -281,8 +296,14 @@
                 </div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                        <span class="text-muted">{{ __('Total preguntas') }}</span>
+                        <span class="text-muted">{{ __('Total elementos') }}</span>
                         <span class="fw-bold" id="totalQuestions">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span class="text-muted d-flex align-items-center gap-1">
+                            <i class="ti ti-info-circle" style="color: #fd7e14;"></i>{{ __('Instrucciones') }}
+                        </span>
+                        <span class="fw-semibold" id="infoQuestions">0</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                         <span class="text-muted d-flex align-items-center gap-1">
@@ -296,11 +317,17 @@
                         </span>
                         <span class="fw-semibold" id="textQuestions">0</span>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center py-2">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                         <span class="text-muted d-flex align-items-center gap-1">
                             <i class="ti ti-select" style="color: #6f42c1;"></i>{{ __('Tipo Select') }}
                         </span>
                         <span class="fw-semibold" id="selectQuestions">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2">
+                        <span class="text-muted d-flex align-items-center gap-1">
+                            <i class="ti ti-upload" style="color: #e83e8c;"></i>{{ __('Subir Archivo') }}
+                        </span>
+                        <span class="fw-semibold" id="fileQuestions">0</span>
                     </div>
                 </div>
             </div>
@@ -666,6 +693,18 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <i class="ti ti-plus me-1"></i>Añadir opción
                             </button>
                         </div>
+                        <div class="mb-3 p-3 rounded" style="background-color: var(--color-light); border: 1px solid var(--color-border);">
+                            <div class="form-check">
+                                <input class="form-check-input allow-other-checkbox" type="checkbox" name="questions[__ID__][allow_other_option]" value="1" id="allowOther__ID__">
+                                <label class="form-check-label fw-semibold small" for="allowOther__ID__">
+                                    <i class="ti ti-text-plus me-1" style="color: var(--color-primary);"></i>
+                                    Permitir respuesta alternativa
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-1 ms-4">
+                                Si el usuario no encuentra una opción adecuada, podrá escribir su propia respuesta
+                            </small>
+                        </div>
                         <div class="select-preview p-3 rounded" style="background-color: #f8f4ff; border: 1px dashed #6f42c1;">
                             <label class="form-label fw-semibold small d-flex align-items-center gap-2 mb-2" style="color: #6f42c1;">
                                 <i class="ti ti-eye"></i>Vista previa del Select
@@ -675,6 +714,97 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <option value="1">Opción 1</option>
                                 <option value="2">Opción 2</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+        file: `
+            <div class="question-card mb-3" data-question-id="__ID__" data-question-type="file">
+                <div class="card border" style="border-color: var(--color-border) !important; border-radius: 10px;">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3" style="border-radius: 10px 10px 0 0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge" style="background-color: #e83e8c;">
+                                <i class="ti ti-upload me-1"></i>Subir Archivo
+                            </span>
+                            <span class="text-muted small">Pregunta #<span class="question-number">__NUM__</span></span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary border-0 btn-move-up" title="Mover arriba">
+                                <i class="ti ti-arrow-up"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary border-0 btn-move-down" title="Mover abajo">
+                                <i class="ti ti-arrow-down"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete-question" title="Eliminar">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Texto de la pregunta <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="questions[__ID__][text]" placeholder="Ej: Sube una foto de cuerpo entero...">
+                            <input type="hidden" name="questions[__ID__][type]" value="file">
+                        </div>
+                        <div class="p-3 rounded" style="background-color: #fdf2f8; border: 1px dashed #e83e8c;">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <i class="ti ti-photo" style="font-size: 2rem; color: #e83e8c;"></i>
+                                <div>
+                                    <small class="fw-semibold d-block" style="color: #e83e8c;">Vista previa del campo de subida</small>
+                                    <small class="text-muted">El usuario podrá subir imágenes o documentos</small>
+                                </div>
+                            </div>
+                            <div class="border rounded p-3 bg-white text-center">
+                                <i class="ti ti-cloud-upload" style="font-size: 1.5rem; color: #ccc;"></i>
+                                <small class="d-block text-muted mt-1">Arrastra archivos aquí o haz clic para seleccionar</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `,
+        info: `
+            <div class="question-card mb-3" data-question-id="__ID__" data-question-type="info">
+                <div class="card border" style="border-color: #fd7e14 !important; border-radius: 10px; border-width: 2px;">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3" style="border-radius: 8px 8px 0 0; background-color: #fff3e6;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge" style="background-color: #fd7e14;">
+                                <i class="ti ti-info-circle me-1"></i>Instrucciones
+                            </span>
+                            <span class="text-muted small">Bloque #<span class="question-number">__NUM__</span></span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary border-0 btn-move-up" title="Mover arriba">
+                                <i class="ti ti-arrow-up"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary border-0 btn-move-down" title="Mover abajo">
+                                <i class="ti ti-arrow-down"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete-question" title="Eliminar">
+                                <i class="ti ti-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-3" style="background-color: #fffaf5;">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small" style="color: #fd7e14;">
+                                <i class="ti ti-message-circle me-1"></i>Título de las instrucciones
+                            </label>
+                            <input type="text" class="form-control" name="questions[__ID__][text]" placeholder="Ej: Instrucciones para las fotografías">
+                            <input type="hidden" name="questions[__ID__][type]" value="info">
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold small" style="color: #fd7e14;">
+                                <i class="ti ti-file-text me-1"></i>Contenido de las instrucciones
+                            </label>
+                            <textarea class="form-control info-content" name="questions[__ID__][options][]" rows="4" placeholder="Escribe las instrucciones detalladas que verá el usuario...&#10;&#10;Por ejemplo:&#10;- La foto debe ser de cuerpo entero&#10;- Con buena iluminación natural&#10;- Fondo neutro preferiblemente"></textarea>
+                        </div>
+                        <div class="mt-3 p-2 rounded" style="background-color: #fff; border: 1px solid #fde3ce;">
+                            <small class="text-muted d-flex align-items-center gap-2">
+                                <i class="ti ti-bulb" style="color: #fd7e14;"></i>
+                                Este bloque mostrará información al usuario, no requiere respuesta
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -898,14 +1028,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateCounters() {
         const total = getVisibleQuestionsCount();
+        const info = questionsContainer.querySelectorAll('[data-question-type="info"]').length;
         const test = questionsContainer.querySelectorAll('[data-question-type="test"]').length;
         const text = questionsContainer.querySelectorAll('[data-question-type="text"]').length;
         const select = questionsContainer.querySelectorAll('[data-question-type="select"]').length;
+        const file = questionsContainer.querySelectorAll('[data-question-type="file"]').length;
         
         document.getElementById('totalQuestions').textContent = total;
+        document.getElementById('infoQuestions').textContent = info;
         document.getElementById('testQuestions').textContent = test;
         document.getElementById('textQuestions').textContent = text;
         document.getElementById('selectQuestions').textContent = select;
+        document.getElementById('fileQuestions').textContent = file;
     }
     
     // Validación del formulario
@@ -933,16 +1067,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Aquí iría la lógica de envío al backend
-        Swal.fire({
-            icon: 'success',
-            title: '¡Cuestionario creado!',
-            text: 'El cuestionario se ha guardado correctamente',
-            showConfirmButton: false,
-            timer: 2000
-        }).then(() => {
-            // window.location.href = '{{ route("questionnaire.index") }}';
-        });
+        // Enviar el formulario al servidor
+        this.submit();
     });
 });
 </script>

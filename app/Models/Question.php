@@ -17,12 +17,14 @@ class Question extends Model
         'type',
         'order',
         'required',
+        'allow_other_option',
     ];
 
     protected $casts = [
         'type' => 'string',
         'order' => 'integer',
         'required' => 'boolean',
+        'allow_other_option' => 'boolean',
     ];
 
     /**
@@ -31,6 +33,8 @@ class Question extends Model
     const TYPE_TEST = 'test';
     const TYPE_TEXT = 'text';
     const TYPE_SELECT = 'select';
+    const TYPE_FILE = 'file';
+    const TYPE_INFO = 'info';
 
     /**
      * Obtener todos los tipos de pregunta
@@ -41,6 +45,8 @@ class Question extends Model
             self::TYPE_TEST => 'Test (opción múltiple)',
             self::TYPE_TEXT => 'Texto libre',
             self::TYPE_SELECT => 'Selector (dropdown)',
+            self::TYPE_FILE => 'Subir archivo',
+            self::TYPE_INFO => 'Información/Instrucciones',
         ];
     }
 

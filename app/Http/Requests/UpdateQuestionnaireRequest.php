@@ -28,11 +28,12 @@ class UpdateQuestionnaireRequest extends FormRequest
             'questions' => 'required|array|min:1',
             'questions.*.id' => 'nullable|integer|exists:questions,id',
             'questions.*.text' => 'required|string',
-            'questions.*.type' => 'required|in:test,text,select',
+            'questions.*.type' => 'required|in:test,text,select,file,info',
             'questions.*.required' => 'boolean',
-            'questions.*.options' => 'required_if:questions.*.type,test,select|array|min:2',
+            'questions.*.allow_other_option' => 'boolean',
+            'questions.*.options' => 'required_if:questions.*.type,test,select|array',
             'questions.*.options.*.id' => 'nullable|integer|exists:question_options,id',
-            'questions.*.options.*.text' => 'required|string|max:255',
+            'questions.*.options.*.text' => 'nullable|string|max:255',
         ];
     }
 
