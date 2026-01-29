@@ -7,6 +7,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\AppointmentAvailabilityController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardUserController;
+use App\Http\Controllers\QuestionnaireController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -72,6 +73,25 @@ Route::middleware('auth','role:admin')->group(function () {
     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+});
+
+//Questionnaire Routes
+Route::middleware('auth','role:admin')->group(function () {
+    Route::get('/questionnaire', [QuestionnaireController::class, 'index'])->name('questionnaire.index');
+    Route::get('/questionnaire/create', [QuestionnaireController::class, 'create'])->name('questionnaire.create');
+    Route::post('/questionnaire', [QuestionnaireController::class, 'store'])->name('questionnaire.store');
+    Route::get('/questionnaire/{id}/edit', [QuestionnaireController::class, 'edit'])->name('questionnaire.edit');
+    Route::put('/questionnaire/{id}', [QuestionnaireController::class, 'update'])->name('questionnaire.update');
+    Route::delete('/questionnaire/{id}', [QuestionnaireController::class, 'destroy'])->name('questionnaire.destroy');
+    
+    // Asignación de cuestionarios a usuarios
+    Route::get('/questionnaire/{id}/assign', [QuestionnaireController::class, 'showAssign'])->name('questionnaire.assign');
+    Route::post('/questionnaire/{id}/assign', [QuestionnaireController::class, 'assign'])->name('questionnaire.assign.store');
+    Route::delete('/questionnaire/{id}/unassign/{userId}', [QuestionnaireController::class, 'unassign'])->name('questionnaire.unassign');
+    
+    // Ver respuestas
+    Route::get('/questionnaire/{id}/responses', [QuestionnaireController::class, 'responses'])->name('questionnaire.responses');
+    Route::get('/questionnaire/{id}/responses/{userId}', [QuestionnaireController::class, 'userResponses'])->name('questionnaire.user-responses');
 });
 
 //Dashboard DashboardUser

@@ -70,6 +70,17 @@
                         <span class="ms-2">{{ __('Productos') }}</span>
                     </a>
                 </li>
+                <!-- Cuestionarios -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center rounded" 
+                    href="{{route('questionnaire.index')}}" 
+                    title="{{ __('Cuestionarios') }}"
+                    style="color: var(--color-secondary);">
+                        <i class="ti ti-clipboard-list sidebar-icon" style="font-size: 1.25rem;"></i>
+                        <span class="ms-2">{{ __('Cuestionarios') }}</span>
+                    </a>
+                </li>
+
             @endrole
             <!-- Separador -->
             <li class="nav-item my-2">

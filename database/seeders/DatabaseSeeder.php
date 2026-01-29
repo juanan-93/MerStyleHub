@@ -21,5 +21,7 @@ class DatabaseSeeder extends Seeder
         //SEEDER PARA CREAR ROLES
         $this->call(RolesAndPermissionsSeeder::class);
 
+        //SEEDER PARA CREAR USUARIO ADMINISTRADOR
+        $this->call(AdminUserSeeder::class);
     }
 }

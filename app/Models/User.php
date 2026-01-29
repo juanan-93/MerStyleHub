@@ -52,4 +52,38 @@ class User extends Authenticatable
     {
         return $this->hasOne(CustomerProfile::class);
     }
+
+    /**
+     * Cuestionarios asignados al usuario
+     */
+    public function questionnaires()
+    {
+        return $this->belongsToMany(Questionnaire::class, 'questionnaire_user')
+            ->withPivot(['status', 'assigned_at', 'completed_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Asignaciones de cuestionarios del usuario
+     */
+    public function questionnaireAssignments()
+    {
+        return $this->hasMany(QuestionnaireUser::class);
+    }
+
+    /**
+     * Cuestionarios pendientes del usuario
+     */
+    public function pendingQuestionnaires()
+    {
+        return $this->questionnaires()->wherePivot('status', 'pending');
+    }
+
+    /**
+     * Cuestionarios completados del usuario
+     */
+    public function completedQuestionnaires()
+    {
+        return $this->questionnaires()->wherePivot('status', 'completed');
+    }
 }
