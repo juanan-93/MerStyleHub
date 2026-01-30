@@ -59,8 +59,8 @@ class QuestionnaireController extends Controller
                     'allow_other_option' => isset($questionData['allow_other_option']) ? true : false,
                 ]);
 
-                // Crear opciones si es pregunta tipo test o select
-                if (in_array($questionData['type'], ['test', 'select']) && !empty($questionData['options'])) {
+                // Crear opciones si es pregunta tipo test, select o info
+                if (in_array($questionData['type'], ['test', 'select', 'info']) && !empty($questionData['options'])) {
                     foreach ($questionData['options'] as $optionOrder => $optionText) {
                         if (!empty(trim($optionText))) {
                             $question->options()->create([
@@ -120,7 +120,8 @@ class QuestionnaireController extends Controller
             $updatedQuestionIds = [];
 
             // Procesar preguntas
-            foreach ($request->questions as $order => $questionData) {
+            $orderIndex = 0;
+            foreach ($request->questions as $key => $questionData) {
                 if (!empty($questionData['id'])) {
                     // Actualizar pregunta existente
                     $question = Question::find($questionData['id']);
@@ -128,7 +129,7 @@ class QuestionnaireController extends Controller
                         $question->update([
                             'text' => $questionData['text'],
                             'type' => $questionData['type'],
-                            'order' => $order,
+                            'order' => $orderIndex,
                             'required' => $questionData['required'] ?? true,
                             'allow_other_option' => isset($questionData['allow_other_option']) ? true : false,
                         ]);
@@ -139,15 +140,17 @@ class QuestionnaireController extends Controller
                     $question = $questionnaire->questions()->create([
                         'text' => $questionData['text'],
                         'type' => $questionData['type'],
-                        'order' => $order,
+                        'order' => $orderIndex,
                         'required' => $questionData['required'] ?? true,
                         'allow_other_option' => isset($questionData['allow_other_option']) ? true : false,
                     ]);
                     $updatedQuestionIds[] = $question->id;
                 }
+                
+                $orderIndex++;
 
-                // Procesar opciones si es tipo test o select
-                if (in_array($questionData['type'], ['test', 'select'])) {
+                // Procesar opciones si es tipo test, select o info
+                if (in_array($questionData['type'], ['test', 'select', 'info'])) {
                     $existingOptionIds = $question->options()->pluck('id')->toArray();
                     $updatedOptionIds = [];
 
@@ -180,7 +183,7 @@ class QuestionnaireController extends Controller
                     $optionsToDelete = array_diff($existingOptionIds, $updatedOptionIds);
                     QuestionOption::whereIn('id', $optionsToDelete)->delete();
                 } else {
-                    // Si cambió de tipo test/select a texto, eliminar opciones
+                    // Si cambió de tipo test/select/info a texto o file, eliminar opciones
                     $question->options()->delete();
                 }
             }

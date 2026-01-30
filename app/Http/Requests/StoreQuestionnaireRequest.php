@@ -28,9 +28,9 @@ class StoreQuestionnaireRequest extends FormRequest
             'questions' => 'required|array|min:1',
             'questions.*.text' => 'required|string',
             'questions.*.type' => 'required|in:test,text,select,file,info',
-            'questions.*.required' => 'boolean',
-            'questions.*.allow_other_option' => 'boolean',
-            'questions.*.options' => 'required_if:questions.*.type,test,select|array',
+            'questions.*.required' => 'nullable|boolean',
+            'questions.*.allow_other_option' => 'nullable|boolean',
+            'questions.*.options' => 'nullable|array',
             'questions.*.options.*' => 'nullable|string|max:255',
         ];
     }

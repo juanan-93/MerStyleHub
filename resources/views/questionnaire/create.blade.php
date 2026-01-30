@@ -10,6 +10,33 @@
 @endsection
 
 @section('content')
+{{-- Mensajes de error y éxito --}}
+@if ($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <strong><i class="ti ti-alert-circle me-2"></i>{{ __('Por favor corrige los siguientes errores:') }}</strong>
+        <ul class="mb-0 mt-2">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if (session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <i class="ti ti-alert-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if (session('success'))
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="ti ti-check me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <form id="questionnaireForm" method="POST" action="{{ route('questionnaire.store') }}" enctype="multipart/form-data">
     @csrf
     <div class="row g-4">
@@ -98,168 +125,7 @@
                             <p class="text-muted small mb-0">{{ __('Usa el botón "Añadir Pregunta" para comenzar a crear tu cuestionario') }}</p>
                         </div>
 
-                        {{-- Preguntas de ejemplo para maquetación --}}
-                        
-                        {{-- Pregunta Tipo Test --}}
-                        <div class="question-card mb-3" data-question-id="1" data-question-type="test" style="display: none;">
-                            <div class="card border" style="border-color: var(--color-border) !important; border-radius: 10px;">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3" style="border-radius: 10px 10px 0 0;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge" style="background-color: #17a2b8;">
-                                            <i class="ti ti-list-check me-1"></i>{{ __('Tipo Test') }}
-                                        </span>
-                                        <span class="text-muted small">{{ __('Pregunta') }} #<span class="question-number">1</span></span>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary border-0" title="Mover arriba">
-                                            <i class="ti ti-arrow-up"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary border-0" title="Mover abajo">
-                                            <i class="ti ti-arrow-down"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete-question" title="Eliminar">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body p-3">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold small">{{ __('Texto de la pregunta') }} <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="questions[1][text]" placeholder="Escribe tu pregunta aquí...">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label fw-semibold small">{{ __('Opciones de respuesta') }}</label>
-                                        <div class="options-container">
-                                            <div class="input-group mb-2">
-                                                <span class="input-group-text bg-white border-end-0">
-                                                    <i class="ti ti-circle text-muted" style="font-size: 0.8rem;"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0" name="questions[1][options][]" placeholder="Opción 1">
-                                                <button type="button" class="btn btn-outline-danger border-start-0 btn-remove-option">
-                                                    <i class="ti ti-x"></i>
-                                                </button>
-                                            </div>
-                                            <div class="input-group mb-2">
-                                                <span class="input-group-text bg-white border-end-0">
-                                                    <i class="ti ti-circle text-muted" style="font-size: 0.8rem;"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0" name="questions[1][options][]" placeholder="Opción 2">
-                                                <button type="button" class="btn btn-outline-danger border-start-0 btn-remove-option">
-                                                    <i class="ti ti-x"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary btn-add-option">
-                                            <i class="ti ti-plus me-1"></i>{{ __('Añadir opción') }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Pregunta Tipo Texto --}}
-                        <div class="question-card mb-3" data-question-id="2" data-question-type="text" style="display: none;">
-                            <div class="card border" style="border-color: var(--color-border) !important; border-radius: 10px;">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3" style="border-radius: 10px 10px 0 0;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge" style="background-color: #28a745;">
-                                            <i class="ti ti-text-caption me-1"></i>{{ __('Tipo Texto') }}
-                                        </span>
-                                        <span class="text-muted small">{{ __('Pregunta') }} #<span class="question-number">2</span></span>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary border-0" title="Mover arriba">
-                                            <i class="ti ti-arrow-up"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary border-0" title="Mover abajo">
-                                            <i class="ti ti-arrow-down"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete-question" title="Eliminar">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body p-3">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold small">{{ __('Texto de la pregunta') }} <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="questions[2][text]" placeholder="Escribe tu pregunta aquí...">
-                                    </div>
-                                    <div class="p-3 rounded" style="background-color: var(--color-light); border: 1px dashed var(--color-border);">
-                                        <small class="text-muted d-flex align-items-center gap-2">
-                                            <i class="ti ti-info-circle"></i>
-                                            {{ __('El usuario responderá con texto libre en un área de texto') }}
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Pregunta Tipo Select --}}
-                        <div class="question-card mb-3" data-question-id="3" data-question-type="select" style="display: none;">
-                            <div class="card border" style="border-color: var(--color-border) !important; border-radius: 10px;">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3" style="border-radius: 10px 10px 0 0;">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge" style="background-color: #6f42c1;">
-                                            <i class="ti ti-select me-1"></i>{{ __('Tipo Select') }}
-                                        </span>
-                                        <span class="text-muted small">{{ __('Pregunta') }} #<span class="question-number">3</span></span>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary border-0" title="Mover arriba">
-                                            <i class="ti ti-arrow-up"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary border-0" title="Mover abajo">
-                                            <i class="ti ti-arrow-down"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger border-0 btn-delete-question" title="Eliminar">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="card-body p-3">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold small">{{ __('Texto de la pregunta') }} <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="questions[3][text]" placeholder="Escribe tu pregunta aquí...">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold small">{{ __('Opciones del select') }}</label>
-                                        <div class="options-container">
-                                            <div class="input-group mb-2">
-                                                <span class="input-group-text bg-white border-end-0">
-                                                    <i class="ti ti-chevron-right text-muted" style="font-size: 0.8rem;"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0 option-input" name="questions[3][options][]" placeholder="Opción 1">
-                                                <button type="button" class="btn btn-outline-danger border-start-0 btn-remove-option">
-                                                    <i class="ti ti-x"></i>
-                                                </button>
-                                            </div>
-                                            <div class="input-group mb-2">
-                                                <span class="input-group-text bg-white border-end-0">
-                                                    <i class="ti ti-chevron-right text-muted" style="font-size: 0.8rem;"></i>
-                                                </span>
-                                                <input type="text" class="form-control border-start-0 option-input" name="questions[3][options][]" placeholder="Opción 2">
-                                                <button type="button" class="btn btn-outline-danger border-start-0 btn-remove-option">
-                                                    <i class="ti ti-x"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary btn-add-option">
-                                            <i class="ti ti-plus me-1"></i>{{ __('Añadir opción') }}
-                                        </button>
-                                    </div>
-                                    <div class="select-preview p-3 rounded" style="background-color: #f8f4ff; border: 1px dashed #6f42c1;">
-                                        <label class="form-label fw-semibold small d-flex align-items-center gap-2 mb-2" style="color: #6f42c1;">
-                                            <i class="ti ti-eye"></i>{{ __('Vista previa del Select') }}
-                                        </label>
-                                        <select class="form-select select2-preview" data-question-id="3" style="width: 100%;">
-                                            <option value="" disabled selected>{{ __('Selecciona una opción...') }}</option>
-                                            <option value="1">Opción 1</option>
-                                            <option value="2">Opción 2</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {{-- Las preguntas se generan dinámicamente con JavaScript --}}
 
                     </div>
                 </div>
@@ -812,8 +678,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `
     };
     
-    // Añadir pregunta
-    document.querySelectorAll('[data-question-type]').forEach(btn => {
+    // Añadir pregunta desde dropdown (solo los elementos del menú)
+    document.querySelectorAll('.dropdown-menu [data-question-type]').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             const type = this.dataset.questionType;
