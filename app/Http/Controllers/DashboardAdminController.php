@@ -14,28 +14,61 @@ class DashboardAdminController extends Controller
         // Obtener el mes y año actual o de la petición
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
+        $view = $request->get('view', 'month');
+        $weekStart = $request->get('week_start');
         
         // Crear fecha base para el mes
         $currentDate = Carbon::createFromDate($year, $month, 1);
         
+        // Variables para la vista semanal
+        $weekStartDate = null;
+        $weekEndDate = null;
+        
+        if ($view === 'week' && $weekStart) {
+            $weekStartDate = Carbon::parse($weekStart)->startOfWeek();
+            $weekEndDate = $weekStartDate->copy()->endOfWeek();
+            // Ajustar mes y año basándose en la semana
+            $month = $weekStartDate->month;
+            $year = $weekStartDate->year;
+            $currentDate = $weekStartDate->copy()->startOfMonth();
+        }
+        
         // Obtener citas del mes (reservadas y bloqueadas)
-        $appointments = Appointment::whereYear('date', $year)
+        $appointmentsQuery = Appointment::whereYear('date', $year)
             ->whereMonth('date', $month)
             ->with('availability')
             ->orderBy('date')
-            ->orderBy('start_time')
-            ->get()
+            ->orderBy('start_time');
+        
+        // Si es vista semanal, también incluir citas de la semana (puede cruzar meses)
+        if ($view === 'week' && $weekStartDate && $weekEndDate) {
+            $appointmentsQuery = Appointment::whereBetween('date', [$weekStartDate->format('Y-m-d'), $weekEndDate->format('Y-m-d')])
+                ->with('availability')
+                ->orderBy('date')
+                ->orderBy('start_time');
+        }
+        
+        $appointments = $appointmentsQuery->get()
             ->groupBy(function($appointment) {
                 return $appointment->date->format('Y-m-d');
             });
         
         // Obtener disponibilidades del mes para generar slots disponibles
-        $availabilities = AppointmentAvailability::whereYear('date', $year)
+        $availabilitiesQuery = AppointmentAvailability::whereYear('date', $year)
             ->whereMonth('date', $month)
             ->with('appointments')
             ->orderBy('date')
-            ->orderBy('start_time')
-            ->get()
+            ->orderBy('start_time');
+        
+        // Si es vista semanal, también incluir disponibilidades de la semana (puede cruzar meses)
+        if ($view === 'week' && $weekStartDate && $weekEndDate) {
+            $availabilitiesQuery = AppointmentAvailability::whereBetween('date', [$weekStartDate->format('Y-m-d'), $weekEndDate->format('Y-m-d')])
+                ->with('appointments')
+                ->orderBy('date')
+                ->orderBy('start_time');
+        }
+        
+        $availabilities = $availabilitiesQuery->get()
             ->groupBy(function($availability) {
                 return $availability->date->format('Y-m-d');
             });
@@ -55,6 +88,9 @@ class DashboardAdminController extends Controller
             'appointments' => $appointments,
             'allSlots' => $allSlots,
             'today' => now()->format('Y-m-d'),
+            'view' => $view,
+            'weekStart' => $weekStartDate ? $weekStartDate->format('Y-m-d') : now()->startOfWeek()->format('Y-m-d'),
+            'weekEnd' => $weekEndDate ? $weekEndDate->format('Y-m-d') : now()->endOfWeek()->format('Y-m-d'),
         ];
         
         return view('dashboardAdmin.index', compact('calendarData'));

@@ -7,12 +7,18 @@
         'appointments' => collect(),
         'allSlots' => [],
         'today' => now()->format('Y-m-d'),
+        'view' => 'month',
+        'weekStart' => now()->startOfWeek()->format('Y-m-d'),
+        'weekEnd' => now()->endOfWeek()->format('Y-m-d'),
     ];
     
     $currentMonth = $calendarData['currentMonth'];
     $appointments = $calendarData['appointments'];
     $allSlots = $calendarData['allSlots'] ?? [];
     $today = $calendarData['today'];
+    $currentView = $calendarData['view'] ?? 'month';
+    $weekStart = \Carbon\Carbon::parse($calendarData['weekStart'] ?? now()->startOfWeek()->format('Y-m-d'));
+    $weekEnd = \Carbon\Carbon::parse($calendarData['weekEnd'] ?? now()->endOfWeek()->format('Y-m-d'));
 @endphp
 
 <div class="card shadow-sm border-0 animate__animated animate__fadeIn" id="calendarContainer">
@@ -77,22 +83,36 @@
                 </div>
 
                 <!-- Botón Hoy -->
-                <button class="btn btn-primary-custom btn-sm px-4 rounded-pill shadow-sm" id="goToToday">
+               <!-- <button class="btn btn-primary-custom btn-sm px-4 rounded-pill shadow-sm" id="goToToday">
                     {{ __('Hoy') }}
-                </button>
+                </button>-->
             </div>
         </div>
 
         <!-- Toolbar de Navegación y Leyenda -->
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pt-2">
             <div class="d-flex align-items-center gap-3">
+                <!-- Toggle Vista Mensual/Semanal -->
+                <div class="btn-group shadow-sm" role="group" aria-label="Vista del calendario">
+                    <button type="button" class="btn btn-sm {{ $currentView === 'month' ? 'btn-primary-custom active' : 'btn-outline-primary-custom' }}" id="viewMonthBtn" data-view="month">
+                        <i class="ti ti-calendar-month me-1"></i>{{ __('Mes') }}
+                    </button>
+                    <button type="button" class="btn btn-sm {{ $currentView === 'week' ? 'btn-primary-custom active' : 'btn-outline-primary-custom' }}" id="viewWeekBtn" data-view="week">
+                        <i class="ti ti-calendar-week me-1"></i>{{ __('Semana') }}
+                    </button>
+                </div>
+                
                 <!-- Navegación -->
                 <div class="d-flex align-items-center bg-light rounded-pill p-1 border">
                     <button class="btn btn-icon btn-sm rounded-circle hover-bg-white border-0" id="prevMonth">
                         <i class="ti ti-chevron-left text-secondary"></i>
                     </button>
-                    <span class="px-3 fw-bold text-secondary text-capitalize" id="currentMonthLabel" style="min-width: 140px; text-align: center;">
-                        {{ $calendarData['monthName'] }}
+                    <span class="px-3 fw-bold text-secondary text-capitalize" id="currentMonthLabel" style="min-width: 200px; text-align: center;">
+                        @if($currentView === 'week')
+                            {{ $weekStart->locale('es')->isoFormat('D MMM') }} - {{ $weekEnd->locale('es')->isoFormat('D MMM YYYY') }}
+                        @else
+                            {{ $calendarData['monthName'] }}
+                        @endif
                     </span>
                     <button class="btn btn-icon btn-sm rounded-circle hover-bg-white border-0" id="nextMonth">
                         <i class="ti ti-chevron-right text-secondary"></i>
@@ -128,7 +148,8 @@
 
     <!-- Cuerpo del Calendario -->
     <div class="card-body p-0">
-        <div class="table-responsive">
+        <!-- Vista Mensual -->
+        <div class="table-responsive" id="monthView" style="display: {{ $currentView === 'month' ? 'block' : 'none' }};">
             <table class="table table-bordered mb-0 calendar-grid">
                 <thead>
                     <tr class="bg-light">
@@ -232,6 +253,97 @@
                         @if (($cell + 1) % 7 == 0)
                             </tr>
                         @endif
+                    @endfor
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Vista Semanal -->
+        <div class="table-responsive" id="weekView" style="display: {{ $currentView === 'week' ? 'block' : 'none' }};">
+            <table class="table table-bordered mb-0 calendar-grid weekly-grid">
+                <thead>
+                    <tr class="bg-light">
+                        <th class="text-center py-3 border-0 hour-column">
+                            <span class="text-uppercase small fw-bold tracking-wider text-muted">{{ __('Hora') }}</span>
+                        </th>
+                        @foreach(['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'] as $index => $dia)
+                            @php
+                                $dayDate = $weekStart->copy()->addDays($index);
+                                $isToday = $dayDate->format('Y-m-d') === $today;
+                            @endphp
+                            <th class="text-center py-2 border-0 {{ $isToday ? 'bg-primary-custom bg-opacity-10' : '' }}" data-weekday="{{ $index }}">
+                                <span class="text-uppercase small fw-bold tracking-wider text-muted d-block">{{ $dia }}</span>
+                                <span class="day-number fw-bold {{ $isToday ? 'today-badge' : 'text-secondary' }}" data-day-number>
+                                    {{ $dayDate->day }}
+                                </span>
+                            </th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody id="weekCalendarBody">
+                    @php
+                        // Generar filas por hora (de 8:00 a 20:00)
+                        $startHour = 8;
+                        $endHour = 20;
+                    @endphp
+                    @for($hour = $startHour; $hour <= $endHour; $hour++)
+                        <tr class="week-row">
+                            <td class="text-center py-2 bg-light" style="vertical-align: middle;">
+                                <small class="fw-bold text-muted">{{ sprintf('%02d:00', $hour) }}</small>
+                            </td>
+                            @for($dayIndex = 0; $dayIndex < 7; $dayIndex++)
+                                @php
+                                    $cellDate = $weekStart->copy()->addDays($dayIndex)->format('Y-m-d');
+                                    $isPastDate = $cellDate < $today;
+                                    $isToday = $cellDate === $today;
+                                    $hourStr = sprintf('%02d:00', $hour);
+                                    
+                                    // Buscar slots para esta hora y día
+                                    $daySlots = $allSlots[$cellDate] ?? [];
+                                    $hourSlots = collect($daySlots)->filter(function($slot) use ($hourStr, $hour) {
+                                        $slotHour = (int)substr($slot['start_time'], 0, 2);
+                                        return $slotHour === $hour;
+                                    })->values()->all();
+                                @endphp
+                                <td class="week-cell p-1 {{ $isToday ? 'today-cell' : '' }} {{ $isPastDate ? 'past-cell' : '' }}" 
+                                    data-date="{{ $cellDate }}" 
+                                    data-hour="{{ $hourStr }}"
+                                    style="height: 50px; vertical-align: top;">
+                                    <div class="week-appointments d-flex flex-column gap-1">
+                                        @foreach($hourSlots as $slot)
+                                            @php
+                                                $statusClass = $slot['status'];
+                                                $statusColor = match($slot['status']) {
+                                                    'available' => 'info',
+                                                    'pending' => 'warning',
+                                                    'confirmed' => 'success',
+                                                    'cancelled' => 'danger',
+                                                    'blocked' => 'dark',
+                                                    default => 'secondary'
+                                                };
+                                                $displayText = match($slot['status']) {
+                                                    'available' => 'Disponible',
+                                                    'blocked' => '🔒',
+                                                    default => $slot['client_name'] ? Str::limit($slot['client_name'], 8) : 'Cita'
+                                                };
+                                            @endphp
+                                            <div class="appointment-card week-appointment {{ $statusClass }} {{ $isPastDate ? 'past-date past-clickable' : 'slot-clickable' }} small" 
+                                                 data-slot='@json($slot)'
+                                                 data-date="{{ $cellDate }}"
+                                                 data-status="{{ $slot['status'] }}"
+                                                 data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
+                                                 title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}">
+                                                <div class="d-flex align-items-center gap-1">
+                                                    <span class="dot bg-{{ $statusColor }}"></span>
+                                                    <strong class="time" style="font-size: 0.65rem;">{{ substr($slot['start_time'], 0, 5) }}</strong>
+                                                    <span class="client text-truncate" style="font-size: 0.6rem;">{{ $displayText }}</span>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </td>
+                            @endfor
+                        </tr>
                     @endfor
                 </tbody>
             </table>
@@ -625,7 +737,64 @@
         transform: rotate(180deg);
     }
     
-    @media (max-width: 768px) { .calendar-cell { height: 100px !important; padding: 4px !important; } .appointment-card { font-size: 0.6rem; padding: 2px 4px; } .day-number { width: 22px; height: 22px; font-size: 0.75rem; } }
+    /* ===== ESTILOS VISTA SEMANAL ===== */
+    .weekly-grid { table-layout: fixed; }
+    .weekly-grid th { min-width: 100px; }
+    .weekly-grid th:first-child, .hour-column { min-width: 70px; width: 70px; white-space: nowrap; }
+    
+    .week-cell { 
+        border: 1px solid var(--color-border-cal) !important; 
+        transition: all 0.2s ease;
+        min-height: 50px;
+    }
+    .week-cell:hover { 
+        background-color: #fffaf7; 
+    }
+    .week-cell.today-cell { 
+        background-color: rgba(160, 138, 122, 0.08) !important;
+        border-left: 2px solid var(--color-primary-cal) !important;
+        border-right: 2px solid var(--color-primary-cal) !important;
+    }
+    .week-cell.past-cell { 
+        background-color: #fafafa; 
+    }
+    
+    .week-appointment { 
+        padding: 2px 4px; 
+        border-radius: 3px;
+        font-size: 0.65rem;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    
+    .week-appointments { 
+        max-height: 45px; 
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-border-cal) transparent;
+    }
+    
+    .week-row td:first-child { 
+        background-color: var(--color-light-cal) !important; 
+        border-right: 2px solid var(--color-border-cal) !important;
+    }
+    
+    /* Toggle activo/inactivo */
+    #viewMonthBtn.active, #viewWeekBtn.active {
+        background-color: var(--color-primary-cal) !important;
+        border-color: var(--color-primary-cal) !important;
+        color: white !important;
+    }
+    
+    @media (max-width: 768px) { 
+        .calendar-cell { height: 100px !important; padding: 4px !important; } 
+        .appointment-card { font-size: 0.6rem; padding: 2px 4px; } 
+        .day-number { width: 22px; height: 22px; font-size: 0.75rem; }
+        .weekly-grid th { min-width: 50px; font-size: 0.7rem; }
+        .weekly-grid th:first-child, .hour-column { min-width: 50px; width: 50px; }
+        .week-cell { min-height: 40px; }
+        .week-appointment { font-size: 0.55rem; padding: 1px 2px; }
+    }
 </style>
 
 @push('scripts')
@@ -639,6 +808,96 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSlotDate = null;
     let currentMonth = {{ $currentMonth->month }};
     let currentYear = {{ $currentMonth->year }};
+    
+    // ===== CONTROL DE VISTAS MENSUAL/SEMANAL =====
+    let currentView = '{{ $currentView }}'; // 'month' o 'week'
+    let currentWeekStart = new Date('{{ $weekStart->format("Y-m-d") }}');
+    
+    const monthView = document.getElementById('monthView');
+    const weekView = document.getElementById('weekView');
+    const viewMonthBtn = document.getElementById('viewMonthBtn');
+    const viewWeekBtn = document.getElementById('viewWeekBtn');
+    const currentMonthLabel = document.getElementById('currentMonthLabel');
+    const prevBtn = document.getElementById('prevMonth');
+    const nextBtn = document.getElementById('nextMonth');
+    
+    // Función para cambiar entre vistas
+    function switchView(view) {
+        currentView = view;
+        
+        if (view === 'month') {
+            // Ir a la vista mensual (recargar página sin parámetros de semana)
+            const url = new URL(window.location);
+            url.searchParams.delete('week_start');
+            url.searchParams.delete('view');
+            url.searchParams.set('tab', 'appointments');
+            window.location.href = url.toString();
+        } else {
+            // Ir a la vista semanal (recargar página con parámetros de semana)
+            loadWeekData();
+        }
+    }
+    
+    // Función para cargar datos de la semana actual (navega a la página con parámetros de semana)
+    function loadWeekData() {
+        const weekEnd = new Date(currentWeekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        const startStr = currentWeekStart.toISOString().split('T')[0];
+        const endStr = weekEnd.toISOString().split('T')[0];
+        
+        // Navegar con parámetros de semana
+        const url = new URL(window.location);
+        url.searchParams.set('week_start', startStr);
+        url.searchParams.set('view', 'week');
+        url.searchParams.set('tab', 'appointments');
+        window.location.href = url.toString();
+    }
+    
+    // Event listeners para los botones de vista
+    viewMonthBtn.addEventListener('click', function() {
+        if (currentView !== 'month') {
+            switchView('month');
+        }
+    });
+    
+    viewWeekBtn.addEventListener('click', function() {
+        if (currentView !== 'week') {
+            switchView('week');
+        }
+    });
+    
+    // Verificar parámetros de URL para actualizar weekStart si es necesario
+    const urlParams = new URLSearchParams(window.location.search);
+    const weekStartParam = urlParams.get('week_start');
+    if (weekStartParam) {
+        currentWeekStart = new Date(weekStartParam);
+    }
+    
+    // Navegación con prevMonth y nextMonth (funciona para ambas vistas)
+    prevBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (currentView === 'week') {
+            currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+            loadWeekData();
+        } else {
+            currentMonth--;
+            if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+            window.location.href = `{{ route('dashboardAdmin.index') }}?month=${currentMonth}&year=${currentYear}&tab=appointments`;
+        }
+    });
+    
+    nextBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (currentView === 'week') {
+            currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+            loadWeekData();
+        } else {
+            currentMonth++;
+            if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+            window.location.href = `{{ route('dashboardAdmin.index') }}?month=${currentMonth}&year=${currentYear}&tab=appointments`;
+        }
+    });
     
     // Click en cualquier slot del calendario (slots activos)
     document.querySelectorAll('.slot-clickable').forEach(card => {
@@ -1072,18 +1331,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    document.getElementById('prevMonth').addEventListener('click', function() { navigateMonth(-1); });
-    document.getElementById('nextMonth').addEventListener('click', function() { navigateMonth(1); });
+    // Botón "Hoy" - navega a la fecha actual en la vista correspondiente
     document.getElementById('goToToday').addEventListener('click', function() { 
-        window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments`; 
+        if (currentView === 'week') {
+            // Ir a la semana actual
+            const today = new Date('{{ $today }}');
+            const dayOfWeek = today.getDay();
+            const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            today.setDate(diff);
+            const weekStartStr = today.toISOString().split('T')[0];
+            window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments&view=week&week_start=${weekStartStr}`; 
+        } else {
+            window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments`; 
+        }
     });
-    
-    function navigateMonth(direction) {
-        currentMonth += direction;
-        if (currentMonth > 12) { currentMonth = 1; currentYear++; } 
-        else if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-        window.location.href = `{{ route('dashboardAdmin.index') }}?month=${currentMonth}&year=${currentYear}&tab=appointments`;
-    }
     
     // Filtro por estado - Múltiple selección
     let selectedFilters = []; // Array para múltiples filtros
@@ -1153,8 +1414,8 @@ document.addEventListener('DOMContentLoaded', function() {
         let visibleCount = 0;
         let hiddenCount = 0;
         
-        // Seleccionar TODOS los slots del calendario
-        const allCards = document.querySelectorAll('#calendarContainer .slot-clickable');
+        // Seleccionar TODOS los slots del calendario (incluyendo pasados)
+        const allCards = document.querySelectorAll('#calendarContainer .slot-clickable, #calendarContainer .past-clickable');
         
         allCards.forEach(card => {
             const cardStatus = card.getAttribute('data-status');
