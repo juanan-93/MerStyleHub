@@ -319,24 +319,18 @@
 
             if (hasData) {
                 // Inicializar DataTables solo si hay datos
-                const table = $('#usersTable').DataTable({
+                $('#usersTable').DataTable({
                     responsive: false,
                     language: {
-                        url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
                     },
                     columnDefs: [
-                        {
-                            targets: -1,
-                            orderable: false,
-                            searchable: false
-                        }
+                        { targets: -1, orderable: false, searchable: false }
                     ],
                     pageLength: 10,
                     dom: '<"table-controls"lf><"table-content"rt><"table-footer"ip>',
                     paging: true,
-                    pagingType: "simple_numbers",
-                    processing: false,
-                    serverSide: false
+                    pagingType: "simple_numbers"
                 });
             }
 
@@ -357,7 +351,6 @@
                         reverseButtons: true
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // Hacer petición DELETE
                             fetch('{{ route('users.destroy', ':id') }}'.replace(':id', userId), {
                                 method: 'DELETE',
                                 headers: {

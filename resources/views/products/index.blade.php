@@ -34,7 +34,8 @@
                             <tr>
                                 <th>{{ __('Título') }}</th>
                                 <th>{{ __('Descripción') }}</th>
-                                <th>{{ __('Precio') }}</th>
+                                <th>{{ __('Precio Presencial') }}</th>
+                                <th>{{ __('Precio Online') }}</th>
                                 <th class="text-end" style="width: 140px;">{{ __('Acciones') }}</th>
                             </tr>
                         </thead>
@@ -50,7 +51,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="fw-bold">{{ number_format($product->price, 2, ',', '.') }}€</span>
+                                        <span class="fw-bold"><i class="ti ti-home text-muted me-1"></i>{{ number_format($product->price_presencial, 2, ',', '.') }}€</span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold"><i class="ti ti-device-laptop text-muted me-1"></i>{{ number_format($product->price_online, 2, ',', '.') }}€</span>
                                     </td>
                                     <td>
                                         <div class="text-end">
@@ -70,7 +74,7 @@
                             @endforeach
                             @if($products->isEmpty())
                                 <tr>
-                                    <td colspan="4" class="text-center py-4 text-muted">
+                                    <td colspan="5" class="text-center py-4 text-muted">
                                         <i class="ti ti-inbox me-2"></i>{{ __('No hay productos creados aún') }}
                                     </td>
                                 </tr>

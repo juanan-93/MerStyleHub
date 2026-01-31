@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\AppointmentAvailability;
+use App\Models\User;
+use App\Models\Product;
+use App\Models\CustomerProfile;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -93,7 +96,89 @@ class DashboardAdminController extends Controller
             'weekEnd' => $weekEndDate ? $weekEndDate->format('Y-m-d') : now()->endOfWeek()->format('Y-m-d'),
         ];
         
-        return view('dashboardAdmin.index', compact('calendarData'));
+        // === DATOS PARA EL DASHBOARD ===
+        
+        // Total de clientes (usuarios con rol customer)
+        $totalClientes = User::role('customer')->count();
+        
+        // Total de servicios (productos)
+        $totalServicios = Product::count();
+        
+        // Calcular ingresos totales según tipo de servicio (presencial/online)
+        $totalIngresos = CustomerProfile::whereNotNull('product_id')
+            ->whereNotNull('percentage_paid')
+            ->with('product')
+            ->get()
+            ->sum(function ($profile) {
+                if ($profile->product && $profile->percentage_paid > 0) {
+                    $price = $profile->service_type === 'online' 
+                        ? $profile->product->price_online 
+                        : $profile->product->price_presencial;
+                    return ($profile->percentage_paid / 100) * $price;
+                }
+                return 0;
+            });
+        
+        // Datos para el gráfico: Ingresos de los últimos 12 meses
+        $chartData = $this->getMonthlyRevenueData();
+        
+        // Estado de pagos de usuarios
+        $userPaymentStatus = CustomerProfile::with(['user', 'product'])
+            ->whereNotNull('product_id')
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+        
+        // Datos del dashboard
+        $dashboardData = [
+            'totalClientes' => $totalClientes,
+            'totalServicios' => $totalServicios,
+            'totalIngresos' => $totalIngresos,
+            'chartLabels' => $chartData['labels'],
+            'chartValues' => $chartData['values'],
+            'userPaymentStatus' => $userPaymentStatus,
+        ];
+        
+        return view('dashboardAdmin.index', compact('calendarData', 'dashboardData'));
+    }
+    
+    /**
+     * Obtener datos de ingresos mensuales para el gráfico
+     */
+    private function getMonthlyRevenueData(): array
+    {
+        $labels = [];
+        $values = [];
+        
+        // Últimos 12 meses
+        for ($i = 11; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $labels[] = $date->locale('es')->isoFormat('MMM');
+            
+            // Calcular ingresos del mes según tipo de servicio
+            $monthlyRevenue = CustomerProfile::whereNotNull('product_id')
+                ->whereNotNull('percentage_paid')
+                ->whereYear('payment_date', $date->year)
+                ->whereMonth('payment_date', $date->month)
+                ->with('product')
+                ->get()
+                ->sum(function ($profile) {
+                    if ($profile->product && $profile->percentage_paid > 0) {
+                        $price = $profile->service_type === 'online' 
+                            ? $profile->product->price_online 
+                            : $profile->product->price_presencial;
+                        return ($profile->percentage_paid / 100) * $price;
+                    }
+                    return 0;
+                });
+            
+            $values[] = round($monthlyRevenue, 2);
+        }
+        
+        return [
+            'labels' => $labels,
+            'values' => $values,
+        ];
     }
     
     /**

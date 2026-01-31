@@ -44,23 +44,44 @@
                                 @enderror
                             </div>
 
-                            <!-- Precio -->
+                            <!-- Precio Presencial -->
                             <div class="col-md-6">
-                                <label for="price" class="form-label-custom small mb-2">
-                                    {{ __('Precio (€)') }} <span class="text-danger">*</span>
+                                <label for="price_presencial" class="form-label-custom small mb-2">
+                                    {{ __('Precio Presencial (€)') }} <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group shadow-sm">
-                                    <span class="input-group-text border-0 bg-white shadow-none"><i class="ti ti-currency-euro"></i></span>
+                                    <span class="input-group-text border-0 bg-white shadow-none"><i class="ti ti-home"></i></span>
                                     <input type="number" 
                                            step="0.01" 
-                                           class="form-control border-0 shadow-none @error('price') is-invalid @enderror" 
-                                           id="price" 
-                                           name="price" 
+                                           class="form-control border-0 shadow-none @error('price_presencial') is-invalid @enderror" 
+                                           id="price_presencial" 
+                                           name="price_presencial" 
                                            placeholder="0.00" 
-                                           value="{{ old('price', $product->price) }}" 
+                                           value="{{ old('price_presencial', $product->price_presencial) }}" 
                                            required>
                                 </div>
-                                @error('price')
+                                @error('price_presencial')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <!-- Precio Online -->
+                            <div class="col-md-6">
+                                <label for="price_online" class="form-label-custom small mb-2">
+                                    {{ __('Precio Online (€)') }} <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text border-0 bg-white shadow-none"><i class="ti ti-device-laptop"></i></span>
+                                    <input type="number" 
+                                           step="0.01" 
+                                           class="form-control border-0 shadow-none @error('price_online') is-invalid @enderror" 
+                                           id="price_online" 
+                                           name="price_online" 
+                                           placeholder="0.00" 
+                                           value="{{ old('price_online', $product->price_online) }}" 
+                                           required>
+                                </div>
+                                @error('price_online')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>

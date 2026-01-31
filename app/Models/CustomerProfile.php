@@ -15,6 +15,7 @@ class CustomerProfile extends Model
         'profession',
         'phone_call_date',
         'product_id',
+        'service_type',
         'service_completion_date',
         'percentage_paid',
         'payment_date',

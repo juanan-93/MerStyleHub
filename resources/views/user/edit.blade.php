@@ -21,7 +21,7 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <form method="POST" action="{{ route('users.update', $user->id) }}">
+                <form method="POST" action="{{ route('users.update', $user->id) }}" autocomplete="off">
                     @csrf
                     @method('PUT')
 
@@ -202,6 +202,7 @@
                                        id="morphology" 
                                        name="morphology" 
                                        value="{{ old('morphology', $user->customerProfile?->morphology ?? '') }}"
+                                       autocomplete="off"
                                        placeholder="{{ __('Ej: Pera, Reloj de Arena, Triángulo') }}">
                                 @error('morphology')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -228,6 +229,25 @@
                                     </select>
                                 </div>
                                 @error('product_id')
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            {{-- Tipo de Servicio --}}
+                            <div class="col-lg-6">
+                                <label for="service_type" class="form-label-custom small mb-2">
+                                    {{ __('Modalidad del Servicio') }}
+                                </label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text"><i class="ti ti-switch-horizontal"></i></span>
+                                    <select class="form-select" 
+                                            id="service_type" 
+                                            name="service_type">
+                                        <option value="presencial" @selected(old('service_type', $user->customerProfile?->service_type) == 'presencial')>{{ __('Presencial') }}</option>
+                                        <option value="online" @selected(old('service_type', $user->customerProfile?->service_type) == 'online')>{{ __('Online') }}</option>
+                                    </select>
+                                </div>
+                                @error('service_type')
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -651,8 +671,8 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar Select2 para los campos de producto y colorimetría
-            $('#product_id, #colorimetry_id, #percentage_paid, #percentage_pending').select2({
+            // Inicializar Select2 para los campos de producto, colorimetría, modalidad y porcentajes
+            $('#product_id, #colorimetry_id, #service_type, #percentage_paid, #percentage_pending').select2({
                 minimumResultsForSearch: Infinity,
                 width: '100%'
             });
@@ -667,37 +687,28 @@
                 
                 // Actualizar las opciones del select pendiente
                 if (paidPercentage === 100) {
-                    // Si se pagó 100%, mostrar solo 0%
                     $('#percentage_pending').html('<option value="0.00" selected>0%</option>');
                 } else if (paidPercentage === 75) {
-                    // Si se pagó 75%, mostrar 25%
                     $('#percentage_pending').html('<option value="25.00" selected>25%</option>');
                 } else if (paidPercentage === 0) {
-                    // Si se pagó 0%, mostrar 100%
                     $('#percentage_pending').html('<option value="100.00" selected>100%</option>');
                 }
             });
+            
+            // Inicializar Summernote con configuración optimizada
             $('#observations').summernote({
-                height: 250,
-                minHeight: 200,
-                maxHeight: 400,
-                focus: true,
-                lang: 'es-ES',
+                height: 200,
+                minHeight: 150,
+                maxHeight: 300,
+                focus: false,
                 placeholder: '{{ __("Notas adicionales sobre el cliente") }}',
                 toolbar: [
-                    ['style', ['style']],
-                    ['font', ['bold', 'underline', 'clear']],
-                    ['fontname', ['fontname']],
-                    ['fontsize', ['fontsize']],
-                    ['color', ['color']],
-                    ['para', ['ul', 'ol', 'paragraph']],
-                    ['table', ['table']],
-                    ['insert', ['link', 'picture', 'video']],
-                    ['view', ['fullscreen', 'codeview', 'help']]
+                    ['font', ['bold', 'underline']],
+                    ['para', ['ul', 'ol']],
+                    ['view', ['fullscreen']]
                 ],
                 callbacks: {
-                    onChange: function(contents, $editable) {
-                        // Mantener sincronizado el valor del textarea
+                    onChange: function(contents) {
                         $('#observations').val(contents);
                     }
                 }

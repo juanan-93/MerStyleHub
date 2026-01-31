@@ -23,13 +23,15 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'price_presencial' => 'required|numeric|min:0',
+            'price_online' => 'required|numeric|min:0',
             'description' => 'nullable|string',
         ]);
 
         Product::create([
             'title' => $validated['title'],
-            'price' => $validated['price'],
+            'price_presencial' => $validated['price_presencial'],
+            'price_online' => $validated['price_online'],
             'description' => $validated['description'],
             'is_active' => true, // Por defecto activo
         ]);
@@ -47,7 +49,8 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'price_presencial' => 'required|numeric|min:0',
+            'price_online' => 'required|numeric|min:0',
             'description' => 'nullable|string',
         ]);
 

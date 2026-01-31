@@ -1332,19 +1332,22 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Botón "Hoy" - navega a la fecha actual en la vista correspondiente
-    document.getElementById('goToToday').addEventListener('click', function() { 
-        if (currentView === 'week') {
-            // Ir a la semana actual
-            const today = new Date('{{ $today }}');
-            const dayOfWeek = today.getDay();
-            const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-            today.setDate(diff);
-            const weekStartStr = today.toISOString().split('T')[0];
-            window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments&view=week&week_start=${weekStartStr}`; 
-        } else {
-            window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments`; 
-        }
-    });
+    const goToTodayBtn = document.getElementById('goToToday');
+    if (goToTodayBtn) {
+        goToTodayBtn.addEventListener('click', function() { 
+            if (currentView === 'week') {
+                // Ir a la semana actual
+                const today = new Date('{{ $today }}');
+                const dayOfWeek = today.getDay();
+                const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+                today.setDate(diff);
+                const weekStartStr = today.toISOString().split('T')[0];
+                window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments&view=week&week_start=${weekStartStr}`; 
+            } else {
+                window.location.href = `{{ route('dashboardAdmin.index') }}?tab=appointments`; 
+            }
+        });
+    }
     
     // Filtro por estado - Múltiple selección
     let selectedFilters = []; // Array para múltiples filtros

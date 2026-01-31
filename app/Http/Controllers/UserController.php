@@ -15,7 +15,10 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::role('customer')->latest()->paginate(10);
+        $users = User::role('customer')
+            ->with('roles')
+            ->latest()
+            ->paginate(10);
 
         return view('user.index', compact('users'));
     }
@@ -43,6 +46,7 @@ class UserController extends Controller
             'profession' => ['nullable', 'string', 'max:255'],
             'phone_call_date' => ['nullable', 'date'],
             'product_id' => ['nullable', 'exists:products,id'],
+            'service_type' => ['nullable', 'in:presencial,online'],
             'style' => ['nullable', 'string', 'max:255'],
             'morphology' => ['nullable', 'string', 'max:255'],
             'colorimetry_id' => ['nullable', 'exists:colorimetries,id'],
@@ -74,6 +78,7 @@ class UserController extends Controller
             'profession' => $request->profession,
             'phone_call_date' => $request->phone_call_date,
             'product_id' => $request->product_id,
+            'service_type' => $request->service_type ?? 'presencial',
             'style' => $request->style,
             'morphology' => $request->morphology,
             'colorimetry_id' => $request->colorimetry_id,
@@ -90,6 +95,8 @@ class UserController extends Controller
     // Edit user
     public function edit(User $user)
     {
+        $user->load('customerProfile');
+        
         $products = Product::where('is_active', true)->get();
         $colorimetries = Colorimetry::where('is_active', true)->get();
 
@@ -109,6 +116,7 @@ class UserController extends Controller
             'profession' => ['nullable', 'string', 'max:255'],
             'phone_call_date' => ['nullable', 'date'],
             'product_id' => ['nullable', 'exists:products,id'],
+            'service_type' => ['nullable', 'in:presencial,online'],
             'style' => ['nullable', 'string', 'max:255'],
             'morphology' => ['nullable', 'string', 'max:255'],
             'colorimetry_id' => ['nullable', 'exists:colorimetries,id'],
@@ -150,6 +158,7 @@ class UserController extends Controller
                 'profession' => $request->profession,
                 'phone_call_date' => $request->phone_call_date,
                 'product_id' => $request->product_id,
+                'service_type' => $request->service_type ?? 'presencial',
                 'style' => $request->style,
                 'morphology' => $request->morphology,
                 'colorimetry_id' => $request->colorimetry_id,
