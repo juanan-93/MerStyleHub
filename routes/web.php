@@ -37,6 +37,10 @@ Route::get('/calendar', [CalendarController::class, 'index'])->name('calendar.in
 Route::get('/calendar/available-dates', [CalendarController::class, 'getAvailableDates'])->name('calendar.available_dates');
 Route::get('/calendar/available-slots/{date}', [CalendarController::class, 'getAvailableSlots'])->name('calendar.available_slots');
 Route::post('/calendar/book', [CalendarController::class, 'book'])->name('calendar.book');
+//Rutas para cancelar citas
+Route::get('/calendar/cancel/{token}', [CalendarController::class, 'showCancelPage'])->name('calendar.cancel');
+Route::post('/calendar/cancel/{token}', [CalendarController::class, 'cancelAppointment'])->name('calendar.cancel.process');
+Route::post('/calendar/check-appointment', [CalendarController::class, 'checkExistingAppointment'])->name('calendar.check_appointment');
 
 //Dashboard Admin Route
 Route::middleware('auth','role:admin')->group(function () {

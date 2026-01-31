@@ -1845,6 +1845,161 @@
             margin-bottom: 0;
             font-size: 0.85rem;
         }
+
+        /* ========== CHECK APPOINTMENT SECTION ========== */
+        .check-appointment-card {
+            background: var(--color-white);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--color-border);
+        }
+
+        @media (min-width: 576px) {
+            .check-appointment-card {
+                padding: 25px;
+            }
+        }
+
+        .check-appointment-card h4 {
+            font-size: 1rem;
+            color: var(--color-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-appointment-card h4 i {
+            color: var(--color-primary);
+        }
+
+        .check-appointment-card p {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 15px;
+        }
+
+        .check-email-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .check-email-form input {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 14px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .check-email-form input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .check-email-form button {
+            padding: 10px 20px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .check-email-form button:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .check-email-form button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .existing-appointment-info {
+            display: none;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--color-primary);
+        }
+
+        .existing-appointment-info.show {
+            display: block;
+        }
+
+        .existing-appointment-info .appointment-detail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .existing-appointment-info .appointment-detail:last-of-type {
+            margin-bottom: 15px;
+        }
+
+        .existing-appointment-info .appointment-detail i {
+            color: var(--color-primary);
+            font-size: 1.1rem;
+        }
+
+        .existing-appointment-info .appointment-detail span {
+            font-size: 0.9rem;
+            color: var(--color-secondary);
+        }
+
+        .btn-cancel-appointment {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel-appointment:hover {
+            background: #c82333;
+            color: white;
+        }
+
+        .no-appointment-msg {
+            display: none;
+            background: #d4edda;
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-top: 15px;
+            color: #155724;
+            font-size: 0.9rem;
+        }
+
+        .no-appointment-msg.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .no-appointment-msg i {
+            font-size: 1.1rem;
+        }
     </style>
 </head>
 <body>
@@ -1899,6 +2054,37 @@
     <!-- ========== MAIN BOOKING SECTION ========== -->
     <main class="booking-main">
         <div class="container">
+            <!-- Check Existing Appointment Card -->
+            <div class="check-appointment-card">
+                <h4><i class="ti ti-calendar-search"></i> ¿Ya tienes una cita reservada?</h4>
+                <p>Introduce tu email para consultar o cancelar tu cita existente</p>
+                <div class="check-email-form">
+                    <input type="email" id="check-email-input" placeholder="tu@email.com">
+                    <button type="button" id="check-email-btn">
+                        <i class="ti ti-search"></i>
+                        Consultar
+                    </button>
+                </div>
+                <div class="existing-appointment-info" id="existing-appointment-info">
+                    <div class="appointment-detail">
+                        <i class="ti ti-calendar"></i>
+                        <span id="existing-date">--</span>
+                    </div>
+                    <div class="appointment-detail">
+                        <i class="ti ti-clock"></i>
+                        <span id="existing-time">--</span>
+                    </div>
+                    <a href="#" class="btn-cancel-appointment" id="btn-cancel-existing">
+                        <i class="ti ti-calendar-x"></i>
+                        Cancelar cita
+                    </a>
+                </div>
+                <div class="no-appointment-msg" id="no-appointment-msg">
+                    <i class="ti ti-check"></i>
+                    <span>No tienes ninguna cita reservada. ¡Puedes reservar una nueva!</span>
+                </div>
+            </div>
+
             <div class="booking-card">
                 <!-- Steps -->
                 <div class="booking-steps-wrapper">
@@ -2426,6 +2612,74 @@
 
             // ========== INICIAR APLICACIÓN ==========
             initCalendar();
+
+            // ========== CHECK EXISTING APPOINTMENT ==========
+            const checkEmailInput = document.getElementById('check-email-input');
+            const checkEmailBtn = document.getElementById('check-email-btn');
+            const existingAppointmentInfo = document.getElementById('existing-appointment-info');
+            const noAppointmentMsg = document.getElementById('no-appointment-msg');
+            const existingDate = document.getElementById('existing-date');
+            const existingTime = document.getElementById('existing-time');
+            const btnCancelExisting = document.getElementById('btn-cancel-existing');
+
+            checkEmailBtn.addEventListener('click', async function() {
+                const email = checkEmailInput.value.trim();
+                if (!email) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Email requerido',
+                        text: 'Por favor, introduce tu email',
+                        confirmButtonColor: '#A08A7A'
+                    });
+                    return;
+                }
+
+                checkEmailBtn.disabled = true;
+                checkEmailBtn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px;"></span>';
+
+                try {
+                    const res = await fetch('/calendar/check-appointment', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': CONFIG.CSRF_TOKEN,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ email })
+                    });
+                    
+                    const data = await res.json();
+
+                    if (data.has_appointment) {
+                        existingDate.textContent = data.appointment.date;
+                        existingTime.textContent = `${data.appointment.time}h`;
+                        btnCancelExisting.href = data.appointment.cancel_url;
+                        existingAppointmentInfo.classList.add('show');
+                        noAppointmentMsg.classList.remove('show');
+                    } else {
+                        existingAppointmentInfo.classList.remove('show');
+                        noAppointmentMsg.classList.add('show');
+                    }
+                } catch (e) {
+                    console.error('Error checking appointment:', e);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo verificar. Inténtalo de nuevo.',
+                        confirmButtonColor: '#A08A7A'
+                    });
+                } finally {
+                    checkEmailBtn.disabled = false;
+                    checkEmailBtn.innerHTML = '<i class="ti ti-search"></i> Consultar';
+                }
+            });
+
+            // Permitir buscar con Enter
+            checkEmailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkEmailBtn.click();
+                }
+            });
 
             // ========== MENÚ MÓVIL HAMBURGUESA ==========
             const navbarToggler = document.getElementById('navbarToggler');

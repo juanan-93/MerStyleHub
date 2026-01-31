@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\AppointmentAvailability;
 use App\Models\Appointment;
+use App\Mail\AppointmentConfirmation;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 
 class CalendarController extends Controller
 {
@@ -41,63 +43,58 @@ class CalendarController extends Controller
 
     /**
      * Obtiene slots disponibles de una fecha específica
-     * Optimizado con una sola consulta y caché
+     * Sin caché para evitar mostrar slots ocupados
      * Solo muestra slots con categoría "standard"
      */
     public function getAvailableSlots($date)
     {
-        $cacheKey = "slots_standard_{$date}_" . now()->format('H');
-        
-        $slots = Cache::remember($cacheKey, 60, function () use ($date) {
-            // Obtener disponibilidades solo de categoría "standard"
-            $availabilities = AppointmentAvailability::where('date', $date)
-                ->where('category', 'standard')
-                ->select('id', 'start_time', 'end_time', 'duration', 'category')
-                ->get();
+        // Obtener disponibilidades solo de categoría "standard"
+        $availabilities = AppointmentAvailability::where('date', $date)
+            ->where('category', 'standard')
+            ->select('id', 'start_time', 'end_time', 'duration', 'category')
+            ->get();
 
-            if ($availabilities->isEmpty()) {
-                return [];
-            }
+        if ($availabilities->isEmpty()) {
+            return response()->json([]);
+        }
 
-            // Obtener TODAS las citas reservadas de la fecha en una sola consulta
-            $bookedSlots = Appointment::where('date', $date)
-                ->whereIn('availability_id', $availabilities->pluck('id'))
-                ->select('availability_id', 'start_time')
-                ->get()
-                ->groupBy('availability_id')
-                ->map(fn($items) => $items->pluck('start_time')
-                    ->map(fn($time) => Carbon::parse($time)->format('H:i'))
-                    ->toArray()
-                );
+        // Obtener TODAS las citas reservadas ACTIVAS de la fecha en una sola consulta
+        $bookedSlots = Appointment::where('date', $date)
+            ->whereIn('availability_id', $availabilities->pluck('id'))
+            ->whereIn('status', ['confirmed', 'pending']) // Solo citas activas, no canceladas ni bloqueadas
+            ->select('availability_id', 'start_time')
+            ->get()
+            ->groupBy('availability_id')
+            ->map(fn($items) => $items->pluck('start_time')
+                ->map(fn($time) => Carbon::parse($time)->format('H:i'))
+                ->toArray()
+            );
 
-            $slots = [];
+        $slots = [];
 
-            foreach ($availabilities as $availability) {
-                $generatedSlots = $this->generateTimeSlots(
-                    $availability->start_time,
-                    $availability->end_time,
-                    $availability->duration
-                );
+        foreach ($availabilities as $availability) {
+            $generatedSlots = $this->generateTimeSlots(
+                $availability->start_time,
+                $availability->end_time,
+                $availability->duration
+            );
 
-                $reserved = $bookedSlots->get($availability->id, []);
+            $reserved = $bookedSlots->get($availability->id, []);
 
-                foreach ($generatedSlots as $slot) {
-                    if (!in_array($slot['start'], $reserved)) {
-                        $slots[] = [
-                            'availability_id' => $availability->id,
-                            'start' => $slot['start'],
-                            'end' => $slot['end'],
-                            'category' => $availability->category,
-                        ];
-                    }
+            foreach ($generatedSlots as $slot) {
+                if (!in_array($slot['start'], $reserved)) {
+                    $slots[] = [
+                        'availability_id' => $availability->id,
+                        'start' => $slot['start'],
+                        'end' => $slot['end'],
+                        'category' => $availability->category,
+                    ];
                 }
             }
+        }
 
-            // Ordenar por hora
-            usort($slots, fn($a, $b) => strcmp($a['start'], $b['start']));
-
-            return $slots;
-        });
+        // Ordenar por hora
+        usort($slots, fn($a, $b) => strcmp($a['start'], $b['start']));
 
         return response()->json($slots);
     }
@@ -116,8 +113,25 @@ class CalendarController extends Controller
             'client_phone' => 'required|string|max:20',
         ]);
 
+        // Verificar si el email ya tiene una cita activa (ANTES de la transacción)
+        $existingAppointment = Appointment::where('client_email', $request->client_email)
+            ->where('date', '>=', now()->toDateString())
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->first();
+
+        if ($existingAppointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ya tienes una cita reservada. Debes cancelarla antes de reservar otra.',
+                'existing_appointment' => [
+                    'date' => Carbon::parse($existingAppointment->date)->format('d/m/Y'),
+                    'time' => Carbon::parse($existingAppointment->start_time)->format('H:i'),
+                ]
+            ], 409);
+        }
+
         try {
-            DB::transaction(function () use ($request) {
+            $appointment = DB::transaction(function () use ($request) {
                 // Verificar disponibilidad
                 $availability = AppointmentAvailability::findOrFail($request->availability_id);
 
@@ -125,10 +139,11 @@ class CalendarController extends Controller
                 $startTime = Carbon::parse($request->start_time);
                 $endTime = $startTime->copy()->addMinutes($availability->duration);
 
-                // Verificar que no esté ya reservado (doble check con lock)
+                // Verificar que no esté ya reservado (doble check con lock) - SOLO citas activas
                 $exists = Appointment::where('availability_id', $request->availability_id)
                     ->where('date', $request->date)
                     ->where('start_time', $request->start_time)
+                    ->whereIn('status', ['confirmed', 'pending'])
                     ->lockForUpdate()
                     ->exists();
 
@@ -137,7 +152,7 @@ class CalendarController extends Controller
                 }
 
                 // Crear reserva
-                Appointment::create([
+                $appointment = Appointment::create([
                     'availability_id' => $request->availability_id,
                     'date' => $request->date,
                     'start_time' => $startTime->format('H:i:s'),
@@ -148,9 +163,14 @@ class CalendarController extends Controller
                     'status' => 'confirmed',
                 ]);
 
-                // Invalidar caché de slots para esta fecha
-                Cache::forget("slots_standard_{$request->date}_" . now()->format('H'));
+                return $appointment;
             });
+
+            // Enviar email de confirmación (fuera de la transacción)
+            Mail::to($appointment->client_email)->send(new AppointmentConfirmation($appointment));
+
+            // Invalidar caché de slots para esta fecha
+            $this->clearSlotsCache($request->date);
 
             return response()->json([
                 'success' => true,
@@ -187,6 +207,97 @@ class CalendarController extends Controller
         }
 
         return $slots;
+    }
+
+    /**
+     * Limpiar caché de slots para una fecha (todas las horas)
+     */
+    private function clearSlotsCache($date)
+    {
+        // Limpiar caché para todas las horas del día
+        for ($hour = 0; $hour < 24; $hour++) {
+            $hourFormatted = str_pad($hour, 2, '0', STR_PAD_LEFT);
+            Cache::forget("slots_standard_{$date}_{$hourFormatted}");
+        }
+    }
+
+    /**
+     * Mostrar página de cancelación
+     */
+    public function showCancelPage($token)
+    {
+        $appointment = Appointment::where('cancellation_token', $token)
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('date', '>=', now()->toDateString())
+            ->first();
+
+        if (!$appointment) {
+            return view('calendar.cancel', [
+                'appointment' => null,
+                'error' => 'La cita no existe, ya fue cancelada o la fecha ya pasó.'
+            ]);
+        }
+
+        return view('calendar.cancel', [
+            'appointment' => $appointment,
+            'error' => null
+        ]);
+    }
+
+    /**
+     * Procesar cancelación de cita
+     */
+    public function cancelAppointment($token)
+    {
+        $appointment = Appointment::where('cancellation_token', $token)
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->where('date', '>=', now()->toDateString())
+            ->first();
+
+        if (!$appointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La cita no existe, ya fue cancelada o la fecha ya pasó.'
+            ], 404);
+        }
+
+        $appointment->update(['status' => 'cancelled']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tu cita ha sido cancelada correctamente.'
+        ]);
+    }
+
+    /**
+     * Verificar si un email tiene cita activa (para el frontend)
+     */
+    public function checkExistingAppointment(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email'
+        ]);
+
+        $appointment = Appointment::where('client_email', $request->email)
+            ->where('date', '>=', now()->toDateString())
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->first();
+
+        if ($appointment) {
+            Carbon::setLocale('es');
+            return response()->json([
+                'has_appointment' => true,
+                'appointment' => [
+                    'date' => Carbon::parse($appointment->date)->translatedFormat('l, d \d\e F \d\e Y'),
+                    'time' => Carbon::parse($appointment->start_time)->format('H:i'),
+                    'cancel_url' => $appointment->cancellation_url
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'has_appointment' => false
+        ]);
     }
     
 }

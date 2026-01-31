@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Appointment extends Model
 {
@@ -15,12 +16,33 @@ class Appointment extends Model
         'client_email',
         'client_phone',
         'status',
-        'notes'
+        'notes',
+        'cancellation_token'
     ];
 
     protected $casts = [
         'date' => 'date',
     ];
+
+    /**
+     * Boot del modelo para generar token automáticamente
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($appointment) {
+            $appointment->cancellation_token = Str::random(64);
+        });
+    }
+
+    /**
+     * Obtener la URL de cancelación
+     */
+    public function getCancellationUrlAttribute()
+    {
+        return url("/calendar/cancel/{$this->cancellation_token}");
+    }
 
     public function availability()
     {
