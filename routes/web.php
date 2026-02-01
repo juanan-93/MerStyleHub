@@ -101,6 +101,7 @@ Route::middleware('auth','role:admin')->group(function () {
 //Dashboard DashboardUser
 Route::middleware('auth','role:customer')->group(function () {
     Route::get('/dashboardUser', [DashboardUserController::class, 'index'])->name('dashboardUser.index');
+    Route::get('/dashboardUser/appointment/{id}', [DashboardUserController::class, 'getAppointment'])->name('dashboardUser.getAppointment');
 });
 
 

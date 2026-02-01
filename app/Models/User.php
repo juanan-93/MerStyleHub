@@ -86,4 +86,13 @@ class User extends Authenticatable
     {
         return $this->questionnaires()->wherePivot('status', 'completed');
     }
+
+    /**
+     * Citas custom asignadas al usuario
+     */
+    public function assignedAppointmentAvailabilities()
+    {
+        return $this->belongsToMany(AppointmentAvailability::class, 'appointment_availability_user', 'user_id', 'batch_id', 'id', 'batch_id')
+            ->withTimestamps();
+    }
 }

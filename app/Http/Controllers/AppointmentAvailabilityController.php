@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 use App\Models\AppointmentAvailability;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class AppointmentAvailabilityController extends Controller
 {
@@ -15,12 +17,27 @@ class AppointmentAvailabilityController extends Controller
             ->groupBy('batch_id', 'title', 'category', 'duration', 'selection_type')
             ->get();
 
-        return view('admin_appointments.index', compact('availabilities'));
+        // Cargar usuarios asignados para cada batch de categoría custom
+        $assignedUsers = [];
+        foreach ($availabilities as $availability) {
+            if ($availability->category === 'custom') {
+                $users = DB::table('appointment_availability_user')
+                    ->join('users', 'appointment_availability_user.user_id', '=', 'users.id')
+                    ->where('appointment_availability_user.batch_id', $availability->batch_id)
+                    ->select('users.name', 'users.email')
+                    ->get();
+                $assignedUsers[$availability->batch_id] = $users;
+            }
+        }
+
+        return view('admin_appointments.index', compact('availabilities', 'assignedUsers'));
     } 
     
     public function create()
     {
-        return view('admin_appointments.create');
+        // Obtener solo usuarios con rol customer
+        $users = User::role('customer')->orderBy('name')->get();
+        return view('admin_appointments.create', compact('users'));
     } 
 
     public function store(Request $request)
@@ -82,6 +99,19 @@ class AppointmentAvailabilityController extends Controller
             }
         }
 
+        // Si es categoría custom, asignar usuarios seleccionados
+        if ($request->category === 'custom' && $request->has('assigned_users') && !empty($request->assigned_users)) {
+            $userIds = $request->assigned_users;
+            foreach ($userIds as $userId) {
+                DB::table('appointment_availability_user')->insert([
+                    'batch_id' => $batchId,
+                    'user_id' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
         return redirect()->route('admin_appointments.index')->with('success', 'Disponibilidad configurada correctamente.');
     }
 
@@ -123,12 +153,23 @@ class AppointmentAvailabilityController extends Controller
 
         $datesList = array_keys($scheduleDataGrouped);
 
+        // Obtener todos los usuarios con rol customer
+        $users = User::role('customer')->orderBy('name')->get();
+        
+        // Obtener usuarios asignados a este batch
+        $assignedUserIds = DB::table('appointment_availability_user')
+            ->where('batch_id', $batch_id)
+            ->pluck('user_id')
+            ->toArray();
+
         return view('admin_appointments.edit', compact(
             'availability', 
             'batch_id', 
             'selectionType', 
             'scheduleData',
-            'datesList'
+            'datesList',
+            'users',
+            'assignedUserIds'
         ));
     }
 
@@ -194,6 +235,25 @@ class AppointmentAvailabilityController extends Controller
                     'end_time' => $endTime,
                     'selection_type' => $selectionType,
                 ]);
+            }
+        }
+
+        // Actualizar asignaciones de usuarios si es categoría custom
+        if ($request->category === 'custom') {
+            // Eliminar asignaciones anteriores
+            DB::table('appointment_availability_user')->where('batch_id', $batch_id)->delete();
+            
+            // Insertar nuevas asignaciones
+            if ($request->has('assigned_users') && !empty($request->assigned_users)) {
+                $userIds = $request->assigned_users;
+                foreach ($userIds as $userId) {
+                    DB::table('appointment_availability_user')->insert([
+                        'batch_id' => $batch_id,
+                        'user_id' => $userId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
 

@@ -66,6 +66,21 @@
                                             </select>
                                         </div>
 
+                                        <!-- Asignación de Usuarios (solo para citas custom) -->
+                                        <div class="mb-3" id="usersAssignmentSection" style="display: {{ $availability->category == 'custom' ? 'block' : 'none' }};">
+                                            <label for="assignedUsers" class="form-label-custom small">
+                                                <i class="ti ti-users me-1"></i>{{ __('Asignar a Usuarios') }}
+                                            </label>
+                                            <select class="form-select border-0 shadow-sm" name="assigned_users[]" id="assignedUsers" multiple>
+                                                @foreach($users as $user)
+                                                    <option value="{{ $user->id }}" {{ in_array($user->id, $assignedUserIds) ? 'selected' : '' }}>
+                                                        {{ $user->name }} ({{ $user->email }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <small class="text-muted">{{ __('Selecciona los usuarios que podrán reservar esta cita personalizada') }}</small>
+                                        </div>
+
                                         <!-- Botones: modo de selección -->
                                         <div class="mt-3">
                                             <label class="form-label-custom small mb-2">{{ __('Modo de Selección de Días') }}</label>
@@ -1761,6 +1776,18 @@
             
             // Inicializar Select2 en todos los selectores
             initializeSelect2();
+            
+            // Listener para mostrar/ocultar sección de asignación de usuarios según categoría
+            const meetingTypeSelect = document.getElementById('meetingType');
+            const usersAssignmentSection = document.getElementById('usersAssignmentSection');
+            
+            meetingTypeSelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    usersAssignmentSection.style.display = 'block';
+                } else {
+                    usersAssignmentSection.style.display = 'none';
+                }
+            });
 
             // Initialize UI
             currentMode = 'custom';
@@ -1900,6 +1927,14 @@
             $('#meetingDuration, #meetingType').select2({
                 minimumResultsForSearch: Infinity, // Sin búsqueda
                 width: '100%'
+            });
+            
+            // Selector múltiple de usuarios
+            $('#assignedUsers').select2({
+                placeholder: 'Selecciona usuarios...',
+                allowClear: true,
+                width: '100%',
+                closeOnSelect: false
             });
             
             // Selectores de tiempo generales del modal

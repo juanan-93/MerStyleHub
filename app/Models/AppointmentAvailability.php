@@ -27,6 +27,15 @@ class AppointmentAvailability extends Model
     }
 
     /**
+     * Usuarios asignados a este batch de disponibilidad (para citas custom)
+     */
+    public function assignedUsers()
+    {
+        return $this->belongsToMany(User::class, 'appointment_availability_user', 'batch_id', 'user_id', 'batch_id')
+            ->withTimestamps();
+    }
+
+    /**
      * Verifica si hay conflicto de horario con otras disponibilidades en la misma fecha
      * Excluyendo el batch_id actual (para ediciones)
      */

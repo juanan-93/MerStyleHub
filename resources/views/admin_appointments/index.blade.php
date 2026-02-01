@@ -44,6 +44,7 @@
                                 <th class="d-none d-md-table-cell">{{ __('Tipo') }}</th>
                                 <th class="d-none d-lg-table-cell">{{ __('Categoría') }}</th>
                                 <th>{{ __('Duración') }}</th>
+                                <th class="d-none d-xl-table-cell">{{ __('Usuarios Asignados') }}</th>
                                 <th class="text-end" style="width: 140px;">{{ __('Actions') }}</th>
                             </tr>
                         </thead>
@@ -266,6 +267,7 @@
             // Datos de ejemplo (reemplazar con datos de la API)
             // Datos reales desde el controlador agrupados por batch_id
             const appointmentsData = @json($availabilities);
+            const assignedUsersData = @json($assignedUsers);
 
             // Mapear los datos para la tabla
             const data = appointmentsData.map(item => {
@@ -293,12 +295,25 @@
                 // Título del evento (o mostrar "Sin título" si no existe)
                 const eventTitle = item.title || '<span class="text-muted fst-italic">Sin título</span>';
 
+                // Usuarios asignados (solo para citas custom)
+                let usersDisplay = '<span class="text-muted small">N/A</span>';
+                if (item.category === 'custom' && assignedUsersData[item.batch_id]) {
+                    const users = assignedUsersData[item.batch_id];
+                    if (users.length > 0) {
+                        const usersList = users.map(u => `<span class="badge bg-secondary me-1 mb-1">${u.name}</span>`).join('');
+                        usersDisplay = `<div class="d-flex flex-wrap">${usersList}</div>`;
+                    } else {
+                        usersDisplay = '<span class="text-warning small">Sin asignar</span>';
+                    }
+                }
+
                 return [
                     `<div class="fw-semibold">${eventTitle}</div>`,
                     `<span class="small">${dateDisplay}</span>`,
                     `<span class="badge ${typeBadgeColor}">${typeLabel}</span>`,
                     item.category ? item.category.toUpperCase() : 'ESTÁNDAR',
                     item.duration + ' min',
+                    usersDisplay,
                     `
                         <div class="text-end">
                             <a href="${editUrl}" 
