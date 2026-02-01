@@ -6,6 +6,8 @@ use App\Models\Appointment;
 use App\Models\AppointmentAvailability;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class DashboardUserController extends Controller
@@ -36,6 +38,7 @@ class DashboardUserController extends Controller
         
         // Obtener solo las citas del usuario autenticado (por email)
         $userEmail = Auth::user()->email;
+        $userId = Auth::id();
         
         $appointmentsQuery = Appointment::where('client_email', $userEmail)
             ->whereYear('date', $year)
@@ -58,30 +61,59 @@ class DashboardUserController extends Controller
                 return $appointment->date->format('Y-m-d');
             });
         
-        // Obtener disponibilidades del mes para mostrar slots disponibles
-        $availabilitiesQuery = AppointmentAvailability::whereYear('date', $year)
-            ->whereMonth('date', $month)
-            ->with('appointments')
-            ->orderBy('date')
-            ->orderBy('start_time');
+        // Obtener batch_ids de citas asignadas a este usuario
+        $assignedBatchIds = DB::table('appointment_availability_user')
+            ->where('user_id', $userId)
+            ->pluck('batch_id')
+            ->toArray();
         
-        // Si es vista semanal, también incluir disponibilidades de la semana (puede cruzar meses)
-        if ($view === 'week' && $weekStartDate && $weekEndDate) {
-            $availabilitiesQuery = AppointmentAvailability::whereBetween('date', [$weekStartDate->format('Y-m-d'), $weekEndDate->format('Y-m-d')])
+        // Debug: Log para ver qué batch_ids están asignados
+        Log::info('User ID: ' . $userId . ' | Assigned Batch IDs: ' . json_encode($assignedBatchIds));
+        
+        // Si el usuario no tiene citas asignadas, no mostrar nada
+        if (empty($assignedBatchIds)) {
+            $availabilities = collect();
+        } else {
+            // Obtener SOLO las disponibilidades asignadas a este usuario
+            $availabilitiesQuery = AppointmentAvailability::whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->whereIn('batch_id', $assignedBatchIds)
                 ->with('appointments')
                 ->orderBy('date')
                 ->orderBy('start_time');
+            
+            // Si es vista semanal, también incluir disponibilidades de la semana (puede cruzar meses)
+            if ($view === 'week' && $weekStartDate && $weekEndDate) {
+                $availabilitiesQuery = AppointmentAvailability::whereBetween('date', [$weekStartDate->format('Y-m-d'), $weekEndDate->format('Y-m-d')])
+                    ->whereIn('batch_id', $assignedBatchIds)
+                    ->with('appointments')
+                    ->orderBy('date')
+                    ->orderBy('start_time');
+            }
+            
+            // Debug: Log de la query SQL
+            Log::info('Query SQL: ' . $availabilitiesQuery->toSql());
+            Log::info('Query Bindings: ' . json_encode($availabilitiesQuery->getBindings()));
+            
+            $availabilities = $availabilitiesQuery->get();
         }
         
-        $availabilities = $availabilitiesQuery->get()
-            ->groupBy(function($availability) {
-                return $availability->date->format('Y-m-d');
-            });
+        // Debug: Log para ver cuántas availabilities se encontraron
+        Log::info('Total availabilities found: ' . $availabilities->count());
+        
+        // Debug: Mostrar cada availability encontrada
+        foreach ($availabilities as $av) {
+            Log::info("Availability: ID={$av->id}, Date={$av->date->format('Y-m-d')}, Category={$av->category}, BatchID={$av->batch_id}");
+        }
+        
+        $availabilities = $availabilities->groupBy(function($availability) {
+            return $availability->date->format('Y-m-d');
+        });
         
         // Generar todos los slots (disponibles y ocupados) por día
         $allSlots = [];
         foreach ($availabilities as $date => $dayAvailabilities) {
-            $allSlots[$date] = $this->generateDaySlots($date, $dayAvailabilities, $appointments[$date] ?? collect(), $userEmail);
+            $allSlots[$date] = $this->generateDaySlots($date, $dayAvailabilities, $appointments[$date] ?? collect(), $userEmail, $assignedBatchIds);
         }
         
         // Datos para la navegación del calendario
@@ -104,7 +136,7 @@ class DashboardUserController extends Controller
     /**
      * Generar todos los slots de un día con su estado (adaptado para usuario)
      */
-    private function generateDaySlots($date, $availabilities, $appointments, $userEmail)
+    private function generateDaySlots($date, $availabilities, $appointments, $userEmail, $assignedBatchIds = [])
     {
         $slots = [];
         
@@ -112,6 +144,9 @@ class DashboardUserController extends Controller
             $startTime = Carbon::parse($availability->start_time);
             $endTime = Carbon::parse($availability->end_time);
             $duration = $availability->duration;
+            
+            // Verificar si esta disponibilidad está asignada al usuario
+            $isAssignedToUser = in_array($availability->batch_id, $assignedBatchIds);
             
             while ($startTime->copy()->addMinutes($duration)->lte($endTime)) {
                 $slotStart = $startTime->format('H:i');
@@ -133,10 +168,13 @@ class DashboardUserController extends Controller
                     'end_time' => $slotEnd,
                     'availability_id' => $availability->id,
                     'availability_title' => $availability->title,
+                    'availability_category' => $availability->category,
+                    'batch_id' => $availability->batch_id,
                     'status' => $appointment ? $appointment->status : 'available',
                     'appointment_id' => $appointment ? $appointment->id : null,
                     'client_name' => $isUserAppointment && $appointment ? $appointment->client_name : null,
                     'is_user_appointment' => $isUserAppointment,
+                    'is_assigned_to_user' => $isAssignedToUser, // Flag para saber si es una cita custom asignada
                 ];
                 
                 $startTime->addMinutes($duration);
