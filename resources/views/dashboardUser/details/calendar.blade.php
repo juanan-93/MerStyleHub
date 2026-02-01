@@ -21,22 +21,6 @@
     $weekEnd = \Carbon\Carbon::parse($calendarData['weekEnd'] ?? now()->endOfWeek()->format('Y-m-d'));
 @endphp
 
-{{-- DEBUG: Mostrar fechas con slots --}}
-<div class="alert alert-info mb-3">
-    <strong>DEBUG:</strong> Fechas con slots: {{ implode(', ', array_keys($allSlots)) }}
-    <br>
-    @if(isset($allSlots['2026-02-06']))
-        <strong>Slots del 6 Feb:</strong> {{ count($allSlots['2026-02-06']) }} slots
-        <ul>
-        @foreach($allSlots['2026-02-06'] as $s)
-            <li>{{ $s['start_time'] }} - {{ $s['availability_title'] }} ({{ $s['availability_category'] }}) - Asignada: {{ $s['is_assigned_to_user'] ? 'SÍ' : 'NO' }}</li>
-        @endforeach
-        </ul>
-    @else
-        <strong class="text-danger">No hay slots para 2026-02-06</strong>
-    @endif
-</div>
-
 <div class="card shadow-sm border-0 animate__animated animate__fadeIn" id="calendarContainer">
     <!-- Header del Calendario -->
     <div class="card-header bg-white py-4 border-bottom d-flex flex-column gap-3">
@@ -130,10 +114,6 @@
                 <div class="d-flex align-items-center gap-1">
                     <span class="dot bg-info"></span>
                     <span class="small text-muted" style="font-size: 0.75rem;">{{ __('Disponible') }}</span>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                    <span class="dot" style="background-color: #6f42c1;"></span>
-                    <span class="small text-muted" style="font-size: 0.75rem;">🎯 {{ __('Asignada a ti') }}</span>
                 </div>
                 <div class="d-flex align-items-center gap-1">
                     <span class="dot bg-warning"></span>
@@ -232,12 +212,12 @@
                                         
                                         // Solo mostrar nombre si es cita del usuario
                                         $displayText = match($slot['status']) {
-                                            'available' => $slot['is_assigned_to_user'] ? '🎯 Asignada a ti' : 'Disponible',
+                                            'available' => 'Disponible',
                                             default => ($slot['is_user_appointment'] && $slot['client_name']) ? Str::limit($slot['client_name'], 10) : 'Mi Cita'
                                         };
                                         
-                                        // Clase especial para citas asignadas
-                                        $assignedClass = ($slot['is_assigned_to_user'] && $slot['status'] === 'available') ? 'assigned-to-user' : '';
+                                        // No usar clase especial, todas son disponibles para el usuario
+                                        $assignedClass = '';
                                         
                                         // Verificar si la fecha ya pasó
                                         $isPastDate = $cellDate < $today;
@@ -335,11 +315,11 @@
                                                     default => 'secondary'
                                                 };
                                                 $displayText = match($slot['status']) {
-                                                    'available' => $slot['is_assigned_to_user'] ? '🎯 Asignada' : 'Disponible',
+                                                    'available' => 'Disponible',
                                                     default => ($slot['is_user_appointment'] && $slot['client_name']) ? Str::limit($slot['client_name'], 8) : 'Mi Cita'
                                                 };
                                                 
-                                                $assignedClass = ($slot['is_assigned_to_user'] && $slot['status'] === 'available') ? 'assigned-to-user' : '';
+                                                $assignedClass = '';
                                                 $isClickable = $slot['is_user_appointment'] || $slot['status'] === 'available';
                                             @endphp
                                             @if($slot['is_user_appointment'] || $slot['status'] === 'available')
@@ -446,13 +426,6 @@
                         <h6 class="mt-3 mb-2">Horario Disponible</h6>
                         <p class="text-muted mb-2"><span id="availableDate">-</span> a las <span id="availableTime">-</span></p>
                         
-                        <!-- Badge si es cita asignada -->
-                        <div id="assignedBadge" style="display: none;" class="mb-3">
-                            <span class="badge" style="background: linear-gradient(135deg, #6f42c1 0%, #8b5cf6 100%); font-size: 0.9rem; padding: 0.5rem 1rem;">
-                                🎯 Esta cita está asignada especialmente para ti
-                            </span>
-                        </div>
-                        
                         <a href="{{ route('calendar.index') }}" class="btn btn-primary-custom">
                             <i class="ti ti-calendar-plus me-1"></i>Reservar Cita
                         </a>
@@ -482,20 +455,6 @@
     .appointment-card:hover { transform: translateY(-1px); box-shadow: 0 3px 6px rgba(0,0,0,0.1); z-index: 5; }
     .appointment-card.available { border-left: 3px solid #17a2b8; background-color: #e3f6f8; color: #0c5460; }
     .appointment-card.available:hover { background-color: #d1ecf1; }
-    
-    /* Citas asignadas al usuario (custom) */
-    .appointment-card.assigned-to-user { 
-        border-left: 3px solid #6f42c1 !important; 
-        background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important; 
-        color: #6f42c1 !important;
-        font-weight: 600;
-        box-shadow: 0 2px 4px rgba(111, 66, 193, 0.2);
-    }
-    .appointment-card.assigned-to-user:hover { 
-        background: linear-gradient(135deg, #e9d5ff 0%, #ddd6fe 100%) !important; 
-        box-shadow: 0 4px 8px rgba(111, 66, 193, 0.3);
-        transform: translateY(-2px);
-    }
     
     .appointment-card.confirmed { border-left: 3px solid #28a745; background-color: #f0fff4; color: #155724; }
     .appointment-card.pending { border-left: 3px solid #ffc107; background-color: #fffbeb; color: #856404; }
@@ -685,7 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showAvailableSlotModal(slot, date) {
         document.getElementById('appointmentDetails').style.display = 'none';
         document.getElementById('availableSlotInfo').style.display = 'block';
-        document.getElementById('modalTitle').textContent = slot.is_assigned_to_user ? '🎯 Cita Asignada para Ti' : 'Horario Disponible';
+        document.getElementById('modalTitle').textContent = 'Horario Disponible';
         
         const dateObj = new Date(date + 'T00:00:00');
         const formattedDate = dateObj.toLocaleDateString('es-ES', { 
@@ -697,14 +656,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('availableDate').textContent = formattedDate;
         document.getElementById('availableTime').textContent = `${slot.start_time} - ${slot.end_time}`;
-        
-        // Mostrar/ocultar badge de asignación
-        const assignedBadge = document.getElementById('assignedBadge');
-        if (slot.is_assigned_to_user) {
-            assignedBadge.style.display = 'block';
-        } else {
-            assignedBadge.style.display = 'none';
-        }
         
         appointmentModal.show();
     }
