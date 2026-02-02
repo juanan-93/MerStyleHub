@@ -411,11 +411,18 @@
                     </div>
                     
                     <!-- Notas -->
-                    <div class="mb-3" id="notesSection" style="display: none;">
+                    <div class="mb-4" id="notesSection" style="display: none;">
                         <label class="form-label text-muted small mb-1">Notas</label>
                         <div class="p-3 bg-light rounded">
                             <p class="mb-0 small" id="modalNotes">-</p>
                         </div>
+                    </div>
+                    
+                    <!-- Botones de acción para cita reservada -->
+                    <div id="appointmentActions" style="display: none;">
+                        <button type="button" id="cancelAppointmentBtn" class="btn btn-danger w-100">
+                            <i class="ti ti-trash me-1"></i>Cancelar Cita
+                        </button>
                     </div>
                 </div>
                 
@@ -426,9 +433,22 @@
                         <h6 class="mt-3 mb-2">Horario Disponible</h6>
                         <p class="text-muted mb-2"><span id="availableDate">-</span> a las <span id="availableTime">-</span></p>
                         
-                        <a href="{{ route('calendar.index') }}" class="btn btn-primary-custom">
-                            <i class="ti ti-calendar-plus me-1"></i>Reservar Cita
-                        </a>
+                        <div id="existingAppointmentWarning" class="alert alert-warning mb-3" style="display: none;">
+                            <small class="text-dark d-block mb-2">
+                                <i class="ti ti-alert-circle me-1"></i>
+                                Tienes una cita reservada el <strong><span id="existingDate">-</span></strong>. 
+                                Debes cancelarla antes de reservar otra.
+                            </small>
+                            <div class="text-center">
+                                <a href="#" id="cancelExistingBtn" class="btn btn-sm btn-warning">Cancelar cita existente</a>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-center mt-4">
+                            <button type="button" id="bookBtn" class="btn btn-primary-custom px-4">
+                                <i class="ti ti-calendar-plus me-1"></i>Reservar Cita
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -538,9 +558,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
-    let currentAppointmentId = null;
     let currentMonth = {{ $currentMonth->month }};
     let currentYear = {{ $currentMonth->year }};
+    
+    // Variables para almacenar el slot actual y el ID de la cita
+    let currentSlot = null;
+    let currentSlotDate = null;
+    let currentAppointmentId = null;
     
     // ===== CONTROL DE VISTAS MENSUAL/SEMANAL =====
     let currentView = '{{ $currentView }}'; // 'month' o 'week'
@@ -642,9 +666,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function showAvailableSlotModal(slot, date) {
+        // Guardar datos del slot para la reserva
+        currentSlot = slot;
+        currentSlotDate = date;
+        
         document.getElementById('appointmentDetails').style.display = 'none';
         document.getElementById('availableSlotInfo').style.display = 'block';
         document.getElementById('modalTitle').textContent = 'Horario Disponible';
+        document.getElementById('existingAppointmentWarning').style.display = 'none';
+        document.getElementById('bookBtn').style.display = 'block';
+        document.getElementById('bookBtn').disabled = false;
         
         const dateObj = new Date(date + 'T00:00:00');
         const formattedDate = dateObj.toLocaleDateString('es-ES', { 
@@ -708,8 +739,231 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('notesSection').style.display = 'none';
         }
         
+        // Mostrar botones de acción si la cita está confirmada o pendiente
+        currentAppointmentId = apt.id;
+        if (['confirmed', 'pending'].includes(apt.status)) {
+            document.getElementById('appointmentActions').style.display = 'block';
+        } else {
+            document.getElementById('appointmentActions').style.display = 'none';
+        }
+        
         appointmentModal.show();
     }
+    
+    // Evento para reservar cita
+    document.getElementById('bookBtn').addEventListener('click', function() {
+        if (!currentSlot || !currentSlotDate) return;
+        
+        this.disabled = true;
+        const btnHtml = this.innerHTML;
+        this.innerHTML = '<i class="ti ti-loader-2 me-1"></i>Reservando...';
+        
+        fetch('{{ route("dashboardUser.book") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                availability_id: currentSlot.availability_id,
+                date: currentSlotDate,
+                start_time: currentSlot.start_time
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            this.innerHTML = btnHtml;
+            
+            if (data.success) {
+                // Mostrar éxito
+                appointmentModal.hide();
+                
+                // Mostrar notificación
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                alertDiv.style.top = '20px';
+                alertDiv.style.right = '20px';
+                alertDiv.style.zIndex = '9999';
+                alertDiv.innerHTML = `
+                    <i class="ti ti-check me-2"></i>${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.body.appendChild(alertDiv);
+                
+                // Recargar el calendario después de 2 segundos
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                // Mostrar error o advertencia de cita existente
+                if (data.has_existing) {
+                    // Mostrar advertencia de cita existente
+                    document.getElementById('existingAppointmentWarning').style.display = 'block';
+                    document.getElementById('existingDate').textContent = data.existing_appointment.date + ' a las ' + data.existing_appointment.time;
+                    document.getElementById('bookBtn').style.display = 'none';
+                    
+                    // Preparar botón de cancelación
+                    document.getElementById('cancelExistingBtn').dataset.appointmentId = data.existing_appointment.id;
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message,
+                        confirmButtonColor: '#A08A7A'
+                    });
+                }
+                this.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error al reservar la cita',
+                confirmButtonColor: '#A08A7A'
+            });
+            this.innerHTML = btnHtml;
+            this.disabled = false;
+        });
+    });
+    
+    // Evento para cancelar cita existente
+    document.getElementById('cancelExistingBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const appointmentId = this.dataset.appointmentId;
+        if (!appointmentId) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se encontró el ID de la cita',
+                confirmButtonColor: '#A08A7A'
+            });
+            return;
+        }
+        
+        Swal.fire({
+            title: '¿Cancelar esta cita?',
+            text: 'Esta acción te permitirá reservar otra cita',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#A08A7A',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/dashboardUser/appointment/${appointmentId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Mostrar éxito
+                        document.getElementById('existingAppointmentWarning').style.display = 'none';
+                        document.getElementById('bookBtn').style.display = 'block';
+                        document.getElementById('bookBtn').disabled = false;
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Cita cancelada!',
+                            text: 'Ahora puedes reservar otra cita',
+                            confirmButtonColor: '#A08A7A'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message,
+                            confirmButtonColor: '#A08A7A'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error al cancelar la cita',
+                        confirmButtonColor: '#A08A7A'
+                    });
+                });
+            }
+        });
+    });
+    
+    // Evento para cancelar cita desde el detalle
+    document.getElementById('cancelAppointmentBtn').addEventListener('click', function() {
+        if (!currentAppointmentId) return;
+        
+        const btnElement = this;
+        
+        Swal.fire({
+            title: '¿Cancelar esta cita?',
+            text: 'Esta acción no se puede deshacer',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#A08A7A',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cancelar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                btnElement.disabled = true;
+                const btnHtml = btnElement.innerHTML;
+                btnElement.innerHTML = '<i class="ti ti-loader-2 me-1"></i>Cancelando...';
+                
+                fetch(`/dashboardUser/appointment/${currentAppointmentId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    btnElement.innerHTML = btnHtml;
+                    
+                    if (data.success) {
+                        appointmentModal.hide();
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: '¡Cita cancelada!',
+                            text: data.message,
+                            confirmButtonColor: '#A08A7A',
+                            timer: 2000,
+                            timerProgressBar: true
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.message,
+                            confirmButtonColor: '#A08A7A'
+                        });
+                        btnElement.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Error al cancelar la cita',
+                        confirmButtonColor: '#A08A7A'
+                    });
+                    btnElement.innerHTML = btnHtml;
+                    btnElement.disabled = false;
+                });
+            }
+        });
+    });
     
     // ===== FILTROS =====
     const filterCheckboxes = document.querySelectorAll('.filter-checkbox');

@@ -102,6 +102,8 @@ Route::middleware('auth','role:admin')->group(function () {
 Route::middleware('auth','role:customer')->group(function () {
     Route::get('/dashboardUser', [DashboardUserController::class, 'index'])->name('dashboardUser.index');
     Route::get('/dashboardUser/appointment/{id}', [DashboardUserController::class, 'getAppointment'])->name('dashboardUser.getAppointment');
+    Route::post('/dashboardUser/book', [DashboardUserController::class, 'bookAppointment'])->name('dashboardUser.book');
+    Route::post('/dashboardUser/appointment/{id}/cancel', [DashboardUserController::class, 'cancelAppointment'])->name('dashboardUser.cancelAppointment');
 });
 
 

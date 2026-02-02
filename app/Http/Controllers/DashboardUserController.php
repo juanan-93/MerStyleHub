@@ -67,9 +67,6 @@ class DashboardUserController extends Controller
             ->pluck('batch_id')
             ->toArray();
         
-        // Debug: Log para ver qué batch_ids están asignados
-        Log::info('User ID: ' . $userId . ' | Assigned Batch IDs: ' . json_encode($assignedBatchIds));
-        
         // Si el usuario no tiene citas asignadas, no mostrar nada
         if (empty($assignedBatchIds)) {
             $availabilities = collect();
@@ -91,19 +88,7 @@ class DashboardUserController extends Controller
                     ->orderBy('start_time');
             }
             
-            // Debug: Log de la query SQL
-            Log::info('Query SQL: ' . $availabilitiesQuery->toSql());
-            Log::info('Query Bindings: ' . json_encode($availabilitiesQuery->getBindings()));
-            
             $availabilities = $availabilitiesQuery->get();
-        }
-        
-        // Debug: Log para ver cuántas availabilities se encontraron
-        Log::info('Total availabilities found: ' . $availabilities->count());
-        
-        // Debug: Mostrar cada availability encontrada
-        foreach ($availabilities as $av) {
-            Log::info("Availability: ID={$av->id}, Date={$av->date->format('Y-m-d')}, Category={$av->category}, BatchID={$av->batch_id}");
         }
         
         $availabilities = $availabilities->groupBy(function($availability) {
@@ -152,15 +137,34 @@ class DashboardUserController extends Controller
                 $slotStart = $startTime->format('H:i');
                 $slotEnd = $startTime->copy()->addMinutes($duration)->format('H:i');
                 
-                // Buscar si hay una cita en este slot
-                $appointment = $appointments->first(function($apt) use ($slotStart) {
-                    return substr($apt->start_time, 0, 5) === $slotStart;
+                // Buscar si hay una cita ACTIVA (confirmed/pending) en este slot primero
+                // Si no hay activa, buscar cualquier cita (para saber si fue cancelada)
+                $appointment = $appointments->first(function($apt) use ($slotStart, $availability) {
+                    $aptTime = substr($apt->start_time, 0, 5);
+                    $match = ($aptTime === $slotStart && $apt->availability_id == $availability->id);
+                    // Priorizar citas activas
+                    return $match && in_array($apt->status, ['confirmed', 'pending']);
                 });
                 
-                // Determinar si el slot pertenece al usuario actual (solo por email)
-                $isUserAppointment = false;
+                // Si no hay cita activa, el slot está disponible (ignorar canceladas)
+                // No necesitamos buscar citas canceladas porque el slot estará disponible de todas formas
+                
+                // Determinar estado del slot
+                $slotStatus = 'available';
+                $slotAppointmentId = null;
+                $slotClientName = null;
+                $showAsUserAppointment = false;
+                
                 if ($appointment) {
-                    $isUserAppointment = ($appointment->client_email == $userEmail);
+                    // Si encontramos una cita activa, establecer sus valores
+                    $slotStatus = $appointment->status;
+                    $slotAppointmentId = $appointment->id;
+                    
+                    // Verificar si es del usuario actual
+                    if ($appointment->client_email == $userEmail) {
+                        $slotClientName = $appointment->client_name;
+                        $showAsUserAppointment = true;
+                    }
                 }
                 
                 $slots[] = [
@@ -170,10 +174,10 @@ class DashboardUserController extends Controller
                     'availability_title' => $availability->title,
                     'availability_category' => $availability->category,
                     'batch_id' => $availability->batch_id,
-                    'status' => $appointment ? $appointment->status : 'available',
-                    'appointment_id' => $appointment ? $appointment->id : null,
-                    'client_name' => $isUserAppointment && $appointment ? $appointment->client_name : null,
-                    'is_user_appointment' => $isUserAppointment,
+                    'status' => $slotStatus,
+                    'appointment_id' => $slotAppointmentId,
+                    'client_name' => $slotClientName,
+                    'is_user_appointment' => $showAsUserAppointment,
                     'is_assigned_to_user' => $isAssignedToUser, // Flag para saber si es una cita custom asignada
                 ];
                 
@@ -220,5 +224,126 @@ class DashboardUserController extends Controller
                 ] : null,
             ]
         ]);
+    }
+    
+    /**
+     * Reservar un slot disponible desde el dashboard
+     */
+    public function bookAppointment(Request $request)
+    {
+        $request->validate([
+            'availability_id' => 'required|exists:appointment_availabilities,id',
+            'date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+        ]);
+
+        $user = Auth::user();
+        $userEmail = $user->email;
+
+        // Verificar que no tenga una cita activa
+        $existingAppointment = Appointment::where('client_email', $userEmail)
+            ->where('date', '>=', now()->toDateString())
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->first();
+
+        if ($existingAppointment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ya tienes una cita reservada. Debes cancelarla antes de reservar otra.',
+                'has_existing' => true,
+                'existing_appointment' => [
+                    'id' => $existingAppointment->id,
+                    'date' => Carbon::parse($existingAppointment->date)->format('d/m/Y'),
+                    'time' => Carbon::parse($existingAppointment->start_time)->format('H:i'),
+                ]
+            ], 409);
+        }
+
+        try {
+            $appointment = DB::transaction(function () use ($request, $userEmail, $user) {
+                // Verificar disponibilidad
+                $availability = AppointmentAvailability::findOrFail($request->availability_id);
+
+                // Calcular hora fin
+                $startTime = Carbon::parse($request->start_time);
+                $endTime = $startTime->copy()->addMinutes($availability->duration);
+
+                // Verificar que no esté ya reservado
+                $exists = Appointment::where('availability_id', $request->availability_id)
+                    ->where('date', $request->date)
+                    ->where('start_time', $request->start_time)
+                    ->whereIn('status', ['confirmed', 'pending'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($exists) {
+                    abort(409, 'Este horario ya ha sido reservado');
+                }
+
+                // Crear reserva
+                $appointment = Appointment::create([
+                    'availability_id' => $request->availability_id,
+                    'date' => $request->date,
+                    'start_time' => $startTime->format('H:i:s'),
+                    'end_time' => $endTime->format('H:i:s'),
+                    'client_name' => $user->name,
+                    'client_email' => $userEmail,
+                    'client_phone' => $user->phone ?? '',
+                    'status' => 'confirmed',
+                ]);
+
+                return $appointment;
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => '¡Cita reservada correctamente!',
+                'appointment' => [
+                    'id' => $appointment->id,
+                    'date' => $appointment->date->format('d/m/Y'),
+                    'time' => substr($appointment->start_time, 0, 5),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al reservar la cita: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+    
+    /**
+     * Cancelar una cita reservada
+     */
+    public function cancelAppointment($id)
+    {
+        $userEmail = Auth::user()->email;
+
+        $appointment = Appointment::where('client_email', $userEmail)
+            ->findOrFail($id);
+
+        if (!in_array($appointment->status, ['confirmed', 'pending'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede cancelar una cita que ya ha sido cancelada o completada.',
+            ], 422);
+        }
+
+        try {
+            // Eliminar la cita en lugar de cambiar su estado para evitar conflictos con el constraint único
+            $appointment->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => '¡Cita cancelada correctamente!',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error al cancelar cita: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cancelar la cita. Por favor, inténtalo de nuevo.',
+            ], 500);
+        }
     }
 }
