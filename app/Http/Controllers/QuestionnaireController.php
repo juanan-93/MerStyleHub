@@ -6,6 +6,7 @@ use App\Models\Questionnaire;
 use App\Models\Question;
 use App\Models\QuestionOption;
 use App\Models\User;
+use App\Models\Notification;
 use App\Http\Requests\StoreQuestionnaireRequest;
 use App\Http\Requests\UpdateQuestionnaireRequest;
 use App\Http\Requests\AssignQuestionnaireRequest;
@@ -269,6 +270,9 @@ class QuestionnaireController extends Controller
                         'status' => 'pending',
                         'assigned_at' => now(),
                     ]);
+                    
+                    // Crear notificación para el usuario
+                    Notification::questionnaireAssigned($userId, $questionnaire);
                 }
             }
 

@@ -8,6 +8,8 @@ use App\Http\Controllers\AppointmentAvailabilityController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\DashboardUserController;
 use App\Http\Controllers\QuestionnaireController;
+use App\Http\Controllers\UserQuestionnaireController;
+use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -104,6 +106,23 @@ Route::middleware('auth','role:customer')->group(function () {
     Route::get('/dashboardUser/appointment/{id}', [DashboardUserController::class, 'getAppointment'])->name('dashboardUser.getAppointment');
     Route::post('/dashboardUser/book', [DashboardUserController::class, 'bookAppointment'])->name('dashboardUser.book');
     Route::post('/dashboardUser/appointment/{id}/cancel', [DashboardUserController::class, 'cancelAppointment'])->name('dashboardUser.cancelAppointment');
+    
+    // Cuestionarios para usuarios
+    Route::get('/my-questionnaires', [UserQuestionnaireController::class, 'index'])->name('user-questionnaire.index');
+    Route::get('/my-questionnaires/{id}', [UserQuestionnaireController::class, 'show'])->name('user-questionnaire.show');
+    Route::post('/my-questionnaires/{id}', [UserQuestionnaireController::class, 'store'])->name('user-questionnaire.store');
+    Route::get('/my-questionnaires/{id}/responses', [UserQuestionnaireController::class, 'viewResponses'])->name('user-questionnaire.responses');
+});
+
+//Notifications Routes (para todos los usuarios autenticados)
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/dropdown', [NotificationController::class, 'getDropdownNotifications'])->name('notifications.dropdown');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unreadCount');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('/notifications/clear/read', [NotificationController::class, 'destroyAllRead'])->name('notifications.destroyAllRead');
 });
 
 

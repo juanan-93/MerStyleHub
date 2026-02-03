@@ -134,22 +134,33 @@
                                 @forelse($dashboardData['userPaymentStatus'] ?? [] as $profile)
                                     @php
                                         $percentPaid = $profile->percentage_paid ?? 0;
-                                        // Seleccionar precio según tipo de servicio (presencial/online)
-                                        $productPrice = $profile->service_type === 'online' 
-                                            ? ($profile->product->price_online ?? 0)
-                                            : ($profile->product->price_presencial ?? 0);
-                                        $amountPaid = ($percentPaid / 100) * $productPrice;
+                                        // Verificar si hay producto/servicio asignado
+                                        $hasProduct = $profile->product_id && $profile->product;
                                         
-                                        // Determinar estado y color
-                                        if ($percentPaid >= 100) {
-                                            $statusClass = 'bg-success';
-                                            $statusText = 'Completado';
-                                        } elseif ($percentPaid > 0) {
-                                            $statusClass = 'bg-warning';
-                                            $statusText = 'Parcial';
+                                        if ($hasProduct) {
+                                            // Seleccionar precio según tipo de servicio (presencial/online)
+                                            $productPrice = $profile->service_type === 'online' 
+                                                ? ($profile->product->price_online ?? 0)
+                                                : ($profile->product->price_presencial ?? 0);
+                                            $amountPaid = ($percentPaid / 100) * $productPrice;
+                                            
+                                            // Determinar estado y color
+                                            if ($percentPaid >= 100) {
+                                                $statusClass = 'bg-success';
+                                                $statusText = 'Completado';
+                                            } elseif ($percentPaid > 0) {
+                                                $statusClass = 'bg-warning';
+                                                $statusText = 'Parcial';
+                                            } else {
+                                                $statusClass = 'bg-danger';
+                                                $statusText = 'Pendiente';
+                                            }
                                         } else {
-                                            $statusClass = 'bg-danger';
-                                            $statusText = 'Pendiente';
+                                            // Sin producto asignado
+                                            $productPrice = 0;
+                                            $amountPaid = 0;
+                                            $statusClass = 'bg-secondary';
+                                            $statusText = 'Sin servicio';
                                         }
                                     @endphp
                                     <tr>
@@ -166,22 +177,26 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{{ $profile->created_at->format('d/m/Y') }}</td>
-                                        <td>{{ $profile->product->title ?? 'Sin servicio' }}</td>
-                                        <td>{{ number_format($productPrice, 2, ',', '.') }}€</td>
+                                        <td>{{ $profile->created_at ? $profile->created_at->format('d/m/Y') : 'N/A' }}</td>
+                                        <td>{{ $hasProduct ? ($profile->product->title ?? 'Sin servicio') : 'Sin servicio' }}</td>
+                                        <td>{{ $hasProduct ? number_format($productPrice, 2, ',', '.') . '€' : '-' }}</td>
                                         <td>
-                                            <div class="progress" style="height: 20px; min-width: 80px;">
-                                                <div class="progress-bar {{ $percentPaid >= 100 ? 'bg-success' : ($percentPaid > 0 ? 'bg-warning' : 'bg-danger') }}" 
-                                                     role="progressbar" 
-                                                     style="width: {{ min($percentPaid, 100) }}%;" 
-                                                     aria-valuenow="{{ $percentPaid }}" 
-                                                     aria-valuemin="0" 
-                                                     aria-valuemax="100">
-                                                    {{ number_format($percentPaid, 0) }}%
+                                            @if($hasProduct)
+                                                <div class="progress" style="height: 20px; min-width: 80px;">
+                                                    <div class="progress-bar {{ $percentPaid >= 100 ? 'bg-success' : ($percentPaid > 0 ? 'bg-warning' : 'bg-danger') }}" 
+                                                         role="progressbar" 
+                                                         style="width: {{ min($percentPaid, 100) }}%;" 
+                                                         aria-valuenow="{{ $percentPaid }}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="100">
+                                                        {{ number_format($percentPaid, 0) }}%
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
                                         </td>
-                                        <td>{{ number_format($amountPaid, 2, ',', '.') }}€</td>
+                                        <td>{{ $hasProduct ? number_format($amountPaid, 2, ',', '.') . '€' : '-' }}</td>
                                         <td>
                                             <span class="badge {{ $statusClass }}">{{ $statusText }}</span>
                                         </td>
@@ -190,7 +205,7 @@
                                     <tr>
                                         <td colspan="7" class="text-center py-5">
                                             <i class="ti ti-users-minus mb-2" style="font-size: 2rem; color: var(--color-primary);"></i>
-                                            <p class="text-muted mb-0">No hay usuarios con servicios contratados</p>
+                                            <p class="text-muted mb-0">No hay usuarios registrados</p>
                                         </td>
                                     </tr>
                                 @endforelse

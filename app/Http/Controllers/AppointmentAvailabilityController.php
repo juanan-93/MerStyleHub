@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\AppointmentAvailability;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Str;
@@ -109,6 +110,9 @@ class AppointmentAvailabilityController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+                
+                // Crear notificación para el usuario
+                Notification::appointmentAvailable($userId, $request->title);
             }
         }
 
@@ -240,6 +244,12 @@ class AppointmentAvailabilityController extends Controller
 
         // Actualizar asignaciones de usuarios si es categoría custom
         if ($request->category === 'custom') {
+            // Obtener usuarios asignados anteriormente
+            $previousUserIds = DB::table('appointment_availability_user')
+                ->where('batch_id', $batch_id)
+                ->pluck('user_id')
+                ->toArray();
+            
             // Eliminar asignaciones anteriores
             DB::table('appointment_availability_user')->where('batch_id', $batch_id)->delete();
             
@@ -253,6 +263,11 @@ class AppointmentAvailabilityController extends Controller
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+                    
+                    // Notificar solo a usuarios nuevos (no estaban asignados antes)
+                    if (!in_array($userId, $previousUserIds)) {
+                        Notification::appointmentAvailable($userId, $request->title);
+                    }
                 }
             }
         }

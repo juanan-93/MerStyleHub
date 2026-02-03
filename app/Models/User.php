@@ -95,4 +95,28 @@ class User extends Authenticatable
         return $this->belongsToMany(AppointmentAvailability::class, 'appointment_availability_user', 'user_id', 'batch_id', 'id', 'batch_id')
             ->withTimestamps();
     }
+
+    /**
+     * Notificaciones del usuario
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Notificaciones no leídas del usuario
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->whereNull('read_at');
+    }
+
+    /**
+     * Contar notificaciones no leídas
+     */
+    public function getUnreadNotificationsCountAttribute(): int
+    {
+        return $this->unreadNotifications()->count();
+    }
 }

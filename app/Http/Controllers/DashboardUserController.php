@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\AppointmentAvailability;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -120,8 +121,9 @@ class DashboardUserController extends Controller
     
     /**
      * Generar todos los slots de un día con su estado (adaptado para usuario)
+     * IMPORTANTE: Usa las citas de cada disponibilidad (no solo del usuario) para determinar ocupación
      */
-    private function generateDaySlots($date, $availabilities, $appointments, $userEmail, $assignedBatchIds = [])
+    private function generateDaySlots($date, $availabilities, $userAppointments, $userEmail, $assignedBatchIds = [])
     {
         $slots = [];
         
@@ -133,21 +135,22 @@ class DashboardUserController extends Controller
             // Verificar si esta disponibilidad está asignada al usuario
             $isAssignedToUser = in_array($availability->batch_id, $assignedBatchIds);
             
+            // Obtener TODAS las citas de esta disponibilidad (de cualquier usuario)
+            $allAppointmentsForAvailability = $availability->appointments ?? collect();
+            
             while ($startTime->copy()->addMinutes($duration)->lte($endTime)) {
                 $slotStart = $startTime->format('H:i');
                 $slotEnd = $startTime->copy()->addMinutes($duration)->format('H:i');
                 
-                // Buscar si hay una cita ACTIVA (confirmed/pending) en este slot primero
-                // Si no hay activa, buscar cualquier cita (para saber si fue cancelada)
-                $appointment = $appointments->first(function($apt) use ($slotStart, $availability) {
+                // Buscar si hay una cita ACTIVA (confirmed/pending) en este slot de CUALQUIER usuario
+                $appointment = $allAppointmentsForAvailability->first(function($apt) use ($slotStart, $date) {
                     $aptTime = substr($apt->start_time, 0, 5);
-                    $match = ($aptTime === $slotStart && $apt->availability_id == $availability->id);
-                    // Priorizar citas activas
-                    return $match && in_array($apt->status, ['confirmed', 'pending']);
+                    $aptDate = $apt->date instanceof \Carbon\Carbon ? $apt->date->format('Y-m-d') : $apt->date;
+                    // Debe coincidir fecha, hora y estar activa
+                    return $aptTime === $slotStart 
+                        && $aptDate === $date
+                        && in_array($apt->status, ['confirmed', 'pending']);
                 });
-                
-                // Si no hay cita activa, el slot está disponible (ignorar canceladas)
-                // No necesitamos buscar citas canceladas porque el slot estará disponible de todas formas
                 
                 // Determinar estado del slot
                 $slotStatus = 'available';
@@ -156,14 +159,19 @@ class DashboardUserController extends Controller
                 $showAsUserAppointment = false;
                 
                 if ($appointment) {
-                    // Si encontramos una cita activa, establecer sus valores
-                    $slotStatus = $appointment->status;
-                    $slotAppointmentId = $appointment->id;
-                    
                     // Verificar si es del usuario actual
-                    if ($appointment->client_email == $userEmail) {
+                    if ($appointment->client_email === $userEmail) {
+                        // Es la cita del usuario actual - puede ver detalles y cancelar
+                        $slotStatus = $appointment->status;
+                        $slotAppointmentId = $appointment->id;
                         $slotClientName = $appointment->client_name;
                         $showAsUserAppointment = true;
+                    } else {
+                        // Es de OTRO usuario - mostrar como ocupado (no disponible)
+                        $slotStatus = 'occupied'; // Nuevo estado para citas de otros usuarios
+                        $slotAppointmentId = null; // No mostrar ID
+                        $slotClientName = null; // No mostrar nombre
+                        $showAsUserAppointment = false;
                     }
                 }
                 
@@ -178,7 +186,7 @@ class DashboardUserController extends Controller
                     'appointment_id' => $slotAppointmentId,
                     'client_name' => $slotClientName,
                     'is_user_appointment' => $showAsUserAppointment,
-                    'is_assigned_to_user' => $isAssignedToUser, // Flag para saber si es una cita custom asignada
+                    'is_assigned_to_user' => $isAssignedToUser,
                 ];
                 
                 $startTime->addMinutes($duration);
@@ -291,6 +299,15 @@ class DashboardUserController extends Controller
                     'client_phone' => $user->phone ?? '',
                     'status' => 'confirmed',
                 ]);
+                
+                // Cargar relación para tener el título
+                $appointment->load('availability');
+                
+                // Crear notificación de confirmación para el usuario
+                Notification::appointmentConfirmed($user->id, $appointment);
+                
+                // Notificar a los administradores sobre la nueva reserva
+                Notification::newBookingForAdmins($user, $appointment);
 
                 return $appointment;
             });
@@ -318,9 +335,11 @@ class DashboardUserController extends Controller
      */
     public function cancelAppointment($id)
     {
-        $userEmail = Auth::user()->email;
+        $user = Auth::user();
+        $userEmail = $user->email;
 
-        $appointment = Appointment::where('client_email', $userEmail)
+        $appointment = Appointment::with('availability')
+            ->where('client_email', $userEmail)
             ->findOrFail($id);
 
         if (!in_array($appointment->status, ['confirmed', 'pending'])) {
@@ -331,8 +350,19 @@ class DashboardUserController extends Controller
         }
 
         try {
+            // Guardar datos antes de eliminar para la notificación
+            $appointmentData = [
+                'date' => $appointment->date->format('d/m/Y'),
+                'time' => substr($appointment->start_time, 0, 5),
+                'id' => $appointment->id,
+                'title' => $appointment->availability?->title ?? 'Cita',
+            ];
+            
             // Eliminar la cita en lugar de cambiar su estado para evitar conflictos con el constraint único
             $appointment->delete();
+            
+            // Notificar a los administradores sobre la cancelación
+            Notification::bookingCancelledForAdmins($user, $appointmentData);
 
             return response()->json([
                 'success' => true,

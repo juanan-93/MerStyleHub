@@ -207,12 +207,14 @@
                                             'pending' => 'warning',
                                             'confirmed' => 'success',
                                             'cancelled' => 'danger',
+                                            'occupied' => 'secondary', // Citas de otros usuarios
                                             default => 'secondary'
                                         };
                                         
-                                        // Solo mostrar nombre si es cita del usuario
+                                        // Texto a mostrar según el estado
                                         $displayText = match($slot['status']) {
                                             'available' => 'Disponible',
+                                            'occupied' => 'No disponible', // Cita de otro usuario
                                             default => ($slot['is_user_appointment'] && $slot['client_name']) ? Str::limit($slot['client_name'], 10) : 'Mi Cita'
                                         };
                                         
@@ -222,16 +224,18 @@
                                         // Verificar si la fecha ya pasó
                                         $isPastDate = $cellDate < $today;
                                         
-                                        // Solo clickeable si es del usuario o está disponible
-                                        $isClickable = $slot['is_user_appointment'] || $slot['status'] === 'available';
+                                        // Solo clickeable si es del usuario o está disponible (NO si está ocupado)
+                                        $isClickable = ($slot['is_user_appointment'] || $slot['status'] === 'available') && $slot['status'] !== 'occupied';
                                     @endphp
-                                    @if($slot['is_user_appointment'] || $slot['status'] === 'available')
+                                    @if($slot['is_user_appointment'] || $slot['status'] === 'available' || $slot['status'] === 'occupied')
                                         <div class="appointment-card {{ $statusClass }} {{ $assignedClass }} {{ $isPastDate ? 'past-date' : '' }} {{ $isClickable && !$isPastDate ? 'slot-clickable' : '' }} {{ $isPastDate && $slot['is_user_appointment'] ? 'past-clickable' : '' }} small d-flex align-items-center justify-content-between px-2" 
+                                             @if($slot['status'] !== 'occupied')
                                              data-slot='@json($slot)'
                                              data-date="{{ $cellDate }}"
                                              data-status="{{ $slot['status'] }}"
                                              data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
                                              data-is-assigned="{{ $slot['is_assigned_to_user'] ? 'true' : 'false' }}"
+                                             @endif
                                              title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}{{ $isPastDate ? ' (Pasado)' : '' }}">
                                             <div class="d-flex align-items-center gap-1 text-truncate">
                                                 <span class="dot bg-{{ $statusColor }}"></span>
@@ -312,23 +316,27 @@
                                                     'pending' => 'warning',
                                                     'confirmed' => 'success',
                                                     'cancelled' => 'danger',
+                                                    'occupied' => 'secondary', // Citas de otros usuarios
                                                     default => 'secondary'
                                                 };
                                                 $displayText = match($slot['status']) {
                                                     'available' => 'Disponible',
+                                                    'occupied' => 'No disponible', // Cita de otro usuario
                                                     default => ($slot['is_user_appointment'] && $slot['client_name']) ? Str::limit($slot['client_name'], 8) : 'Mi Cita'
                                                 };
                                                 
                                                 $assignedClass = '';
-                                                $isClickable = $slot['is_user_appointment'] || $slot['status'] === 'available';
+                                                $isClickable = ($slot['is_user_appointment'] || $slot['status'] === 'available') && $slot['status'] !== 'occupied';
                                             @endphp
-                                            @if($slot['is_user_appointment'] || $slot['status'] === 'available')
+                                            @if($slot['is_user_appointment'] || $slot['status'] === 'available' || $slot['status'] === 'occupied')
                                                 <div class="appointment-card week-appointment {{ $statusClass }} {{ $assignedClass }} {{ $isPastDate ? 'past-date' : '' }} {{ $isClickable && !$isPastDate ? 'slot-clickable' : '' }} {{ $isPastDate && $slot['is_user_appointment'] ? 'past-clickable' : '' }} small" 
+                                                     @if($slot['status'] !== 'occupied')
                                                      data-slot='@json($slot)'
                                                      data-date="{{ $cellDate }}"
                                                      data-status="{{ $slot['status'] }}"
                                                      data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
                                                      data-is-assigned="{{ $slot['is_assigned_to_user'] ? 'true' : 'false' }}"
+                                                     @endif
                                                      title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}">
                                                     <div class="d-flex align-items-center gap-1">
                                                         <span class="dot bg-{{ $statusColor }}"></span>
@@ -479,6 +487,20 @@
     .appointment-card.confirmed { border-left: 3px solid #28a745; background-color: #f0fff4; color: #155724; }
     .appointment-card.pending { border-left: 3px solid #ffc107; background-color: #fffbeb; color: #856404; }
     .appointment-card.cancelled { border-left: 3px solid #dc3545; background-color: #fff5f5; color: #721c24; opacity: 0.7; text-decoration: line-through; }
+    
+    /* Citas ocupadas por otros usuarios - NO clickeables */
+    .appointment-card.occupied { 
+        border-left: 3px solid #6c757d; 
+        background-color: #f8f9fa; 
+        color: #6c757d; 
+        cursor: not-allowed; 
+        opacity: 0.7;
+    }
+    .appointment-card.occupied:hover { 
+        transform: none; 
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        background-color: #f8f9fa;
+    }
     
     /* Citas de fechas pasadas */
     .appointment-card.past-date {

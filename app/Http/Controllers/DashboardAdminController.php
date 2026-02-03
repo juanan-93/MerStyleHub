@@ -122,12 +122,26 @@ class DashboardAdminController extends Controller
         // Datos para el gráfico: Ingresos de los últimos 12 meses
         $chartData = $this->getMonthlyRevenueData();
         
-        // Estado de pagos de usuarios
-        $userPaymentStatus = CustomerProfile::with(['user', 'product'])
-            ->whereNotNull('product_id')
+        // Estado de pagos de usuarios - Mostrar todos los clientes (con y sin servicio)
+        // Primero obtenemos todos los usuarios con rol 'customer'
+        $customers = User::role('customer')
+            ->with(['customerProfile.product'])
             ->orderBy('created_at', 'desc')
             ->take(10)
             ->get();
+        
+        // Transformar a un formato similar al anterior para mantener compatibilidad con la vista
+        $userPaymentStatus = $customers->map(function ($user) {
+            // Si el usuario no tiene perfil, crear uno temporal para la vista
+            if (!$user->customerProfile) {
+                $tempProfile = new CustomerProfile();
+                $tempProfile->user_id = $user->id;
+                $tempProfile->created_at = $user->created_at;
+                $tempProfile->user = $user;
+                return $tempProfile;
+            }
+            return $user->customerProfile;
+        });
         
         // Datos del dashboard
         $dashboardData = [
@@ -156,17 +170,30 @@ class DashboardAdminController extends Controller
             $labels[] = $date->locale('es')->isoFormat('MMM');
             
             // Calcular ingresos del mes según tipo de servicio
+            // Usa payment_date si existe, si no usa created_at como referencia
             $monthlyRevenue = CustomerProfile::whereNotNull('product_id')
                 ->whereNotNull('percentage_paid')
-                ->whereYear('payment_date', $date->year)
-                ->whereMonth('payment_date', $date->month)
+                ->where(function($query) use ($date) {
+                    $query->where(function($q) use ($date) {
+                        // Si tiene payment_date, usar esa fecha
+                        $q->whereNotNull('payment_date')
+                          ->whereYear('payment_date', $date->year)
+                          ->whereMonth('payment_date', $date->month);
+                    })->orWhere(function($q) use ($date) {
+                        // Si no tiene payment_date pero sí percentage_paid > 0, usar created_at
+                        $q->whereNull('payment_date')
+                          ->where('percentage_paid', '>', 0)
+                          ->whereYear('created_at', $date->year)
+                          ->whereMonth('created_at', $date->month);
+                    });
+                })
                 ->with('product')
                 ->get()
                 ->sum(function ($profile) {
                     if ($profile->product && $profile->percentage_paid > 0) {
                         $price = $profile->service_type === 'online' 
-                            ? $profile->product->price_online 
-                            : $profile->product->price_presencial;
+                            ? ($profile->product->price_online ?? 0)
+                            : ($profile->product->price_presencial ?? 0);
                         return ($profile->percentage_paid / 100) * $price;
                     }
                     return 0;
@@ -197,19 +224,35 @@ class DashboardAdminController extends Controller
                 $slotStart = $startTime->format('H:i');
                 $slotEnd = $startTime->copy()->addMinutes($duration)->format('H:i');
                 
-                // Buscar si hay una cita en este slot
-                $appointment = $appointments->first(function($apt) use ($slotStart) {
-                    return substr($apt->start_time, 0, 5) === $slotStart;
+                // Buscar si hay una cita ACTIVA en este slot para esta disponibilidad específica
+                $appointment = $appointments->first(function($apt) use ($slotStart, $availability) {
+                    $aptTime = substr($apt->start_time, 0, 5);
+                    // Debe coincidir hora Y availability_id, y estar activa (confirmed/pending)
+                    return $aptTime === $slotStart 
+                        && $apt->availability_id == $availability->id
+                        && in_array($apt->status, ['confirmed', 'pending']);
                 });
+                
+                // Si no hay cita activa, buscar si hay una cita bloqueada
+                if (!$appointment) {
+                    $appointment = $appointments->first(function($apt) use ($slotStart, $availability) {
+                        $aptTime = substr($apt->start_time, 0, 5);
+                        return $aptTime === $slotStart 
+                            && $apt->availability_id == $availability->id
+                            && $apt->status === 'blocked';
+                    });
+                }
                 
                 $slots[] = [
                     'start_time' => $slotStart,
                     'end_time' => $slotEnd,
                     'availability_id' => $availability->id,
                     'availability_title' => $availability->title,
+                    'availability_category' => $availability->category ?? null,
                     'status' => $appointment ? $appointment->status : 'available',
                     'appointment_id' => $appointment ? $appointment->id : null,
                     'client_name' => $appointment ? $appointment->client_name : null,
+                    'client_email' => $appointment ? $appointment->client_email : null,
                 ];
                 
                 $startTime->addMinutes($duration);
@@ -262,15 +305,45 @@ class DashboardAdminController extends Controller
             'status' => 'required|in:pending,confirmed,cancelled'
         ]);
 
-        $appointment = Appointment::findOrFail($id);
-        $appointment->status = $request->status;
-        $appointment->save();
-
+        $appointment = Appointment::with('availability')->findOrFail($id);
+        $previousStatus = $appointment->status;
+        
         $statusLabels = [
             'pending' => 'pendiente',
             'confirmed' => 'confirmada',
             'cancelled' => 'cancelada'
         ];
+        
+        // Si el admin cancela la cita, notificar al usuario y ELIMINARLA
+        // (eliminamos en lugar de cambiar status para liberar el slot)
+        if ($request->status === 'cancelled' && $previousStatus !== 'cancelled') {
+            $appointmentData = [
+                'date' => $appointment->date->format('d/m/Y'),
+                'time' => substr($appointment->start_time, 0, 5),
+                'id' => $appointment->id,
+                'title' => $appointment->availability?->title ?? 'Cita',
+            ];
+            
+            if ($appointment->client_email) {
+                $user = \App\Models\User::where('email', $appointment->client_email)->first();
+                if ($user) {
+                    \App\Models\Notification::appointmentCancelled($user->id, $appointmentData);
+                }
+            }
+            
+            // Eliminar la cita en lugar de cambiar su status
+            $appointment->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Cita cancelada y eliminada correctamente",
+                'deleted' => true
+            ]);
+        }
+        
+        // Para otros cambios de status (pending, confirmed), actualizar normalmente
+        $appointment->status = $request->status;
+        $appointment->save();
 
         return response()->json([
             'success' => true,
@@ -330,8 +403,29 @@ class DashboardAdminController extends Controller
      */
     public function deleteAppointment($id)
     {
-        $appointment = Appointment::findOrFail($id);
+        $appointment = Appointment::with('availability')->findOrFail($id);
+        
+        // Guardar datos antes de eliminar para la notificación
+        $appointmentData = [
+            'date' => $appointment->date->format('d/m/Y'),
+            'time' => substr($appointment->start_time, 0, 5),
+            'id' => $appointment->id,
+            'title' => $appointment->availability?->title ?? 'Cita',
+        ];
+        
+        // Obtener email del cliente para buscar el usuario
+        $clientEmail = $appointment->client_email;
+        
+        // Eliminar la cita
         $appointment->delete();
+        
+        // Notificar al usuario que su cita fue cancelada por el admin
+        if ($clientEmail) {
+            $user = \App\Models\User::where('email', $clientEmail)->first();
+            if ($user) {
+                \App\Models\Notification::appointmentCancelled($user->id, $appointmentData);
+            }
+        }
 
         return response()->json([
             'success' => true,

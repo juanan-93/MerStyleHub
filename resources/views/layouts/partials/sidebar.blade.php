@@ -81,25 +81,7 @@
                 <hr class="text-secondary opacity-25">
             </li>
             
-            <!-- Reportes -->
-            <li class="nav-item mb-1">
-                <a class="nav-link sidebar-link d-flex align-items-center rounded" 
-                   href="#" 
-                   title="{{ __('Reportes') }}">
-                    <i class="ti ti-chart-bar sidebar-icon"></i>
-                    <span class="ms-2">{{ __('Reportes') }}</span>
-                </a>
-            </li>
-            
-            <!-- Configuración -->
-            <li class="nav-item mb-1">
-                <a class="nav-link sidebar-link d-flex align-items-center rounded" 
-                   href="#" 
-                   title="{{ __('Configuración') }}">
-                    <i class="ti ti-settings sidebar-icon"></i>
-                    <span class="ms-2">{{ __('Configuración') }}</span>
-                </a>
-            </li>
+
         </ul>
     </div>
 </div>
