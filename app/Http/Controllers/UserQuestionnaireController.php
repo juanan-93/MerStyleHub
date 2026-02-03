@@ -36,9 +36,14 @@ class UserQuestionnaireController extends Controller
         $user = Auth::user();
         
         // Verificar que el cuestionario esté asignado al usuario
-        $questionnaire = Questionnaire::with(['questions.options' => function($query) {
-            $query->orderBy('order');
-        }])
+        $questionnaire = Questionnaire::with([
+            'questions' => function($query) {
+                $query->orderBy('order');
+            },
+            'questions.options' => function($query) {
+                $query->orderBy('order');
+            }
+        ])
         ->whereHas('users', function($query) use ($user) {
             $query->where('users.id', $user->id);
         })
@@ -57,9 +62,6 @@ class UserQuestionnaireController extends Controller
         $existingResponses = UserQuestionnaireResponse::where('questionnaire_user_id', $assignment->id)
             ->get()
             ->keyBy('question_id');
-        
-        // Ordenar preguntas
-        $questionnaire->questions = $questionnaire->questions->sortBy('order');
         
         return view('user-questionnaire.show', compact('questionnaire', 'assignment', 'existingResponses'));
     }

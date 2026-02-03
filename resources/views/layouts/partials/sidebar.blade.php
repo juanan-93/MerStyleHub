@@ -14,9 +14,19 @@
                 <li class="nav-item mb-1">
                     <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('dashboardUser.*') ? 'active' : '' }}" 
                     href="{{ route('dashboardUser.index') }}" 
-                    title="{{ __('appointments') }}">
+                    title="{{ __('Mi Panel') }}">
                         <i class="ti ti-home sidebar-icon"></i>
-                        <span class="ms-2">{{ __('appointments') }}</span>
+                        <span class="ms-2">{{ __('Mi Panel') }}</span>
+                    </a>
+                </li>
+
+                <!-- Cuestionarios -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('user-questionnaire.*') ? 'active' : '' }}" 
+                    href="{{ route('user-questionnaire.index') }}" 
+                    title="{{ __('Cuestionarios') }}">
+                        <i class="ti ti-clipboard-list sidebar-icon"></i>
+                        <span class="ms-2">{{ __('Cuestionarios') }}</span>
                     </a>
                 </li>
 

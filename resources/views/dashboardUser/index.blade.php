@@ -31,27 +31,6 @@
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link d-flex align-items-center gap-2" 
-                            id="cuestionarios-tab" 
-                            data-bs-toggle="tab" 
-                            data-bs-target="#cuestionarios" 
-                            type="button" 
-                            role="tab" 
-                            aria-controls="cuestionarios" 
-                            aria-selected="false">
-                        <i class="ti ti-clipboard-list" style="font-size: 1.25rem;"></i>
-                        <span>Mis Cuestionarios</span>
-                        @php
-                            $pendingQuestionnaires = Auth::user()->questionnaires()
-                                ->wherePivot('status', 'pending')
-                                ->count();
-                        @endphp
-                        @if($pendingQuestionnaires > 0)
-                            <span class="badge bg-warning text-dark ms-1">{{ $pendingQuestionnaires }}</span>
-                        @endif
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link d-flex align-items-center gap-2" 
                             id="perfil-tab" 
                             data-bs-toggle="tab" 
                             data-bs-target="#perfil" 
@@ -71,11 +50,6 @@
                 <!-- Tab Calendario -->
                 <div class="tab-pane fade show active" id="calendario" role="tabpanel" aria-labelledby="calendario-tab">
                     @include('dashboardUser.details.calendar')
-                </div>
-                
-                <!-- Tab Cuestionarios -->
-                <div class="tab-pane fade" id="cuestionarios" role="tabpanel" aria-labelledby="cuestionarios-tab">
-                    @include('dashboardUser.details.questionnaires')
                 </div>
                 
                 <!-- Tab Perfil -->
