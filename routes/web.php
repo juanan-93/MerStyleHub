@@ -16,6 +16,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Ruta de prueba temporal para debug
+Route::post('/test-questionnaire-submit/{id}', function(\Illuminate\Http\Request $request, $id) {
+    \Log::info('TEST ROUTE CALLED - ID: ' . $id);
+    \Log::info('Request data:', $request->all());
+    return response()->json(['success' => true, 'data' => $request->all()]);
+})->middleware('web')->name('test.questionnaire.submit');
+
 //Authenticated Routes
 Route::middleware('auth', 'role:admin')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

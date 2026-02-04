@@ -86,8 +86,31 @@
                                             <span>{{ $response->selectedOption->text }}</span>
                                         </div>
                                     @elseif($response->text_response)
-                                        {{-- Respuesta de texto --}}
-                                        @if($question->type === 'info' && $response->text_response)
+                                        {{-- Verificar si es tipo archivo --}}
+                                        @if($question->type === 'file')
+                                            @php
+                                                $files = json_decode($response->text_response, true);
+                                            @endphp
+                                            @if(is_array($files) && count($files) > 0)
+                                                <div class="uploaded-files">
+                                                    @foreach($files as $file)
+                                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                                            @if(str_starts_with($file['mime'] ?? '', 'image/'))
+                                                                <i class="ti ti-photo text-primary me-1"></i>
+                                                            @else
+                                                                <i class="ti ti-file-text text-primary me-1"></i>
+                                                            @endif
+                                                            <a href="{{ Storage::url($file['path']) }}" target="_blank" class="text-decoration-none">
+                                                                {{ $file['name'] }}
+                                                            </a>
+                                                            <small class="text-muted">({{ number_format($file['size'] / 1024, 1) }} KB)</small>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <span class="text-muted fst-italic">Sin archivos</span>
+                                            @endif
+                                        @elseif($question->type === 'info' && $response->text_response)
                                             {{-- Múltiples opciones para tipo info --}}
                                             @php
                                                 $selectedIds = json_decode($response->text_response, true);

@@ -71,7 +71,12 @@ class UserQuestionnaireController extends Controller
      */
     public function store(Request $request, $id)
     {
+        \Log::info('=== STORE METHOD CALLED ===');
+        \Log::info('Cuestionario ID: ' . $id);
+        
         $user = Auth::user();
+        
+        \Log::info('Usuario autenticado: ' . ($user ? $user->id : 'NO'));
         
         // Verificar que el cuestionario esté asignado al usuario
         $questionnaire = Questionnaire::with('questions')
@@ -98,10 +103,68 @@ class UserQuestionnaireController extends Controller
 
         try {
             DB::beginTransaction();
+            
+            \Log::info('=== INICIANDO GUARDADO DE RESPUESTAS ===');
+            \Log::info('Usuario ID: ' . $user->id);
+            \Log::info('Cuestionario ID: ' . $questionnaire->id);
+            \Log::info('Assignment ID: ' . $assignment->id);
+            \Log::info('Total preguntas: ' . $questionnaire->questions->count());
+            \Log::info('Request data: ', $request->all());
+            \Log::info('Request files: ', $request->allFiles());
 
             // Procesar cada respuesta
             foreach ($questionnaire->questions as $question) {
                 $responseKey = 'question_' . $question->id;
+                
+                // Para archivos, verificar $request->file en lugar de $request->input
+                if ($question->type === 'file') {
+                    $files = $request->file($responseKey);
+                    
+                    if ($files && (is_array($files) ? count($files) > 0 : true)) {
+                        // Asegurar que sea array
+                        $filesArray = is_array($files) ? $files : [$files];
+                        $filePaths = [];
+                        
+                        foreach ($filesArray as $file) {
+                            if (!$file || !$file->isValid()) continue;
+                            
+                            // Validar tamaño (5MB máx)
+                            if ($file->getSize() > 5 * 1024 * 1024) {
+                                throw new \Exception("El archivo \"{$file->getClientOriginalName()}\" excede el tamaño máximo de 5MB.");
+                            }
+                            
+                            // Guardar archivo
+                            $path = $file->store('questionnaire-responses/' . $user->id, 'public');
+                            $filePaths[] = [
+                                'path' => $path,
+                                'name' => $file->getClientOriginalName(),
+                                'size' => $file->getSize(),
+                                'mime' => $file->getMimeType()
+                            ];
+                        }
+                        
+                        if (count($filePaths) > 0) {
+                            UserQuestionnaireResponse::updateOrCreate(
+                                [
+                                    'questionnaire_user_id' => $assignment->id,
+                                    'question_id' => $question->id,
+                                ],
+                                [
+                                    'questionnaire_user_id' => $assignment->id,
+                                    'question_id' => $question->id,
+                                    'question_option_id' => null,
+                                    'text_response' => json_encode($filePaths)
+                                ]
+                            );
+                        } elseif ($question->required) {
+                            throw new \Exception("La pregunta \"{$question->text}\" requiere al menos un archivo.");
+                        }
+                    } elseif ($question->required) {
+                        throw new \Exception("La pregunta \"{$question->text}\" requiere al menos un archivo.");
+                    }
+                    continue;
+                }
+                
                 $responseValue = $request->input($responseKey);
                 
                 // Saltar si no hay respuesta y no es requerida
@@ -131,30 +194,35 @@ class UserQuestionnaireController extends Controller
                         $responseData['text_response'] = null;
                     }
                 } elseif ($question->type === 'info') {
-                    // Para tipo info (informativo), puede ser múltiple o single
+                    // Para tipo info (informativo), guardar confirmación en text_response
+                    // El valor "read" indica que el usuario leyó la información
+                    $responseData['question_option_id'] = null;
                     if (is_array($responseValue)) {
-                        // Múltiples opciones seleccionadas - guardar como JSON
-                        $responseData['question_option_id'] = null;
                         $responseData['text_response'] = json_encode($responseValue);
                     } else {
-                        $responseData['question_option_id'] = $responseValue;
-                        $responseData['text_response'] = null;
+                        $responseData['text_response'] = $responseValue; // "read" o cualquier confirmación
                     }
                 } else {
-                    // Tipo texto o file
+                    // Tipo texto
                     $responseData['question_option_id'] = null;
                     $responseData['text_response'] = $responseValue;
                 }
                 
                 // Usar updateOrCreate para permitir ediciones
-                UserQuestionnaireResponse::updateOrCreate(
+                \Log::info("Guardando respuesta para pregunta {$question->id}: ", $responseData);
+                
+                $savedResponse = UserQuestionnaireResponse::updateOrCreate(
                     [
                         'questionnaire_user_id' => $assignment->id,
                         'question_id' => $question->id,
                     ],
                     $responseData
                 );
+                
+                \Log::info("Respuesta guardada ID: " . $savedResponse->id);
             }
+            
+            \Log::info('=== TODAS LAS RESPUESTAS GUARDADAS, MARCANDO COMO COMPLETADO ===');
             
             // Marcar como completado
             $assignment->markAsCompleted();
