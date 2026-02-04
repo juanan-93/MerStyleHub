@@ -23,64 +23,57 @@
                 
                 <!-- Notificaciones Dropdown -->
                 @auth
-                <li class="nav-item dropdown">
-                    <button class="btn btn-link text-decoration-none position-relative" 
-                            id="notificationDropdown"
-                            data-bs-toggle="dropdown"
-                            data-bs-auto-close="outside"
-                            aria-expanded="false"
-                            style="color: var(--color-secondary);">
-                        <i class="ti ti-bell" style="font-size: 1.3rem;"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill" 
-                              id="notificationBadge"
-                              style="font-size: 0.6rem; display: none;">0</span>
-                    </button>
-                    
-                    <!-- Dropdown Menu de Notificaciones -->
-                    <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow-lg border-0" 
-                         aria-labelledby="notificationDropdown"
-                         style="width: 360px; max-width: 95vw;">
-                        <!-- Header del dropdown -->
-                        <div class="dropdown-header d-flex justify-content-between align-items-center py-3 px-3 border-bottom">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="ti ti-bell me-1"></i>Notificaciones
-                            </h6>
-                            <button class="btn btn-sm btn-link text-decoration-none p-0" 
-                                    id="markAllReadDropdown"
-                                    style="color: var(--color-primary); font-size: 0.8rem;">
-                                Marcar todas como leídas
-                            </button>
-                        </div>
+                    <li class="nav-item dropdown">
+                        <button class="btn btn-link text-decoration-none position-relative" 
+                                id="notificationDropdown"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
+                                aria-expanded="false"
+                                style="color: var(--color-secondary);">
+                            <i class="ti ti-bell" style="font-size: 1.3rem;"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge bg-danger rounded-pill" 
+                                id="notificationBadge"
+                                style="font-size: 0.6rem; display: none;">0</span>
+                        </button>
                         
-                        <!-- Lista de notificaciones (scrollable) -->
-                        <div class="notification-list" style="max-height: 350px; overflow-y: auto;">
-                            <div id="notificationItems" class="py-2">
-                                <!-- Las notificaciones se cargarán aquí via AJAX -->
-                                <div class="text-center py-4" id="notificationLoading">
-                                    <div class="spinner-border spinner-border-sm text-muted" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
+                        <!-- Dropdown Menu de Notificaciones -->
+                        <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow-lg border-0" 
+                            aria-labelledby="notificationDropdown"
+                            style="width: 360px; max-width: 95vw;">
+                            <!-- Header del dropdown -->
+                            <div class="dropdown-header d-flex justify-content-between align-items-center py-3 px-3 border-bottom">
+                                <h6 class="mb-0 fw-bold">
+                                    <i class="ti ti-bell me-1"></i>Notificaciones
+                                </h6>
+                                <button class="btn btn-sm btn-link text-decoration-none p-0" 
+                                        id="markAllReadDropdown"
+                                        style="color: var(--color-primary); font-size: 0.8rem;">
+                                    Marcar todas como leídas
+                                </button>
+                            </div>
+                            
+                            <!-- Lista de notificaciones (scrollable) -->
+                            <div class="notification-list" style="max-height: 350px; overflow-y: auto;">
+                                <div id="notificationItems" class="py-2">
+                                    <!-- Las notificaciones se cargarán aquí via AJAX -->
+                                    <div class="text-center py-4" id="notificationLoading">
+                                        <div class="spinner-border spinner-border-sm text-muted" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                        <p class="text-muted small mb-0 mt-2">Cargando notificaciones...</p>
                                     </div>
-                                    <p class="text-muted small mb-0 mt-2">Cargando notificaciones...</p>
                                 </div>
                             </div>
+                            
+                            <!-- Footer del dropdown -->
+                            <div class="dropdown-footer border-top p-2 text-center">
+                                <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-link text-decoration-none w-100" style="color: var(--color-primary);">
+                                    <i class="ti ti-list me-1"></i>Ver todas las notificaciones
+                                </a>
+                            </div>
                         </div>
-                        
-                        <!-- Footer del dropdown -->
-                        <div class="dropdown-footer border-top p-2 text-center">
-                            <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-link text-decoration-none w-100" style="color: var(--color-primary);">
-                                <i class="ti ti-list me-1"></i>Ver todas las notificaciones
-                            </a>
-                        </div>
-                    </div>
-                </li>
+                    </li>
                 @endauth
-
-                <!-- Mensajes -->
-                <li class="nav-item">
-                    <button class="btn btn-link text-decoration-none" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Mensajes" style="color: var(--color-secondary);">
-                        <i class="ti ti-mail" style="font-size: 1.3rem;"></i>
-                    </button>
-                </li>
 
                 <!-- Separador -->
                 <li class="nav-item d-none d-lg-block">

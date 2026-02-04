@@ -74,7 +74,7 @@
                                     <div class="form-check user-item p-3 rounded mb-2" style="background-color: var(--color-light);">
                                         <input class="form-check-input" type="checkbox" name="user_ids[]" 
                                                value="{{ $user->id }}" id="user_{{ $user->id }}">
-                                        <label class="form-check-label w-100 d-flex align-items-center" for="user_{{ $user->id }}">
+                                        <label class="form-check-label w-100 d-flex align-items-center ms-2" for="user_{{ $user->id }}" style="cursor: pointer;">
                                             <div class="avatar-circle me-3" style="width: 40px; height: 40px; background-color: var(--color-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
                                                 <span class="text-white fw-semibold">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
                                             </div>
@@ -117,11 +117,6 @@
                     <i class="ti ti-users me-2" style="color: var(--color-primary);"></i>{{ __('Usuarios Asignados') }}
                     <span class="badge bg-light text-dark ms-2">{{ $assignedUsers->count() }}</span>
                 </h5>
-                @if($assignedUsers->count() > 0)
-                    <a href="{{ route('questionnaire.responses', $questionnaire->id) }}" class="btn btn-sm btn-outline-secondary">
-                        <i class="ti ti-chart-bar me-1"></i> {{ __('Ver Respuestas') }}
-                    </a>
-                @endif
             </div>
             <div class="card-body">
                 @if($assignedUsers->count() > 0)
@@ -220,6 +215,16 @@
         cursor: pointer;
         transition: all 0.2s ease;
         border: 1px solid transparent;
+        padding-left: 2.5rem !important; /* Más espacio para el checkbox */
+        position: relative;
+    }
+
+    .user-item .form-check-input {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
     }
 
     .user-item:hover {
