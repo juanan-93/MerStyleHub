@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class CustomerProfile extends Model
 {
     protected $fillable = [
         'user_id',
+        'profile_image',
         'last_name',
         'phone',
         'age',
@@ -51,5 +53,33 @@ class CustomerProfile extends Model
     public function colorimetry()
     {
         return $this->belongsTo(Colorimetry::class);
+    }
+
+    // Relación con documentos del cliente
+    public function documents()
+    {
+        return $this->hasMany(CustomerDocument::class);
+    }
+
+    /**
+     * Obtener la URL de la imagen de perfil
+     */
+    public function getProfileImageUrlAttribute(): ?string
+    {
+        if ($this->profile_image && Storage::exists($this->profile_image)) {
+            return Storage::url($this->profile_image);
+        }
+        return null;
+    }
+
+    /**
+     * Eliminar la imagen de perfil del storage
+     */
+    public function deleteProfileImage(): bool
+    {
+        if ($this->profile_image && Storage::exists($this->profile_image)) {
+            return Storage::delete($this->profile_image);
+        }
+        return false;
     }
 }

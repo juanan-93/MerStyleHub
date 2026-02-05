@@ -10,6 +10,7 @@ use App\Http\Controllers\DashboardUserController;
 use App\Http\Controllers\QuestionnaireController;
 use App\Http\Controllers\UserQuestionnaireController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\InfoUserAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -131,6 +132,17 @@ Route::middleware('auth')->group(function () {
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::delete('/notifications/clear/read', [NotificationController::class, 'destroyAllRead'])->name('notifications.destroyAllRead');
 });
+
+//Rutas Info User Admin 
+Route::middleware('auth','role:admin')->group(function () {
+    Route::get('/info-user-admin/{userId}', [InfoUserAdminController::class, 'show'])->name('info-user-admin.show');
+    Route::get('/info-user-admin/{userId}/questionnaire/{questionnaireUserId}', [InfoUserAdminController::class, 'showQuestionnaireResponses'])->name('info-user-admin.questionnaire-responses');
+    
+    // Gestión de documentos
+    Route::post('/info-user-admin/{userId}/documents/upload', [InfoUserAdminController::class, 'uploadDocument'])->name('info-user-admin.documents.upload');
+    Route::delete('/info-user-admin/{userId}/documents/{documentId}', [InfoUserAdminController::class, 'deleteDocument'])->name('info-user-admin.documents.delete');
+});
+
 
 
 require __DIR__.'/auth.php';

@@ -128,6 +128,7 @@
                                     <th>% Pagado</th>
                                     <th>Importe Pagado</th>
                                     <th>Estado</th>
+                                    <th class="text-center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -199,10 +200,18 @@
                                         <td>{{ $hasProduct ? number_format($amountPaid, 2, ',', '.') . '€' : '-' }}</td>
                                         <td>
                                             <span class="badge {{ $statusClass }}">{{ $statusText }}</span>
+                                        <td class="text-center">
+                                            <a href="{{ route('info-user-admin.show', $profile->user_id) }}" 
+                                               class="btn btn-sm btn-outline-secondary rounded-circle"
+                                               title="Ver detalles"
+                                               data-bs-toggle="tooltip">
+                                                <i class="ti ti-file-text"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
+                                        <td colspan="8
                                         <td colspan="7" class="text-center py-5">
                                             <i class="ti ti-users-minus mb-2" style="font-size: 2rem; color: var(--color-primary);"></i>
                                             <p class="text-muted mb-0">No hay usuarios registrados</p>
