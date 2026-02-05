@@ -29,6 +29,20 @@
                         <span>Mis Citas</span>
                     </button>
                 </li>
+
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link d-flex align-items-center gap-2" 
+                            id="documentos-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#documentos" 
+                            type="button" 
+                            role="tab" 
+                            aria-controls="documentos" 
+                            aria-selected="false">
+                        <i class="ti ti-files" style="font-size: 1.25rem;"></i>
+                        <span>Mis Documentos</span>
+                    </button>
+                </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link d-flex align-items-center gap-2" 
                             id="perfil-tab" 
@@ -55,6 +69,11 @@
                 <!-- Tab Perfil -->
                 <div class="tab-pane fade" id="perfil" role="tabpanel" aria-labelledby="perfil-tab">
                     @include('dashboardUser.details.profile')
+                </div>
+                
+                <!-- Tab Documentos -->
+                <div class="tab-pane fade" id="documentos" role="tabpanel" aria-labelledby="documentos-tab">
+                    @include('dashboardUser.details.document')
                 </div>
             </div>
         </div>
@@ -103,8 +122,16 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Aquí puedes inicializar el calendario u otras funcionalidades
-        console.log('Dashboard cargado');
+        // Activar tab desde parámetro URL (?tab=documentos, ?tab=perfil, etc.)
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam) {
+            const tabButton = document.getElementById(tabParam + '-tab');
+            if (tabButton) {
+                const bsTab = new bootstrap.Tab(tabButton);
+                bsTab.show();
+            }
+        }
     });
 </script>
 @endpush

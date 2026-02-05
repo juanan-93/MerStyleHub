@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\AppointmentAvailability;
 use App\Models\Notification;
+use App\Models\QuestionnaireUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -116,7 +117,28 @@ class DashboardUserController extends Controller
             'weekEnd' => $weekEndDate ? $weekEndDate->format('Y-m-d') : now()->endOfWeek()->format('Y-m-d'),
         ];
         
-        return view('dashboardUser.index', compact('calendarData'));
+        // Datos del perfil del usuario
+        $user = Auth::user();
+        $user->load(['customerProfile.product', 'customerProfile.colorimetry', 'customerProfile.documents']);
+        $profile = $user->customerProfile;
+        
+        // Documentos del usuario
+        $documents = $profile ? $profile->documents()->orderBy('created_at', 'desc')->get() : collect();
+        
+        // Próxima cita del usuario
+        $nextAppointment = Appointment::where('client_email', $user->email)
+            ->where('date', '>=', now()->toDateString())
+            ->whereIn('status', ['confirmed', 'pending'])
+            ->with('availability')
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->first();
+        
+        // Cuestionarios asignados
+        $assignedQuestionnairesCount = QuestionnaireUser::where('user_id', $user->id)->count();
+        $completedQuestionnairesCount = QuestionnaireUser::where('user_id', $user->id)->where('status', 'completed')->count();
+        
+        return view('dashboardUser.index', compact('calendarData', 'user', 'profile', 'nextAppointment', 'assignedQuestionnairesCount', 'completedQuestionnairesCount', 'documents'));
     }
     
     /**

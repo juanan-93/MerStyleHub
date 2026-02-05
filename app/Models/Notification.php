@@ -36,6 +36,7 @@ class Notification extends Model
     const TYPE_APPOINTMENT_AVAILABLE = 'appointment_available';
     const TYPE_NEW_BOOKING = 'new_booking'; // Para admin: nueva reserva
     const TYPE_BOOKING_CANCELLED = 'booking_cancelled'; // Para admin: cancelación de reserva
+    const TYPE_DOCUMENT_UPLOADED = 'document_uploaded'; // Para usuario: nuevo documento
     const TYPE_SYSTEM = 'system';
     const TYPE_WELCOME = 'welcome';
 
@@ -381,5 +382,31 @@ class Notification extends Model
                 'data' => array_merge($questionnaireData, ['customer_name' => $customerName, 'customer_id' => $customerUser?->id]),
             ]);
         }
+    }
+
+    /**
+     * Notificar al usuario que se le ha subido un nuevo documento
+     * @param User|int $user Usuario destinatario
+     * @param CustomerDocument|array $document Documento o datos del documento
+     */
+    public static function documentUploaded(User|int $user, CustomerDocument|array $document): self
+    {
+        $documentData = $document instanceof CustomerDocument
+            ? [
+                'file_name' => $document->file_name,
+                'id' => $document->id,
+            ]
+            : $document;
+
+        return self::create([
+            'user_id' => self::resolveUserId($user),
+            'type' => self::TYPE_DOCUMENT_UPLOADED,
+            'title' => 'Nuevo documento disponible',
+            'message' => "Tu asesora ha compartido un nuevo documento: {$documentData['file_name']}",
+            'icon' => 'ti-file-upload',
+            'icon_color' => 'success',
+            'action_url' => route('dashboardUser.index') . '?tab=documentos',
+            'data' => $documentData,
+        ]);
     }
 }

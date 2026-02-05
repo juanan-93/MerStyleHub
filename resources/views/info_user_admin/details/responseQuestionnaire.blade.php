@@ -26,6 +26,9 @@
         .question-number {
             width: 40px;
             height: 40px;
+            min-width: 40px;
+            min-height: 40px;
+            flex-shrink: 0;
             background-color: var(--color-primary);
             color: white;
             border-radius: 50%;

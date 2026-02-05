@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\CustomerProfile;
 use App\Models\QuestionnaireUser;
 use App\Models\CustomerDocument;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class InfoUserAdminController extends Controller
@@ -84,6 +85,9 @@ class InfoUserAdminController extends Controller
                 'file_type' => $file->getMimeType(),
                 'file_size' => $file->getSize(),
             ]);
+
+            // Notificar al usuario
+            Notification::documentUploaded($user, $document);
 
             return response()->json([
                 'success' => true,
