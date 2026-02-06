@@ -166,7 +166,7 @@
                     {{-- Contenido del mensaje --}}
                     @if($message->body)
                         <div class="message-content" style="font-size: 0.95rem; line-height: 1.6; color: var(--color-secondary);">
-                            {!! nl2br(e($message->body)) !!}
+                            {!! $message->body !!}
                         </div>
                     @endif
                 </div>
@@ -178,28 +178,6 @@
     <div class="card-footer bg-white border-top p-4">
         <form action="{{ route('chat-admin.send', $conversation->id) }}" method="POST" enctype="multipart/form-data" id="chatForm">
             @csrf
-            
-            {{-- Cabecera de composición --}}
-            <div class="compose-header mb-3 pb-3 border-bottom">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <h6 class="mb-1 fw-bold" style="color: var(--color-secondary);">
-                            <i class="ti ti-edit me-2"></i>Redactar mensaje para {{ $conversation->customer->name }}
-                        </h6>
-                        <small class="text-muted">Compone tu respuesta usando el editor de texto enriquecido</small>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-outline-warning btn-sm" id="clearBtn" title="Limpiar editor">
-                            <i class="ti ti-eraser me-1"></i>Limpiar
-                        </button>
-                        <label class="btn btn-outline-secondary btn-sm" title="Adjuntar archivo">
-                            <i class="ti ti-paperclip me-1"></i>Adjuntar
-                            <input type="file" name="attachment" class="d-none" id="fileInput" 
-                                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
-                        </label>
-                    </div>
-                </div>
-            </div>
             
             {{-- Preview del archivo adjunto --}}
             <div id="filePreview" class="d-none mb-3">
@@ -213,7 +191,7 @@
                             </div>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
-                            <i class="ti ti-x me-1"></i>Quitar archivo
+                            <i class="ti ti-x me-1"></i>Quitar
                         </button>
                     </div>
                 </div>
@@ -221,11 +199,20 @@
             
             {{-- Editor de contenido --}}
             <div class="compose-content mb-3">
-                <label class="form-label fw-semibold" style="color: var(--color-secondary);">Mensaje:</label>
-                <textarea name="body" id="summernoteEditor" placeholder="Escribe tu mensaje aquí..."></textarea>
-                <div class="form-text text-muted">
-                    <small><i class="ti ti-info-circle me-1"></i>Usa <kbd>Ctrl + Enter</kbd> para enviar rápidamente</small>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label fw-semibold mb-0" style="color: var(--color-secondary);">Mensaje:</label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-warning btn-sm" id="clearBtn" title="Limpiar editor">
+                            <i class="ti ti-eraser me-1"></i>Limpiar
+                        </button>
+                        <label class="btn btn-outline-secondary btn-sm mb-0" title="Adjuntar archivo">
+                            <i class="ti ti-paperclip me-1"></i>Adjuntar
+                            <input type="file" name="attachment" class="d-none" id="fileInput" 
+                                   accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
+                        </label>
+                    </div>
                 </div>
+                <textarea name="body" id="summernoteEditor" placeholder="Escribe tu mensaje aquí..."></textarea>
             </div>
             
             {{-- Botones de acción --}}
@@ -236,45 +223,6 @@
                 <button type="submit" class="btn text-white" style="background-color: var(--color-primary);" id="sendBtn">
                     <i class="ti ti-send me-1"></i>Enviar Mensaje
                 </button>
-            </div>
-                        <textarea name="body" id="summernoteEditor" class="form-control" placeholder="Escribe tu mensaje aquí..."></textarea>
-                    </div>
-                    
-                    {{-- Preview del archivo adjunto --}}
-                    <div id="filePreview" class="d-none mb-3 p-3 rounded border" style="background-color: var(--color-light);">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="d-flex align-items-center">
-                                <i class="ti ti-paperclip me-2" style="color: var(--color-primary); font-size: 1.2rem;"></i>
-                                <div>
-                                    <div class="fw-semibold" style="font-size: 0.9rem;">Archivo adjunto:</div>
-                                    <span id="fileName" class="text-muted" style="font-size: 0.8rem;"></span>
-                                </div>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
-                                <i class="ti ti-x me-1"></i>Quitar
-                            </button>
-                        </div>
-                    </div>
-                    
-                    {{-- Botones de acción --}}
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex gap-2">
-                            <label class="btn btn-outline-secondary btn-sm" title="Adjuntar archivo">
-                                <i class="ti ti-paperclip me-1"></i>Adjuntar
-                                <input type="file" name="attachment" class="d-none" id="fileInput" 
-                                       accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
-                            </label>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-light" id="clearBtn">
-                                <i class="ti ti-eraser me-1"></i>Limpiar
-                            </button>
-                            <button type="submit" class="btn text-white" style="background-color: var(--color-primary);" id="sendBtn">
-                                <i class="ti ti-send me-1"></i>Enviar Mensaje
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </form>
     </div>

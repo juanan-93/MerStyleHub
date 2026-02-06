@@ -1,20 +1,15 @@
 @extends('layouts.app', ['title' => 'Mensajes'])
 
-@section('content')
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="fw-bold mb-1" style="color: var(--color-secondary);">
-                    <i class="ti ti-messages me-2"></i>Mensajes
-                </h2>
-                <p class="text-muted mb-0">Comunicación con tus clientes</p>
-            </div>
-        </div>
-    </div>
+@section('breadcrumbs')
+    <li class="breadcrumb-item active">
+        <i class="ti ti-messages me-1"></i>
+        {{ __('Mensajes') }}
+    </li>
+@endsection
 
-    <div class="row" style="height: calc(100vh - 200px); min-height: 500px;">
+@section('content')
+<div class="container-fluid py-3">
+    <div class="row" style="height: calc(100vh - 140px); min-height: 600px;">
         <!-- Panel izquierdo: Lista de conversaciones -->
         <div class="col-md-4 col-lg-3 h-100">
             <div class="card border-0 shadow-sm h-100 d-flex flex-column">
@@ -77,7 +72,7 @@
                                         @if($conv->lastMessage->hasAttachment() && !$conv->lastMessage->body)
                                             <i class="ti ti-paperclip"></i> Archivo adjunto
                                         @else
-                                            {{ Str::limit($conv->lastMessage->body, 40) }}
+                                            {{ Str::limit(strip_tags($conv->lastMessage->body), 40) }}
                                         @endif
                                     </p>
                                 @else
@@ -160,16 +155,46 @@
 
 @push('styles')
 <style>
+    /* Layout principal */
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    /* Panel de conversaciones */
+    .conversations-panel {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
     .conversation-item {
         transition: all 0.2s ease;
         color: var(--color-secondary);
+        border-left: 3px solid transparent;
     }
+    
     .conversation-item:hover {
         background-color: var(--color-light);
+        border-left-color: var(--color-border);
     }
+    
     .conversation-item.active {
-        background-color: rgba(160, 138, 122, 0.1);
+        background-color: rgba(160, 138, 122, 0.15);
         border-left: 3px solid var(--color-primary) !important;
+    }
+    
+    /* Panel vacío */
+    .empty-state-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        border-radius: 12px;
+    }
+    
+    /* Mejoras responsive */
+    @media (max-width: 768px) {
+        .conversations-panel {
+            border-radius: 0;
+        }
     }
 </style>
 @endpush

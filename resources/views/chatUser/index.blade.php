@@ -1,17 +1,14 @@
 @extends('layouts.app', ['title' => 'Mensajes'])
 
-@section('content')
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="fw-bold mb-1" style="color: var(--color-secondary);">
-                <i class="ti ti-messages me-2"></i>Mis Mensajes
-            </h2>
-            <p class="text-muted mb-0">Tus conversaciones</p>
-        </div>
-    </div>
+@section('breadcrumbs')
+    <li class="breadcrumb-item active">
+        <i class="ti ti-messages me-1"></i>
+        {{ __('Mensajes') }}
+    </li>
+@endsection
 
+@section('content')
+<div class="container-fluid py-3">
     <div class="row">
         @forelse($conversations as $conv)
             <div class="col-md-6 col-lg-4 mb-3">
@@ -26,7 +23,7 @@
                                 <h6 class="mb-1 fw-bold" style="color: var(--color-secondary);">{{ $conv->admin->name }}</h6>
                                 @if($conv->lastMessage)
                                     <p class="mb-0 text-muted text-truncate" style="font-size: 0.85rem;">
-                                        {{ Str::limit($conv->lastMessage->body ?? 'Archivo adjunto', 50) }}
+                                        {{ Str::limit(strip_tags($conv->lastMessage->body ?? 'Archivo adjunto'), 50) }}
                                     </p>
                                 @else
                                     <p class="mb-0 text-muted fst-italic" style="font-size: 0.85rem;">Sin mensajes aún</p>

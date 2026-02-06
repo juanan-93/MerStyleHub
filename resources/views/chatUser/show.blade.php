@@ -1,18 +1,17 @@
 @extends('layouts.app', ['title' => 'Chat'])
 
-@section('content')
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2 class="fw-bold mb-1" style="color: var(--color-secondary);">
-                <i class="ti ti-messages me-2"></i>Mensajes
-            </h2>
-            <p class="text-muted mb-0">Conversación con tu asesora</p>
-        </div>
-    </div>
+@section('breadcrumbs')
+    <li class="breadcrumb-item">
+        <a href="{{ route('chat-user.index') }}" class="text-decoration-none">
+            <i class="ti ti-messages me-1"></i>{{ __('Mensajes') }}
+        </a>
+    </li>
+    <li class="breadcrumb-item active">{{ $conversation->admin->name }}</li>
+@endsection
 
-    <div class="row" style="height: calc(100vh - 200px); min-height: 500px;">
+@section('content')
+<div class="container-fluid py-3">
+    <div class="row" style="height: calc(100vh - 140px); min-height: 500px;">
         <div class="col-12 h-100">
             <div class="card border-0 shadow-sm h-100 d-flex flex-column" id="chatWindow">
                 <!-- Header del chat -->
@@ -148,7 +147,7 @@
                                 {{-- Contenido del mensaje --}}
                                 @if($message->body)
                                     <div class="message-content" style="font-size: 0.95rem; line-height: 1.6; color: var(--color-secondary);">
-                                        {!! nl2br(e($message->body)) !!}
+                                        {!! $message->body !!}
                                     </div>
                                 @endif
                             </div>
@@ -160,28 +159,6 @@
                 <div class="card-footer bg-white border-top p-4">
                     <form action="{{ route('chat-user.send', $conversation->id) }}" method="POST" enctype="multipart/form-data" id="chatForm">
                         @csrf
-                        
-                        {{-- Cabecera de composición --}}
-                        <div class="compose-header mb-3 pb-3 border-bottom">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <h6 class="mb-1 fw-bold" style="color: var(--color-secondary);">
-                                        <i class="ti ti-edit me-2"></i>Mensaje para tu asesora
-                                    </h6>
-                                    <small class="text-muted">Escribe tu consulta usando el editor de texto</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-outline-warning btn-sm" id="clearBtn" title="Limpiar editor">
-                                        <i class="ti ti-eraser me-1"></i>Limpiar
-                                    </button>
-                                    <label class="btn btn-outline-secondary btn-sm" title="Adjuntar archivo">
-                                        <i class="ti ti-paperclip me-1"></i>Adjuntar
-                                        <input type="file" name="attachment" class="d-none" id="fileInput" 
-                                               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
                         
                         {{-- Preview del archivo adjunto --}}
                         <div id="filePreview" class="d-none mb-3">
@@ -195,7 +172,7 @@
                                         </div>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-danger" id="removeFile">
-                                        <i class="ti ti-x me-1"></i>Quitar archivo
+                                        <i class="ti ti-x me-1"></i>Quitar
                                     </button>
                                 </div>
                             </div>
@@ -203,11 +180,20 @@
                         
                         {{-- Editor de contenido --}}
                         <div class="compose-content mb-3">
-                            <label class="form-label fw-semibold" style="color: var(--color-secondary);">Tu consulta:</label>
-                            <textarea name="body" id="summernoteEditor" placeholder="Escribe tu mensaje aquí..."></textarea>
-                            <div class="form-text text-muted">
-                                <small><i class="ti ti-info-circle me-1"></i>Usa <kbd>Ctrl + Enter</kbd> para enviar rápidamente</small>
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <label class="form-label fw-semibold mb-0" style="color: var(--color-secondary);">Tu consulta:</label>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-warning btn-sm" id="clearBtn" title="Limpiar editor">
+                                        <i class="ti ti-eraser me-1"></i>Limpiar
+                                    </button>
+                                    <label class="btn btn-outline-secondary btn-sm mb-0" title="Adjuntar archivo">
+                                        <i class="ti ti-paperclip me-1"></i>Adjuntar
+                                        <input type="file" name="attachment" class="d-none" id="fileInput" 
+                                               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
+                                    </label>
+                                </div>
                             </div>
+                            <textarea name="body" id="summernoteEditor" placeholder="Escribe tu mensaje aquí..."></textarea>
                         </div>
                         
                         {{-- Botones de acción --}}
@@ -506,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Formato de correo electrónico
-        const bodyHtml = msg.body ? `<div class="message-content" style="font-size: 0.95rem; line-height: 1.6; color: var(--color-secondary);">${escapeHtml(msg.body).replace(/\n/g, '<br>')}</div>` : '';
+        const bodyHtml = msg.body ? `<div class="message-content" style="font-size: 0.95rem; line-height: 1.6; color: var(--color-secondary);">${msg.body}</div>` : '';
         const senderName = isMe ? 'Tú' : 'Tu asesora';
         const senderAvatar = isMe ? '{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}' : 'A';
         const statusBadge = isMe ? `<span class="badge bg-warning text-dark" style="font-size: 0.65rem;">✓ Enviado</span>` : '';

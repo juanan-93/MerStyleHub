@@ -1,20 +1,17 @@
 @extends('layouts.app', ['title' => 'Chat - ' . $conversation->customer->name])
 
-@section('content')
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="fw-bold mb-1" style="color: var(--color-secondary);">
-                    <i class="ti ti-messages me-2"></i>Mensajes
-                </h2>
-                <p class="text-muted mb-0">Comunicación con tus clientes</p>
-            </div>
-        </div>
-    </div>
+@section('breadcrumbs')
+    <li class="breadcrumb-item">
+        <a href="{{ route('chat-admin.index') }}" class="text-decoration-none">
+            <i class="ti ti-messages me-1"></i>{{ __('Mensajes') }}
+        </a>
+    </li>
+    <li class="breadcrumb-item active">{{ $conversation->customer->name }}</li>
+@endsection
 
-    <div class="row" style="height: calc(100vh - 200px); min-height: 500px;">
+@section('content')
+<div class="container-fluid py-3">
+    <div class="row" style="height: calc(100vh - 140px); min-height: 600px;">
         <!-- Panel izquierdo: Lista de conversaciones -->
         <div class="col-md-4 col-lg-3 h-100 d-none d-md-block">
             <div class="card border-0 shadow-sm h-100 d-flex flex-column">
@@ -59,7 +56,7 @@
                                 @if($conv->lastMessage)
                                     <p class="mb-0 text-muted text-truncate" style="font-size: 0.75rem;">
                                         @if($conv->lastMessage->sender_id === Auth::id()) <span>Tú: </span> @endif
-                                        {{ Str::limit($conv->lastMessage->body ?? 'Archivo adjunto', 30) }}
+                                        {{ Str::limit(strip_tags($conv->lastMessage->body ?? 'Archivo adjunto'), 30) }}
                                     </p>
                                 @endif
                             </div>
@@ -79,16 +76,40 @@
 
 @push('styles')
 <style>
+    /* Layout principal */
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    /* Panel de conversaciones */
+    .conversations-panel {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
     .conversation-item {
         transition: all 0.2s ease;
         color: var(--color-secondary);
+        border-left: 3px solid transparent;
     }
+    
     .conversation-item:hover {
         background-color: var(--color-light);
+        border-left-color: var(--color-border);
     }
+    
     .conversation-item.active {
-        background-color: rgba(160, 138, 122, 0.1);
+        background-color: rgba(160, 138, 122, 0.15);
         border-left: 3px solid var(--color-primary) !important;
+    }
+    
+    /* Mejoras responsive */
+    @media (max-width: 768px) {
+        .conversations-panel {
+            border-radius: 0;
+        }
     }
 </style>
 @endpush
