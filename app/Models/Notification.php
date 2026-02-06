@@ -37,6 +37,8 @@ class Notification extends Model
     const TYPE_NEW_BOOKING = 'new_booking'; // Para admin: nueva reserva
     const TYPE_BOOKING_CANCELLED = 'booking_cancelled'; // Para admin: cancelación de reserva
     const TYPE_DOCUMENT_UPLOADED = 'document_uploaded'; // Para usuario: nuevo documento
+    const TYPE_NEW_MESSAGE = 'new_message'; // Para usuario: nuevo mensaje del admin
+    const TYPE_NEW_MESSAGE_ADMIN = 'new_message_admin'; // Para admin: nuevo mensaje de usuario
     const TYPE_SYSTEM = 'system';
     const TYPE_WELCOME = 'welcome';
 
@@ -382,6 +384,40 @@ class Notification extends Model
                 'data' => array_merge($questionnaireData, ['customer_name' => $customerName, 'customer_id' => $customerUser?->id]),
             ]);
         }
+    }
+
+    /**
+     * Notificar al customer que tiene un nuevo mensaje del admin
+     */
+    public static function newMessage(int $customerId, User $admin, Conversation $conversation): self
+    {
+        return self::create([
+            'user_id' => $customerId,
+            'type' => self::TYPE_NEW_MESSAGE,
+            'title' => 'Nuevo mensaje',
+            'message' => "{$admin->name} te ha enviado un mensaje.",
+            'icon' => 'ti-message-2',
+            'icon_color' => 'info',
+            'action_url' => route('chat-user.show', $conversation->id),
+            'data' => ['conversation_id' => $conversation->id, 'sender_name' => $admin->name],
+        ]);
+    }
+
+    /**
+     * Notificar al admin que tiene un nuevo mensaje de un customer
+     */
+    public static function newMessageForAdmin(int $adminId, User $customer, Conversation $conversation): self
+    {
+        return self::create([
+            'user_id' => $adminId,
+            'type' => self::TYPE_NEW_MESSAGE_ADMIN,
+            'title' => 'Nuevo mensaje de cliente',
+            'message' => "{$customer->name} te ha enviado un mensaje.",
+            'icon' => 'ti-message-2',
+            'icon_color' => 'info',
+            'action_url' => route('chat-admin.show', $conversation->id),
+            'data' => ['conversation_id' => $conversation->id, 'sender_name' => $customer->name],
+        ]);
     }
 
     /**

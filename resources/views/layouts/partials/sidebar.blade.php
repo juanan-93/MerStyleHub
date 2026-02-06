@@ -30,6 +30,16 @@
                     </a>
                 </li>
 
+                <!-- Buzon de entrada chat/mensajes -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('chat-user.*') ? 'active' : '' }}" 
+                    href="{{ route('chat-user.index') }}" 
+                    title="{{ __('Mensajes') }}">
+                        <i class="ti ti-send sidebar-icon"></i>
+                        <span class="ms-2">{{ __('Mensajes') }}</span>
+                    </a>
+                </li>
+
             @endrole
 
             @role('admin')
@@ -41,6 +51,16 @@
                     title="{{ __('Dashboard') }}">
                         <i class="ti ti-home sidebar-icon"></i>
                         <span class="ms-2">{{ __('Dashboard') }}</span>
+                    </a>
+                </li>
+
+                <!-- Buzon de entrada chat/mensajes -->
+                <li class="nav-item mb-1">
+                    <a class="nav-link sidebar-link d-flex align-items-center rounded {{ request()->routeIs('chat-admin.*') ? 'active' : '' }}" 
+                    href="{{ route('chat-admin.index') }}" 
+                    title="{{ __('Mensajes') }}">
+                        <i class="ti ti-send sidebar-icon"></i>
+                        <span class="ms-2">{{ __('Mensajes') }}</span>
                     </a>
                 </li>
                 

@@ -119,4 +119,36 @@ class User extends Authenticatable
     {
         return $this->unreadNotifications()->count();
     }
+
+    /**
+     * Conversaciones del usuario (como admin o customer)
+     */
+    public function conversations()
+    {
+        return Conversation::where('admin_id', $this->id)
+            ->orWhere('customer_id', $this->id)
+            ->orderByDesc('last_message_at');
+    }
+
+    /**
+     * Mensajes enviados por el usuario
+     */
+    public function sentMessages()
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+
+    /**
+     * Total de mensajes no leídos en todas las conversaciones
+     */
+    public function getUnreadMessagesCountAttribute(): int
+    {
+        return Message::whereHas('conversation', function ($q) {
+            $q->where('admin_id', $this->id)
+              ->orWhere('customer_id', $this->id);
+        })
+        ->where('sender_id', '!=', $this->id)
+        ->whereNull('read_at')
+        ->count();
+    }
 }

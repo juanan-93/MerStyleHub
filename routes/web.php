@@ -11,6 +11,8 @@ use App\Http\Controllers\QuestionnaireController;
 use App\Http\Controllers\UserQuestionnaireController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InfoUserAdminController;
+use App\Http\Controllers\ChatAdminController;
+use App\Http\Controllers\ChatUserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -144,5 +146,26 @@ Route::middleware('auth','role:admin')->group(function () {
 });
 
 
+
+//Chat Admin Routes
+Route::middleware('auth','role:admin')->group(function () {
+    Route::get('/chat-admin', [ChatAdminController::class, 'index'])->name('chat-admin.index');
+    Route::get('/chat-admin/{conversationId}', [ChatAdminController::class, 'show'])->name('chat-admin.show');
+    Route::post('/chat-admin/start', [ChatAdminController::class, 'startConversation'])->name('chat-admin.start');
+    Route::post('/chat-admin/{conversationId}/send', [ChatAdminController::class, 'sendMessage'])->name('chat-admin.send');
+    Route::get('/chat-admin/{conversationId}/new-messages', [ChatAdminController::class, 'getNewMessages'])->name('chat-admin.new-messages');
+    Route::get('/chat-admin-unread-total', [ChatAdminController::class, 'getUnreadTotal'])->name('chat-admin.unread-total');
+    Route::delete('/chat-admin/{conversationId}/message/{messageId}', [ChatAdminController::class, 'deleteMessage'])->name('chat-admin.delete-message');
+});
+
+//Chat User Routes
+Route::middleware('auth','role:customer')->group(function () {
+    Route::get('/chat-user', [ChatUserController::class, 'index'])->name('chat-user.index');
+    Route::get('/chat-user/{conversationId}', [ChatUserController::class, 'show'])->name('chat-user.show');
+    Route::post('/chat-user/{conversationId}/send', [ChatUserController::class, 'sendMessage'])->name('chat-user.send');
+    Route::get('/chat-user/{conversationId}/new-messages', [ChatUserController::class, 'getNewMessages'])->name('chat-user.new-messages');
+    Route::get('/chat-user-unread-total', [ChatUserController::class, 'getUnreadTotal'])->name('chat-user.unread-total');
+    Route::delete('/chat-user/{conversationId}/message/{messageId}', [ChatUserController::class, 'deleteMessage'])->name('chat-user.delete-message');
+});
 
 require __DIR__.'/auth.php';
