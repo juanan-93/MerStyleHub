@@ -58,6 +58,74 @@
             background: linear-gradient(135deg, var(--color-primary) 0%, #8B7669 100%);
             color: white;
         }
+
+        /* ===== Previsualización de archivos ===== */
+        .file-preview-card {
+            width: 160px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .file-preview-card:hover {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .file-preview-link {
+            display: block;
+            width: 100%;
+            height: 120px;
+            overflow: hidden;
+            background: var(--color-light);
+        }
+
+        .file-preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .file-preview-card:hover .file-preview-img {
+            transform: scale(1.05);
+        }
+
+        .file-preview-name {
+            padding: 0.5rem 0.6rem;
+            font-size: 0.75rem;
+            color: var(--color-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .file-download-card {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.75rem 1rem;
+            background: white;
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            text-decoration: none;
+            color: var(--color-secondary);
+            transition: all 0.2s ease;
+        }
+
+        .file-download-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 2px 10px rgba(160, 138, 122, 0.15);
+            color: var(--color-secondary);
+        }
+
+        .file-download-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
     </style>
 @endpush
 
@@ -84,9 +152,16 @@
                                 </div>
                             </div>
                         </div>
+                    <div class="d-flex flex-column align-items-end gap-2">
                         <span class="badge bg-success px-3 py-2">
                             <i class="ti ti-check me-1"></i>Completado
                         </span>
+                        <a href="{{ route('info-user-admin.questionnaire-responses.pdf', [$user->id, $questionnaireUser->id]) }}" 
+                           class="btn btn-sm px-3 py-1"
+                           style="background-color: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.4); backdrop-filter: blur(4px);">
+                            <i class="ti ti-file-type-pdf me-1"></i>Exportar PDF
+                        </a>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -143,6 +218,40 @@
                                                     <span class="text-muted">Sin respuesta</span>
                                                 @endif
                                             </div>
+                                        @elseif($question->type === 'file')
+                                            @php
+                                                $files = json_decode($response->text_response, true);
+                                            @endphp
+                                            @if(is_array($files) && count($files) > 0)
+                                                <div class="d-flex flex-wrap gap-3">
+                                                    @foreach($files as $file)
+                                                        @php
+                                                            $isImage = str_starts_with($file['mime'] ?? '', 'image/');
+                                                            $fileUrl = asset('storage/' . $file['path']);
+                                                        @endphp
+                                                        @if($isImage)
+                                                            <div class="file-preview-card">
+                                                                <a href="{{ $fileUrl }}" target="_blank" class="file-preview-link">
+                                                                    <img src="{{ $fileUrl }}" alt="{{ $file['name'] ?? 'Imagen' }}" class="file-preview-img">
+                                                                </a>
+                                                                <div class="file-preview-name" title="{{ $file['name'] ?? '' }}">
+                                                                    <i class="ti ti-photo me-1"></i>{{ Str::limit($file['name'] ?? 'Imagen', 25) }}
+                                                                </div>
+                                                            </div>
+                                                        @else
+                                                            <a href="{{ $fileUrl }}" target="_blank" class="file-download-card">
+                                                                <i class="ti ti-file-download" style="font-size: 1.5rem; color: var(--color-primary);"></i>
+                                                                <span class="file-download-name">{{ Str::limit($file['name'] ?? 'Archivo', 30) }}</span>
+                                                                @if(isset($file['size']))
+                                                                    <small class="text-muted">{{ number_format($file['size'] / 1024, 0) }} KB</small>
+                                                                @endif
+                                                            </a>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="response-text text-muted">Sin archivos adjuntos</div>
+                                            @endif
                                         @elseif($question->type === 'info')
                                             <div class="response-text">
                                                 <i class="ti ti-info-circle me-2" style="color: var(--color-primary);"></i>

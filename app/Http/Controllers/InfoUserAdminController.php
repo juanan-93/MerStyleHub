@@ -9,6 +9,7 @@ use App\Models\QuestionnaireUser;
 use App\Models\CustomerDocument;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InfoUserAdminController extends Controller
 {
@@ -144,5 +145,33 @@ class InfoUserAdminController extends Controller
                 'message' => 'Error al eliminar el documento: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function exportQuestionnairePdf($userId, $questionnaireUserId)
+    {
+        $user = User::findOrFail($userId);
+
+        $questionnaireUser = QuestionnaireUser::with([
+            'questionnaire.questions.options',
+            'responses.question.options',
+            'responses.selectedOption'
+        ])->findOrFail($questionnaireUserId);
+
+        if ($questionnaireUser->user_id != $userId) {
+            abort(403, 'No autorizado');
+        }
+
+        $questions = $questionnaireUser->questionnaire->questions;
+        $responses = $questionnaireUser->responses->keyBy('question_id');
+
+        $pdf = Pdf::loadView('pdf.questionnaire-responses', compact(
+            'user', 'questionnaireUser', 'questions', 'responses'
+        ));
+
+        $pdf->setPaper('A4', 'portrait');
+
+        $filename = 'respuestas_' . str_replace(' ', '_', $questionnaireUser->questionnaire->title) . '_' . $user->name . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

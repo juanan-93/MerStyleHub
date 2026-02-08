@@ -63,6 +63,13 @@
         .sidebar-desktop.collapsed .nav-link {
             justify-content: center;
         }
+        .sidebar-desktop.collapsed .p-3:not(.border-bottom) {
+            padding: 0.75rem 0.65rem !important;
+        }
+        .sidebar-desktop.collapsed .nav-item {
+            display: flex;
+            justify-content: center;
+        }
 
         /* Header estilos */
         .navbar {

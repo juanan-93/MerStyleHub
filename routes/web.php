@@ -145,6 +145,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth','role:admin')->group(function () {
     Route::get('/info-user-admin/{userId}', [InfoUserAdminController::class, 'show'])->name('info-user-admin.show');
     Route::get('/info-user-admin/{userId}/questionnaire/{questionnaireUserId}', [InfoUserAdminController::class, 'showQuestionnaireResponses'])->name('info-user-admin.questionnaire-responses');
+    Route::get('/info-user-admin/{userId}/questionnaire/{questionnaireUserId}/pdf', [InfoUserAdminController::class, 'exportQuestionnairePdf'])->name('info-user-admin.questionnaire-responses.pdf');
     
     // Gestión de documentos
     Route::post('/info-user-admin/{userId}/documents/upload', [InfoUserAdminController::class, 'uploadDocument'])->name('info-user-admin.documents.upload');

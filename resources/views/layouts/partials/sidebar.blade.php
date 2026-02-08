@@ -123,11 +123,29 @@
         padding: 0.75rem 1rem;
         transition: all 0.2s ease;
         border: 1px solid transparent;
+        overflow: hidden;
     }
     
     .sidebar-nav .sidebar-link .sidebar-icon {
         font-size: 1.25rem;
         transition: all 0.2s ease;
+        flex-shrink: 0;
+    }
+    
+    /* ===== Estado collapsed del sidebar ===== */
+    .sidebar-desktop.collapsed .sidebar-nav .sidebar-link {
+        padding: 0.65rem;
+        justify-content: center;
+        border-radius: 10px !important;
+        margin: 0 auto;
+        max-width: 44px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .sidebar-desktop.collapsed .sidebar-nav .sidebar-link .sidebar-icon {
+        margin: 0;
+        font-size: 1.2rem;
     }
     
     /* Hover State */
