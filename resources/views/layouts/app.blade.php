@@ -288,5 +288,8 @@
     
     @stack('scripts')
     @yield('scripts')
+
+    {{-- Banner de Cookies --}}
+    @include('partials.cookie-banner')
 </body>
 </html>

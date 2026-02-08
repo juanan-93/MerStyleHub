@@ -365,6 +365,11 @@ class DashboardAdminController extends Controller
 
         $appointment = Appointment::findOrFail($id);
         
+        // Guardar datos antiguos antes de mover
+        \Carbon\Carbon::setLocale('es');
+        $oldDate = $appointment->date->format('d/m/Y');
+        $oldTime = substr($appointment->start_time, 0, 5);
+        
         // Verificar que no hay conflicto en el nuevo horario
         $conflict = Appointment::where('id', '!=', $id)
             ->where('date', $request->date)
@@ -390,6 +395,23 @@ class DashboardAdminController extends Controller
         $appointment->start_time = $request->start_time;
         $appointment->end_time = $request->end_time;
         $appointment->save();
+
+        // Notificar al usuario sobre la reubicación de su cita
+        if ($appointment->client_email) {
+            $user = \App\Models\User::where('email', $appointment->client_email)->first();
+            if ($user) {
+                $newDate = \Carbon\Carbon::parse($request->date)->format('d/m/Y');
+                $newTime = substr($request->start_time, 0, 5) . ' - ' . substr($request->end_time, 0, 5);
+                
+                \App\Models\Notification::appointmentMoved($user->id, [
+                    'old_date' => $oldDate,
+                    'old_time' => $oldTime,
+                    'new_date' => $newDate,
+                    'new_time' => $newTime,
+                    'appointment_id' => $appointment->id,
+                ]);
+            }
+        }
 
         return response()->json([
             'success' => true,

@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\NotificationMail;
 
 class Notification extends Model
 {
@@ -30,6 +33,7 @@ class Notification extends Model
     const TYPE_APPOINTMENT_CANCELLED = 'appointment_cancelled';
     const TYPE_APPOINTMENT_CONFIRMED = 'appointment_confirmed';
     const TYPE_APPOINTMENT_REMINDER = 'appointment_reminder';
+    const TYPE_APPOINTMENT_MOVED = 'appointment_moved';
     const TYPE_QUESTIONNAIRE_ASSIGNED = 'questionnaire_assigned';
     const TYPE_QUESTIONNAIRE_REMINDER = 'questionnaire_reminder';
     const TYPE_QUESTIONNAIRE_COMPLETED = 'questionnaire_completed'; // Para admin
@@ -41,6 +45,27 @@ class Notification extends Model
     const TYPE_NEW_MESSAGE_ADMIN = 'new_message_admin'; // Para admin: nuevo mensaje de usuario
     const TYPE_SYSTEM = 'system';
     const TYPE_WELCOME = 'welcome';
+
+    /**
+     * Boot del modelo: enviar email automáticamente al crear una notificación
+     */
+    protected static function booted(): void
+    {
+        static::created(function (Notification $notification) {
+            try {
+                $user = $notification->user;
+                if ($user && $user->email) {
+                    Mail::to($user->email)->send(new NotificationMail($notification, $user));
+                }
+            } catch (\Exception $e) {
+                Log::error('Error enviando email de notificación: ' . $e->getMessage(), [
+                    'notification_id' => $notification->id,
+                    'user_id' => $notification->user_id,
+                    'type' => $notification->type,
+                ]);
+            }
+        });
+    }
 
     /**
      * Obtener el ID del usuario (acepta User o int)
@@ -189,6 +214,30 @@ class Notification extends Model
             'icon_color' => 'success',
             'action_url' => route('dashboardUser.index'),
             'data' => $appointmentData,
+        ]);
+    }
+
+    /**
+     * Crear notificación de cita reubicada/movida
+     * @param User|int $user Usuario o ID del usuario
+     * @param array $data Datos con fecha/hora antigua y nueva
+     */
+    public static function appointmentMoved(User|int $user, array $data): self
+    {
+        $oldDate = $data['old_date'] ?? '';
+        $oldTime = $data['old_time'] ?? '';
+        $newDate = $data['new_date'] ?? '';
+        $newTime = $data['new_time'] ?? '';
+            
+        return self::create([
+            'user_id' => self::resolveUserId($user),
+            'type' => self::TYPE_APPOINTMENT_MOVED,
+            'title' => 'Cita reubicada',
+            'message' => "Tu cita del {$oldDate} a las {$oldTime} ha sido reubicada al {$newDate} a las {$newTime}.",
+            'icon' => 'ti-calendar-event',
+            'icon_color' => 'info',
+            'action_url' => route('dashboardUser.index'),
+            'data' => $data,
         ]);
     }
 

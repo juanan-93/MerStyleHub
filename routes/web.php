@@ -13,6 +13,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\InfoUserAdminController;
 use App\Http\Controllers\ChatAdminController;
 use App\Http\Controllers\ChatUserController;
+use App\Http\Controllers\CookieConsentController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::get('/', function () {
     $products = Product::where('is_active', true)->get();
     return view('welcome', compact('products'));
 });
+
+// Consentimiento de cookies
+Route::post('/cookie-consent', [CookieConsentController::class, 'store'])->name('cookie.consent');
 
 // Ruta de prueba temporal para debug
 Route::post('/test-questionnaire-submit/{id}', function(\Illuminate\Http\Request $request, $id) {
