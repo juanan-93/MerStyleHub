@@ -896,7 +896,16 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const appointmentModal = new bootstrap.Modal(document.getElementById('appointmentModal'));
+    const appointmentModalEl = document.getElementById('appointmentModal');
+    const appointmentModal = new bootstrap.Modal(appointmentModalEl);
+
+    // Evitar warning aria-hidden: quitar foco del interior del modal antes de ocultarlo
+    appointmentModalEl.addEventListener('hide.bs.modal', function() {
+        if (this.contains(document.activeElement)) {
+            document.activeElement.blur();
+        }
+    });
+
     let currentMonth = {{ $currentMonth->month }};
     let currentYear = {{ $currentMonth->year }};
     
@@ -1101,7 +1110,8 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 availability_id: currentSlot.availability_id,
@@ -1109,8 +1119,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 start_time: currentSlot.start_time
             })
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(response => response.json().then(data => ({ ok: response.ok, data })))
+        .then(({ ok, data }) => {
             this.innerHTML = btnHtml;
             
             if (data.success) {

@@ -915,6 +915,9 @@
             width: 100% !important;
             min-width: 100% !important;
             max-width: 100% !important;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
         }
 
         .flatpickr-months {
@@ -979,6 +982,7 @@
             margin-top: 0.5rem;
             padding: 0.5rem 0;
             border-bottom: 1px solid var(--color-border);
+            width: 100%;
         }
 
         .flatpickr-weekday {
@@ -986,6 +990,8 @@
             font-weight: 600;
             font-size: 0.7rem;
             text-transform: uppercase;
+            flex-basis: 14.2857%;
+            max-width: none;
         }
 
         @media (min-width: 576px) {
@@ -1012,9 +1018,9 @@
             height: 40px;
             line-height: 38px;
             font-size: 0.9rem;
-            margin: 2px;
-            max-width: 40px;
-            flex-basis: 14.285%;
+            margin: 0;
+            max-width: none;
+            flex-basis: 14.2857%;
             box-sizing: border-box;
         }
 
@@ -1023,7 +1029,6 @@
             .flatpickr-day {
                 height: 44px;
                 line-height: 42px;
-                max-width: 44px;
                 font-size: 0.95rem;
             }
         }
@@ -1033,9 +1038,7 @@
             .flatpickr-day {
                 height: 50px;
                 line-height: 48px;
-                max-width: 50px;
                 font-size: 1rem;
-                margin: 3px;
                 border-radius: 12px;
             }
         }
@@ -1045,7 +1048,6 @@
             .flatpickr-day {
                 height: 52px;
                 line-height: 50px;
-                max-width: 52px;
                 font-size: 1.05rem;
             }
         }
@@ -1055,7 +1057,6 @@
             .flatpickr-day {
                 height: 48px;
                 line-height: 46px;
-                max-width: 48px;
                 font-size: 1rem;
                 border-radius: 12px;
             }

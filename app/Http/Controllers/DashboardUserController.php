@@ -292,7 +292,7 @@ class DashboardUserController extends Controller
                     'date' => Carbon::parse($existingAppointment->date)->format('d/m/Y'),
                     'time' => Carbon::parse($existingAppointment->start_time)->format('H:i'),
                 ]
-            ], 409);
+            ]);
         }
 
         try {
@@ -313,7 +313,7 @@ class DashboardUserController extends Controller
                     ->exists();
 
                 if ($exists) {
-                    abort(409, 'Este horario ya ha sido reservado');
+                    throw new \Exception('Este horario ya ha sido reservado por otro usuario. Por favor, elige otro horario.');
                 }
 
                 // Crear reserva

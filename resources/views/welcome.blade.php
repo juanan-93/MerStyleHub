@@ -634,14 +634,63 @@
             }
         }
 
+        /* ========== CARRUSEL DE SERVICIOS ========== */
+        .services-carousel-wrapper {
+            position: relative;
+            overflow: hidden;
+            padding: 1rem 0 2rem;
+        }
+
+        .services-carousel-track {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+        }
+
+        .service-slide {
+            flex: 0 0 88%;
+            max-width: 88%;
+            padding: 0 0.4rem;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (min-width: 576px) {
+            .service-slide {
+                flex: 0 0 70%;
+                max-width: 70%;
+                padding: 0 0.75rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .service-slide {
+                flex: 0 0 50%;
+                max-width: 50%;
+                padding: 0 1rem;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .service-slide {
+                flex: 0 0 33.333%;
+                max-width: 33.333%;
+                padding: 0 1rem;
+            }
+        }
+
         .service-card {
             background: var(--color-white);
             border-radius: 16px;
             padding: 1.5rem;
             text-align: center;
-            transition: all 0.4s ease;
-            border: 1px solid transparent;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--color-border);
             height: 100%;
+            opacity: 0.6;
+            transform: scale(0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         @media (min-width: 576px) {
@@ -658,10 +707,11 @@
             }
         }
 
-        .service-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        .service-slide.active .service-card {
+            opacity: 1;
+            transform: scale(1);
             border-color: var(--color-primary);
+            box-shadow: 0 20px 60px rgba(160, 138, 122, 0.2);
         }
 
         .service-icon {
@@ -675,6 +725,7 @@
             margin: 0 auto 1rem;
             color: var(--color-white);
             font-size: 1.5rem;
+            flex-shrink: 0;
         }
 
         @media (min-width: 576px) {
@@ -716,17 +767,67 @@
             }
         }
 
-        .service-card p {
+        .service-card .service-desc {
             color: #666;
-            line-height: 1.6;
-            font-size: 0.9rem;
+            line-height: 1.7;
+            font-size: 0.875rem;
+            text-align: left;
+            margin-bottom: 0;
         }
 
         @media (min-width: 576px) {
-            .service-card p {
-                line-height: 1.7;
-                font-size: 0.95rem;
+            .service-card .service-desc {
+                font-size: 0.925rem;
+                line-height: 1.75;
             }
+        }
+
+        /* Navegación del carrusel */
+        .carousel-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .carousel-btn {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            min-height: 48px;
+            border-radius: 50%;
+            border: 2px solid var(--color-primary);
+            background: var(--color-white);
+            color: var(--color-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .carousel-btn:hover {
+            background: var(--color-primary);
+            color: var(--color-white);
+            transform: scale(1.05);
+        }
+
+        .carousel-counter {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--color-secondary);
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .carousel-counter .current {
+            font-weight: 700;
+            color: var(--color-primary);
+            font-size: 1.1rem;
         }
 
         /* About Section */
@@ -1054,9 +1155,6 @@
         /* Mejoras adicionales para touch en móviles */
         @media (hover: none) and (pointer: coarse) {
             /* Eliminar efectos hover en dispositivos táctiles */
-            .service-card:hover {
-                transform: none;
-            }
             .btn-primary-custom:hover,
             .btn-outline-custom:hover,
             .btn-white:hover {
@@ -1186,61 +1284,36 @@
                 <p class="section-subtitle fade-up">Servicios personalizados diseñados para potenciar tu imagen y estilo personal</p>
             </div>
             
-            <div class="row g-4">
-                <div class="col-md-6 col-lg-4">
-                    <div class="service-card fade-up">
-                        <div class="service-icon">
-                            <i class="ti ti-palette"></i>
+            @php
+                $icons = ['ti-palette', 'ti-hanger', 'ti-diamond', 'ti-shirt', 'ti-brush', 'ti-shopping-bag', 'ti-walk', 'ti-calendar-event'];
+            @endphp
+
+            <div class="services-carousel-wrapper fade-up">
+                <div class="services-carousel-track" id="servicesTrack">
+                    @foreach($products as $index => $product)
+                    <div class="service-slide {{ $index === 0 ? 'active' : '' }}" data-index="{{ $index }}">
+                        <div class="service-card">
+                            <div class="service-icon">
+                                <i class="ti {{ $icons[$index % count($icons)] }}"></i>
+                            </div>
+                            <h4>{{ $product->title }}</h4>
+                            <p class="service-desc">{!! strip_tags($product->description) !!}</p>
                         </div>
-                        <h4>Colorimetría</h4>
-                        <p>Descubre qué colores te favorecen según tu tono de piel, ojos y cabello. Potencia tu belleza natural con la paleta perfecta para ti.</p>
                     </div>
+                    @endforeach
                 </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="service-card fade-up">
-                        <div class="service-icon">
-                            <i class="ti ti-hanger"></i>
-                        </div>
-                        <h4>Asesoría de Imagen</h4>
-                        <p>Creamos juntas tu estilo personal. Te guío para que tu vestuario refleje tu personalidad y objetivos profesionales.</p>
-                    </div>
+            </div>
+
+            <div class="carousel-nav">
+                <button class="carousel-btn" id="carouselPrev" aria-label="Servicio anterior">
+                    <i class="ti ti-chevron-left"></i>
+                </button>
+                <div class="carousel-counter">
+                    <span class="current" id="carouselCurrent">1</span> / <span id="carouselTotal">{{ $products->count() }}</span>
                 </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="service-card fade-up">
-                        <div class="service-icon">
-                            <i class="ti ti-shopping-bag"></i>
-                        </div>
-                        <h4>Personal Shopper</h4>
-                        <p>Te acompaño en tus compras para que inviertas de forma inteligente en prendas que realmente te favorezcan y uses.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="service-card fade-up">
-                        <div class="service-icon">
-                            <i class="ti ti-shirt"></i>
-                        </div>
-                        <h4>Análisis de Armario</h4>
-                        <p>Organizamos tu closet, identificamos lo que funciona y creamos combinaciones que maximicen tu guardarropa actual.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="service-card fade-up">
-                        <div class="service-icon">
-                            <i class="ti ti-brush"></i>
-                        </div>
-                        <h4>Asesoría de Maquillaje</h4>
-                        <p>Aprende técnicas de maquillaje adaptadas a tu rostro, estilo de vida y los colores que mejor te sientan.</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <div class="service-card fade-up">
-                        <div class="service-icon">
-                            <i class="ti ti-diamond"></i>
-                        </div>
-                        <h4>Pack Completo</h4>
-                        <p>La experiencia completa de transformación: colorimetría, asesoría de imagen, análisis de armario y acompañamiento continuo.</p>
-                    </div>
-                </div>
+                <button class="carousel-btn" id="carouselNext" aria-label="Siguiente servicio">
+                    <i class="ti ti-chevron-right"></i>
+                </button>
             </div>
         </div>
     </section>
@@ -1332,10 +1405,7 @@
                         Tu aliada en el camino hacia una imagen auténtica y un estilo que te represente.
                     </p>
                     <div class="social-icons mt-3">
-                        <a href="#"><i class="ti ti-brand-instagram"></i></a>
-                        <a href="#"><i class="ti ti-brand-facebook"></i></a>
-                        <a href="#"><i class="ti ti-brand-pinterest"></i></a>
-                        <a href="#"><i class="ti ti-brand-linkedin"></i></a>
+                        <a href="#"><i class="ti ti-brand-instagram"></i></a>  
                     </div>
                 </div>
                 <div class="col-6 col-lg-2">
@@ -1361,15 +1431,12 @@
                     <ul class="footer-links">
                         <li>
                             <i class="ti ti-mail me-2" style="color: var(--color-primary);"></i>
-                            <a href="mailto:hola@merstylehub.com">hola@merstylehub.com</a>
+                            <a href="mailto:hola@merstylehub.com">info@merstylehub.com</a>
                         </li>
-                        <li>
-                            <i class="ti ti-phone me-2" style="color: var(--color-primary);"></i>
-                            <a href="tel:+34600000000">+34 600 000 000</a>
-                        </li>
+                        
                         <li>
                             <i class="ti ti-map-pin me-2" style="color: var(--color-primary);"></i>
-                            <span style="color: rgba(255, 255, 255, 0.7);">Madrid, España</span>
+                            <span style="color: rgba(255, 255, 255, 0.7);">Palma, España</span>
                         </li>
                     </ul>
                 </div>
@@ -1492,6 +1559,174 @@
                 closeMobileMenu();
             }
         });
+
+        // ========== CARRUSEL DE SERVICIOS ==========
+        (function() {
+            const track = document.getElementById('servicesTrack');
+            const slides = document.querySelectorAll('.service-slide');
+            const prevBtn = document.getElementById('carouselPrev');
+            const nextBtn = document.getElementById('carouselNext');
+            const counterCurrent = document.getElementById('carouselCurrent');
+            const totalSlides = slides.length;
+            let currentIndex = 0;
+            let startX = 0;
+            let isDragging = false;
+            let currentTranslate = 0;
+            let prevTranslate = 0;
+            let autoplayInterval = null;
+            const AUTOPLAY_DELAY = 5000;
+
+            function getSlideWidth() {
+                const w = window.innerWidth;
+                if (w >= 992) return 33.333;
+                if (w >= 768) return 50;
+                if (w >= 576) return 70;
+                return 88;
+            }
+
+            function getOffset() {
+                const slideW = getSlideWidth();
+                return (100 - slideW) / 2;
+            }
+
+            function updateCarousel(animate) {
+                if (animate !== false) {
+                    track.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+                } else {
+                    track.style.transition = 'none';
+                }
+
+                const slideW = getSlideWidth();
+                const offset = getOffset();
+                const translateX = -(currentIndex * slideW) + offset;
+                track.style.transform = `translateX(${translateX}%)`;
+                prevTranslate = translateX;
+
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === currentIndex);
+                });
+
+                counterCurrent.textContent = currentIndex + 1;
+            }
+
+            function goTo(index) {
+                // Loop infinito
+                if (index < 0) index = totalSlides - 1;
+                if (index >= totalSlides) index = 0;
+                currentIndex = index;
+                updateCarousel();
+            }
+
+            function startAutoplay() {
+                stopAutoplay();
+                autoplayInterval = setInterval(() => {
+                    goTo(currentIndex + 1);
+                }, AUTOPLAY_DELAY);
+            }
+
+            function stopAutoplay() {
+                if (autoplayInterval) {
+                    clearInterval(autoplayInterval);
+                    autoplayInterval = null;
+                }
+            }
+
+            prevBtn.addEventListener('click', () => {
+                stopAutoplay();
+                goTo(currentIndex - 1);
+                startAutoplay();
+            });
+
+            nextBtn.addEventListener('click', () => {
+                stopAutoplay();
+                goTo(currentIndex + 1);
+                startAutoplay();
+            });
+
+            // Touch/drag support
+            const wrapper = track.parentElement;
+
+            function touchStart(e) {
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+                track.style.transition = 'none';
+                stopAutoplay();
+            }
+
+            function touchMove(e) {
+                if (!isDragging) return;
+                const currentX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+                const diff = currentX - startX;
+                const wrapperWidth = wrapper.offsetWidth;
+                const percentMoved = (diff / wrapperWidth) * 100;
+                track.style.transform = `translateX(${prevTranslate + percentMoved}%)`;
+                currentTranslate = prevTranslate + percentMoved;
+            }
+
+            function touchEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                const moved = currentTranslate - prevTranslate;
+                const threshold = getSlideWidth() / 4;
+
+                if (moved < -threshold) {
+                    goTo(currentIndex + 1);
+                } else if (moved > threshold) {
+                    goTo(currentIndex - 1);
+                } else {
+                    updateCarousel();
+                }
+                startAutoplay();
+            }
+
+            wrapper.addEventListener('touchstart', touchStart, { passive: true });
+            wrapper.addEventListener('touchmove', touchMove, { passive: true });
+            wrapper.addEventListener('touchend', touchEnd);
+
+            wrapper.addEventListener('mousedown', touchStart);
+            wrapper.addEventListener('mousemove', touchMove);
+            wrapper.addEventListener('mouseup', touchEnd);
+            wrapper.addEventListener('mouseleave', () => {
+                if (isDragging) touchEnd();
+            });
+
+            // Pausar autoplay al hover en desktop
+            const section = document.getElementById('servicios');
+            section.addEventListener('mouseenter', stopAutoplay);
+            section.addEventListener('mouseleave', startAutoplay);
+
+            // Keyboard support
+            document.addEventListener('keydown', function(e) {
+                const rect = section.getBoundingClientRect();
+                const visible = rect.top < window.innerHeight && rect.bottom > 0;
+                if (!visible) return;
+
+                if (e.key === 'ArrowLeft') { stopAutoplay(); goTo(currentIndex - 1); startAutoplay(); }
+                if (e.key === 'ArrowRight') { stopAutoplay(); goTo(currentIndex + 1); startAutoplay(); }
+            });
+
+            // Update on resize
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => updateCarousel(false), 100);
+            });
+
+            // Pausar cuando la sección no es visible (IntersectionObserver)
+            const visibilityObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        startAutoplay();
+                    } else {
+                        stopAutoplay();
+                    }
+                });
+            }, { threshold: 0.3 });
+            visibilityObserver.observe(section);
+
+            // Initial position
+            updateCarousel(false);
+        })();
     </script>
 </body>
 </html>

@@ -233,10 +233,6 @@
                                     <i class="ti ti-arrow-left"></i>
                                     <span>Volver</span>
                                 </button>
-                                <button type="button" class="btn-review" id="reviewBtn">
-                                    <i class="ti ti-eye"></i>
-                                    <span>Revisar</span>
-                                </button>
                                 <button type="submit" class="btn-submit" id="submitBtn">
                                     <span>Enviar</span>
                                     <i class="ti ti-check"></i>
@@ -250,23 +246,6 @@
     @endif
 </div>
 
-{{-- Modal de revisión --}}
-<div class="modal fade" id="reviewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down">
-        <div class="modal-content modal-review">
-            <div class="modal-header">
-                <h5 class="modal-title">Revisar respuestas</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="reviewContent">
-                {{-- Se llenará con JavaScript --}}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-modal-close" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('styles')
@@ -989,27 +968,6 @@
         flex-wrap: wrap;
     }
     
-    .btn-review {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px 24px;
-        border-radius: 4px;
-        font-weight: 500;
-        font-family: var(--font-main);
-        color: var(--tf-text);
-        background: transparent;
-        border: 1px solid var(--tf-option-border);
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    
-    .btn-review:hover {
-        border-color: var(--tf-border-hover);
-        color: var(--tf-text);
-    }
-    
     .btn-back-final {
         display: flex;
         align-items: center;
@@ -1143,91 +1101,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-    }
-    
-    /* ===== MODAL REVIEW - Clean Style ===== */
-    #reviewModal .modal-content {
-        border: none;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    
-    #reviewModal .modal-header {
-        background: var(--tf-primary);
-        color: white;
-        border: none;
-        padding: 16px 20px;
-    }
-    
-    #reviewModal .modal-title {
-        font-weight: 500;
-        font-size: 16px;
-    }
-    
-    #reviewModal .btn-close {
-        filter: brightness(0) invert(1);
-        opacity: 0.8;
-    }
-    
-    #reviewModal .modal-body {
-        padding: 0;
-    }
-    
-    #reviewModal .modal-footer {
-        border-top: 1px solid var(--tf-border);
-        padding: 12px 20px;
-    }
-    
-    .btn-modal-close {
-        padding: 8px 16px;
-        border-radius: 4px;
-        font-weight: 500;
-        font-family: var(--font-main);
-        color: var(--tf-text);
-        background: #F5F5F5;
-        border: none;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-    
-    .btn-modal-close:hover {
-        background: #EBEBEB;
-    }
-    
-    .review-item {
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--tf-border);
-    }
-    
-    .review-item:hover {
-        background-color: #FAFAFA;
-    }
-    
-    .review-item:last-child {
-        border-bottom: none;
-    }
-    
-    .review-question {
-        font-weight: 500;
-        color: var(--tf-text);
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-family: var(--font-main);
-    }
-    
-    .review-answer {
-        color: var(--tf-primary);
-        background: rgba(160, 138, 122, 0.1);
-        padding: 8px 12px;
-        border-radius: 4px;
-        font-size: 14px;
-        font-family: var(--font-main);
-    }
-    
-    .review-answer.empty {
-        color: #9E9E9E;
-        font-style: italic;
-        background: #F5F5F5;
     }
     
     /* ===== COMPLETED STATE ===== */
@@ -1421,8 +1294,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const progressBar = document.getElementById('progressBar');
     const form = document.getElementById('questionnaireForm');
-    const reviewBtn = document.getElementById('reviewBtn');
-    const reviewModal = document.getElementById('reviewModal');
     
     // Inicializar Select2 para los selectores
     if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -1913,62 +1784,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 goToSlide(currentSlide - 1);
             }
         });
-    }
-    
-    // Botón revisar respuestas
-    if (reviewBtn) {
-        reviewBtn.addEventListener('click', function() {
-            generateReview();
-            new bootstrap.Modal(reviewModal).show();
-        });
-    }
-    
-    // Generar contenido de revisión
-    function generateReview() {
-        const reviewContent = document.getElementById('reviewContent');
-        let html = '';
-        
-        slides.forEach((slide, index) => {
-            if (slide.dataset.type === 'final') return;
-            
-            const questionText = slide.querySelector('.question-text')?.textContent?.replace('*', '').trim();
-            let answerText = '';
-            
-            const inputs = slide.querySelectorAll('.question-field');
-            inputs.forEach(input => {
-                if (input.type === 'radio' && input.checked) {
-                    const label = slide.querySelector(`label[for="${input.id}"] .option-text`);
-                    answerText = label ? label.textContent : input.value;
-                    
-                    // Si es "otro", obtener el texto
-                    if (input.value === 'other') {
-                        const otherInput = document.getElementById(input.dataset.target);
-                        if (otherInput && otherInput.value) {
-                            answerText = 'Otro: ' + otherInput.value;
-                        }
-                    }
-                } else if (input.tagName === 'SELECT' && input.value) {
-                    answerText = input.options[input.selectedIndex].text;
-                } else if (input.tagName === 'TEXTAREA' || input.type === 'text') {
-                    answerText = input.value;
-                } else if (input.type === 'hidden' && input.value === 'read') {
-                    answerText = 'Información leída ✓';
-                } else if (input.type === 'file' && input.files.length > 0) {
-                    answerText = input.files[0].name;
-                }
-            });
-            
-            const isEmpty = !answerText || answerText.trim() === '';
-            
-            html += `
-                <div class="review-item">
-                    <div class="review-question">${index + 1}. ${questionText}</div>
-                    <div class="review-answer ${isEmpty ? 'empty' : ''}">${isEmpty ? 'Sin respuesta' : answerText}</div>
-                </div>
-            `;
-        });
-        
-        reviewContent.innerHTML = html;
     }
     
     // Confirmación al enviar
