@@ -21,7 +21,6 @@ return new class extends Migration
     public function up(): void
     {
         // Primero, eliminar TODAS las citas duplicadas (manteniendo solo la más reciente)
-        // Esto incluye citas canceladas, confirmadas, pending, etc.
         DB::statement("
             DELETE t1 FROM appointments t1
             INNER JOIN appointments t2 
@@ -30,8 +29,13 @@ return new class extends Migration
             AND t1.date = t2.date 
             AND t1.start_time = t2.start_time
         ");
+
+        // Eliminar la foreign key que depende del índice
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->dropForeign(['availability_id']);
+        });
         
-        // Verificar qué constraint existe actualmente
+        // Verificar qué constraint existe actualmente y eliminarlo
         $indexExists = DB::select("
             SELECT COUNT(*) as count 
             FROM information_schema.statistics 
@@ -41,16 +45,18 @@ return new class extends Migration
         ");
         
         if ($indexExists[0]->count > 0) {
-            // Eliminar el constraint único actual que incluye status
             DB::statement("ALTER TABLE appointments DROP INDEX appointments_slot_status_unique");
         }
 
-        // Crear nuevo constraint único SIN status
-        // Esto permite solo UNA cita por slot, sin importar el status
-        DB::statement("
-            ALTER TABLE appointments 
-            ADD UNIQUE KEY appointments_slot_unique (availability_id, date, start_time)
-        ");
+        // Crear nuevo constraint único SIN status y recrear foreign key
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->unique(['availability_id', 'date', 'start_time'], 'appointments_slot_unique');
+
+            $table->foreign('availability_id')
+                  ->references('id')
+                  ->on('appointment_availabilities')
+                  ->cascadeOnDelete();
+        });
     }
 
     /**
@@ -58,13 +64,22 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Eliminar foreign key primero
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->dropForeign(['availability_id']);
+        });
+
         // Eliminar el constraint nuevo
         DB::statement("ALTER TABLE appointments DROP INDEX appointments_slot_unique");
         
-        // Restaurar el constraint anterior con status
-        DB::statement("
-            ALTER TABLE appointments 
-            ADD UNIQUE KEY appointments_slot_status_unique (availability_id, date, start_time, status)
-        ");
+        // Restaurar el constraint anterior con status y la foreign key
+        Schema::table('appointments', function (Blueprint $table) {
+            $table->unique(['availability_id', 'date', 'start_time', 'status'], 'appointments_slot_status_unique');
+
+            $table->foreign('availability_id')
+                  ->references('id')
+                  ->on('appointment_availabilities')
+                  ->cascadeOnDelete();
+        });
     }
 };
