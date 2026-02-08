@@ -1207,8 +1207,7 @@
                     </li>
                 </ul>
                 <div class="d-flex gap-2">
-                    <a href="{{ route('login') }}" class="btn btn-outline-custom">Iniciar Sesión</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary-custom">Registro</a>
+                    <a href="{{ route('login') }}" class="btn btn-primary-custom">Iniciar Sesión</a>
                 </div>
             </div>
         </div>

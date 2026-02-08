@@ -340,18 +340,7 @@
                     </button>
                 </form>
 
-                <!-- Divider -->
-                <div class="divider">
-                    <span>o</span>
-                </div>
 
-                <!-- Register Link -->
-                <div class="register-footer">
-                    <p>¿No tienes cuenta?</p>
-                    <a href="{{ route('register') }}" class="register-link">
-                        <i class="ti ti-user-plus me-1"></i>Crea una aquí
-                    </a>
-                </div>
             </div>
         </div>
     </div>
