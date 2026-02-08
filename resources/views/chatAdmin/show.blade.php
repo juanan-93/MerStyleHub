@@ -105,8 +105,50 @@
         border-left: 3px solid var(--color-primary) !important;
     }
     
-    /* Mejoras responsive */
+    /* ========================================
+       ESTILOS RESPONSIVE PARA MÓVILES
+       ======================================== */
+    
     @media (max-width: 768px) {
+        /* Ocultar padding del layout y footer */
+        .p-4.flex-grow-1 {
+            padding: 0 !important;
+        }
+        
+        .mt-auto {
+            display: none !important;
+        }
+        
+        /* Breadcrumbs más compactos */
+        .bg-white.border-bottom.px-4.py-3 {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        .bg-white.border-bottom.px-4.py-3 .breadcrumb {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Contenedor principal */
+        .container-fluid.py-3 {
+            padding: 0 !important;
+            height: 100% !important;
+        }
+        
+        .container-fluid.py-3 > .row {
+            height: calc(100vh - 100px) !important;
+            min-height: auto !important;
+            margin: 0 !important;
+        }
+        
+        /* Panel izquierdo oculto en móvil - ya tiene d-none d-md-block */
+        
+        /* Panel derecho ocupa todo */
+        .col-md-8.col-lg-9 {
+            padding: 0 !important;
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+        
         .conversations-panel {
             border-radius: 0;
         }

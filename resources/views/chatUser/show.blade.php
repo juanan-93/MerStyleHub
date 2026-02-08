@@ -91,17 +91,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                    {{-- Estados y acciones --}}
-                                    <div class="d-flex align-items-center gap-2">
-                                        @if($isMe)
-                                            @if($message->isRead())
-                                                <span class="badge bg-success" style="font-size: 0.65rem;">✓ Leído</span>
-                                            @else
-                                                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;">✓ Enviado</span>
-                                            @endif
-                                        @endif
-                                    </div>
                                 </div>
                             </div>
                             
@@ -331,6 +320,289 @@
         font-weight: 500;
         letter-spacing: 0.3px;
     }
+    
+    /* ========================================
+       ESTILOS RESPONSIVE PARA MÓVILES
+       ======================================== */
+    
+    @media (max-width: 768px) {
+        /* Ocultar layout padding y footer en móvil para el chat */
+        .p-4.flex-grow-1 {
+            padding: 0 !important;
+        }
+        
+        .mt-auto {
+            display: none !important; /* Ocultar footer */
+        }
+        
+        /* Breadcrumbs más compactos en móvil */
+        .bg-white.border-bottom.px-4.py-3 {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        .bg-white.border-bottom.px-4.py-3 .breadcrumb {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Contenedor principal - pantalla completa */
+        .container-fluid.py-3 {
+            padding: 0 !important;
+            height: 100% !important;
+        }
+        
+        .container-fluid.py-3 > .row {
+            height: calc(100vh - 100px) !important; /* Resta navbar + breadcrumbs */
+            min-height: auto !important;
+            margin: 0 !important;
+        }
+        
+        .container-fluid.py-3 > .row > .col-12 {
+            padding: 0 !important;
+            height: 100% !important;
+        }
+        
+        /* Card del chat - sin bordes redondeados */
+        #chatWindow {
+            border-radius: 0 !important;
+            height: 100% !important;
+        }
+        
+        /* Header del chat - más compacto */
+        #chatWindow > .card-header {
+            padding: 0.75rem 1rem !important;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-radius: 0 !important;
+        }
+        
+        #chatWindow > .card-header .rounded-circle {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 0.85rem !important;
+        }
+        
+        #chatWindow > .card-header .me-3 {
+            margin-right: 0.75rem !important;
+        }
+        
+        #chatWindow > .card-header h6 {
+            font-size: 0.95rem !important;
+        }
+        
+        #chatWindow > .card-header small {
+            font-size: 0.7rem !important;
+        }
+        
+        /* Área de mensajes */
+        #messagesContainer {
+            padding: 0.75rem !important;
+        }
+        
+        /* Mensajes - estilo más compacto tipo chat */
+        .email-message {
+            border-radius: 16px !important;
+            margin-bottom: 0.75rem !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08) !important;
+        }
+        
+        .email-message:hover {
+            transform: none !important;
+        }
+        
+        .email-header {
+            padding: 0.65rem 0.85rem !important;
+        }
+        
+        .email-header .rounded-circle {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 0.75rem !important;
+        }
+        
+        .email-header .me-3 {
+            margin-right: 0.5rem !important;
+        }
+        
+        .email-header .fw-bold {
+            font-size: 0.85rem !important;
+        }
+        
+        .email-header .text-muted {
+            font-size: 0.7rem !important;
+        }
+        
+        .email-header .badge {
+            font-size: 0.55rem !important;
+            padding: 0.2em 0.5em !important;
+            margin-left: 0.35rem !important;
+        }
+        
+        .email-body {
+            padding: 0.75rem !important;
+        }
+        
+        .message-content {
+            font-size: 0.9rem !important;
+            line-height: 1.5 !important;
+        }
+        
+        /* Adjuntos en móvil */
+        .attachment-section {
+            padding: 0.65rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .attachment-section img {
+            max-height: 200px !important;
+        }
+        
+        .file-download-card {
+            padding: 0.65rem !important;
+        }
+        
+        .file-download-card .file-icon i {
+            font-size: 1.5rem !important;
+        }
+        
+        .file-download-card .btn {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+        
+        /* Separador de fecha */
+        .text-center.my-3 {
+            margin: 0.5rem 0 !important;
+        }
+        
+        .text-center.my-3 .badge {
+            font-size: 0.7rem !important;
+            padding: 0.35rem 0.75rem !important;
+        }
+        
+        /* Área de composición - estilo app móvil */
+        #chatWindow > .card-footer {
+            padding: 0.75rem !important;
+            border-radius: 0 !important;
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            background: white !important;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .compose-content {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .compose-content .d-flex.align-items-center.justify-content-between {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .compose-content label.form-label {
+            font-size: 0.85rem !important;
+            display: none; /* Ocultar label en móvil */
+        }
+        
+        .compose-content .d-flex.gap-2 {
+            width: 100%;
+            justify-content: flex-end;
+            margin-bottom: 0.5rem;
+        }
+        
+        .compose-content .btn-sm {
+            font-size: 0.75rem !important;
+            padding: 0.35rem 0.65rem !important;
+        }
+        
+        /* Summernote en móvil - más compacto */
+        .note-editor.note-frame {
+            border-radius: 16px !important;
+        }
+        
+        .note-toolbar {
+            padding: 6px 8px !important;
+            border-radius: 16px 16px 0 0 !important;
+            flex-wrap: wrap;
+        }
+        
+        .note-toolbar .note-btn-group {
+            margin-right: 3px !important;
+        }
+        
+        .note-toolbar .note-btn {
+            font-size: 12px !important;
+            padding: 4px 6px !important;
+        }
+        
+        .note-editable {
+            min-height: 80px !important;
+            max-height: 150px !important;
+            padding: 10px !important;
+            font-size: 0.9rem !important;
+            border-radius: 0 0 16px 16px !important;
+        }
+        
+        /* Botones de acción en móvil */
+        .card-footer .d-flex.justify-content-end.gap-2 {
+            flex-direction: row;
+            gap: 0.5rem !important;
+        }
+        
+        .card-footer .btn-light {
+            display: none; /* Ocultar botón volver en móvil, usar breadcrumb/navbar */
+        }
+        
+        .card-footer #sendBtn {
+            flex: 1;
+            border-radius: 25px !important;
+            padding: 0.65rem 1rem !important;
+            font-size: 0.9rem !important;
+        }
+        
+        /* Preview de archivo en móvil */
+        #filePreview .attachment-preview {
+            padding: 0.65rem !important;
+        }
+        
+        #filePreview .btn {
+            font-size: 0.75rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+    }
+    
+    /* Extra small devices (phones < 375px) */
+    @media (max-width: 375px) {
+        .email-header .badge {
+            display: none !important; /* Ocultar badges en pantallas muy pequeñas */
+        }
+        
+        .compose-content .btn-sm span,
+        .compose-content .btn-sm .me-1 + span {
+            display: none;
+        }
+        
+        .note-toolbar .note-btn-group:nth-child(n+4) {
+            display: none !important;
+        }
+    }
+    
+    /* Landscape mode en móvil */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .container-fluid.py-3 > .row {
+            height: calc(100vh - 56px) !important;
+        }
+        
+        .note-editable {
+            min-height: 60px !important;
+            max-height: 100px !important;
+        }
+        
+        #messagesContainer {
+            max-height: calc(100vh - 200px);
+        }
+    }
 </style>
 @endpush
 
@@ -345,21 +617,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatForm = document.getElementById('chatForm');
     const clearBtn = document.getElementById('clearBtn');
     let summernoteEditor;
+    
+    // Detectar si es móvil
+    const isMobile = window.innerWidth <= 768;
+    
+    // Toolbar según dispositivo
+    const toolbarConfig = isMobile ? [
+        ['font', ['bold', 'italic', 'underline']],
+        ['para', ['ul', 'ol']],
+        ['insert', ['link']]
+    ] : [
+        ['style', ['style']],
+        ['font', ['bold', 'italic', 'underline', 'clear']],
+        ['fontsize', ['fontsize']],
+        ['color', ['color']],
+        ['para', ['ul', 'ol', 'paragraph']],
+        ['table', ['table']],
+        ['insert', ['link', 'hr']],
+        ['view', ['fullscreen', 'help']]
+    ];
 
     // Inicializar SummerNote
     $('#summernoteEditor').summernote({
-        height: 120,
-        focus: true,
-        toolbar: [
-            ['style', ['style']],
-            ['font', ['bold', 'italic', 'underline', 'clear']],
-            ['fontsize', ['fontsize']],
-            ['color', ['color']],
-            ['para', ['ul', 'ol', 'paragraph']],
-            ['table', ['table']],
-            ['insert', ['link', 'hr']],
-            ['view', ['fullscreen', 'help']]
-        ],
+        height: isMobile ? 80 : 120,
+        focus: !isMobile, // No auto-focus en móvil para evitar teclado
+        toolbar: toolbarConfig,
         placeholder: 'Escribe tu mensaje aquí...',
         callbacks: {
             onKeydown: function(e) {
@@ -373,6 +655,12 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             onFocus: function() {
                 $('.note-editor.note-frame').css('border-color', 'var(--color-primary)');
+                // En móvil, hacer scroll al área de composición
+                if (isMobile) {
+                    setTimeout(() => {
+                        document.querySelector('.card-footer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }, 300);
+                }
             },
             onBlur: function() {
                 $('.note-editor.note-frame').css('border-color', 'var(--color-border)');
@@ -495,7 +783,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const bodyHtml = msg.body ? `<div class="message-content" style="font-size: 0.95rem; line-height: 1.6; color: var(--color-secondary);">${msg.body}</div>` : '';
         const senderName = isMe ? 'Tú' : 'Tu asesora';
         const senderAvatar = isMe ? '{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}' : 'A';
-        const statusBadge = isMe ? `<span class="badge bg-warning text-dark" style="font-size: 0.65rem;">✓ Enviado</span>` : '';
         const avatarBg = isMe ? 'var(--color-primary)' : 'var(--color-secondary)';
         const roleBadge = isMe ? '<span class="badge bg-primary ms-2" style="font-size: 0.65rem;">Cliente</span>' : '<span class="badge bg-secondary ms-2" style="font-size: 0.65rem;">Asesora</span>';
         const date = new Date(msg.created_at);
@@ -518,9 +805,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="text-muted" style="font-size: 0.8rem;">${dateStr}</div>
                         </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        ${statusBadge}
                     </div>
                 </div>
             </div>

@@ -190,10 +190,103 @@
         border-radius: 12px;
     }
     
-    /* Mejoras responsive */
+    /* ========================================
+       ESTILOS RESPONSIVE PARA MÓVILES
+       ======================================== */
+    
     @media (max-width: 768px) {
+        /* Ocultar padding del layout y footer */
+        .p-4.flex-grow-1 {
+            padding: 0.5rem !important;
+        }
+        
+        .mt-auto {
+            display: none !important;
+        }
+        
+        /* Breadcrumbs más compactos */
+        .bg-white.border-bottom.px-4.py-3 {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        .bg-white.border-bottom.px-4.py-3 .breadcrumb {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Contenedor principal */
+        .container-fluid.py-3 {
+            padding: 0.5rem !important;
+            height: auto !important;
+        }
+        
+        .container-fluid.py-3 > .row {
+            height: auto !important;
+            min-height: calc(100vh - 150px) !important;
+            margin: 0 !important;
+        }
+        
+        /* Panel de conversaciones ocupa todo */
+        .col-md-4.col-lg-3 {
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+            padding: 0 !important;
+        }
+        
+        /* Ocultar panel derecho vacío en móvil */
+        .col-md-8.col-lg-9 {
+            display: none !important;
+        }
+        
+        /* Card de conversaciones */
+        .col-md-4.col-lg-3 > .card {
+            border-radius: 16px !important;
+        }
+        
+        .col-md-4.col-lg-3 > .card > .card-header {
+            padding: 0.75rem 1rem !important;
+            border-radius: 16px 16px 0 0 !important;
+        }
+        
+        .col-md-4.col-lg-3 > .card > .card-header h6 {
+            font-size: 1rem !important;
+        }
+        
+        /* Conversations list */
+        .conversation-item {
+            padding: 0.85rem 1rem !important;
+        }
+        
+        .conversation-item:active {
+            background-color: rgba(160, 138, 122, 0.15) !important;
+        }
+        
+        .conversation-item .rounded-circle {
+            width: 44px !important;
+            height: 44px !important;
+        }
+        
+        .conversation-item h6 {
+            font-size: 0.9rem !important;
+        }
+        
+        .conversation-item p {
+            font-size: 0.8rem !important;
+        }
+        
         .conversations-panel {
             border-radius: 0;
+        }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 375px) {
+        .conversation-item .rounded-circle {
+            width: 40px !important;
+            height: 40px !important;
+        }
+        
+        .conversation-item .ms-3 {
+            margin-left: 0.65rem !important;
         }
     }
 </style>

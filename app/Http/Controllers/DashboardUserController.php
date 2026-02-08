@@ -32,84 +32,80 @@ class DashboardUserController extends Controller
         if ($view === 'week' && $weekStart) {
             $weekStartDate = Carbon::parse($weekStart)->startOfWeek();
             $weekEndDate = $weekStartDate->copy()->endOfWeek();
-            // Ajustar mes y año basándose en la semana
             $month = $weekStartDate->month;
             $year = $weekStartDate->year;
             $currentDate = $weekStartDate->copy()->startOfMonth();
         }
         
-        // Obtener solo las citas del usuario autenticado (por email)
-        $userEmail = Auth::user()->email;
-        $userId = Auth::id();
+        $user = Auth::user();
+        $userEmail = $user->email;
+        $userId = $user->id;
         
-        $appointmentsQuery = Appointment::where('client_email', $userEmail)
-            ->whereYear('date', $year)
-            ->whereMonth('date', $month)
-            ->with('availability')
-            ->orderBy('date')
-            ->orderBy('start_time');
+        // ====== EAGER LOAD perfil con relaciones en una sola query ======
+        $user->load(['customerProfile.product', 'customerProfile.colorimetry', 'customerProfile.documents']);
+        $profile = $user->customerProfile;
         
-        // Si es vista semanal, también incluir citas de la semana (puede cruzar meses)
-        if ($view === 'week' && $weekStartDate && $weekEndDate) {
-            $appointmentsQuery = Appointment::where('client_email', $userEmail)
-                ->whereBetween('date', [$weekStartDate->format('Y-m-d'), $weekEndDate->format('Y-m-d')])
-                ->with('availability')
-                ->orderBy('date')
-                ->orderBy('start_time');
-        }
+        // Documentos ya cargados via eager load
+        $documents = $profile ? $profile->documents->sortByDesc('created_at') : collect();
         
-        $appointments = $appointmentsQuery->get()
-            ->groupBy(function($appointment) {
-                return $appointment->date->format('Y-m-d');
-            });
-        
-        // Obtener batch_ids de citas asignadas a este usuario
+        // ====== Batch IDs asignados - query simple con caché en variable ======
         $assignedBatchIds = DB::table('appointment_availability_user')
             ->where('user_id', $userId)
             ->pluck('batch_id')
             ->toArray();
         
-        // Si el usuario no tiene citas asignadas, no mostrar nada
+        // Si no tiene batch_ids, saltar todas las queries pesadas del calendario
         if (empty($assignedBatchIds)) {
-            $availabilities = collect();
+            $allSlots = [];
+            $appointments = collect();
         } else {
-            // Obtener SOLO las disponibilidades asignadas a este usuario
-            $availabilitiesQuery = AppointmentAvailability::whereYear('date', $year)
-                ->whereMonth('date', $month)
-                ->whereIn('batch_id', $assignedBatchIds)
-                ->with('appointments')
-                ->orderBy('date')
-                ->orderBy('start_time');
-            
-            // Si es vista semanal, también incluir disponibilidades de la semana (puede cruzar meses)
+            // Determinar rango de fechas según la vista
             if ($view === 'week' && $weekStartDate && $weekEndDate) {
-                $availabilitiesQuery = AppointmentAvailability::whereBetween('date', [$weekStartDate->format('Y-m-d'), $weekEndDate->format('Y-m-d')])
-                    ->whereIn('batch_id', $assignedBatchIds)
-                    ->with('appointments')
-                    ->orderBy('date')
-                    ->orderBy('start_time');
+                $dateStart = $weekStartDate->format('Y-m-d');
+                $dateEnd = $weekEndDate->format('Y-m-d');
+            } else {
+                $dateStart = $currentDate->copy()->startOfMonth()->format('Y-m-d');
+                $dateEnd = $currentDate->copy()->endOfMonth()->format('Y-m-d');
             }
             
-            $availabilities = $availabilitiesQuery->get();
+            // ====== UNA SOLA query para citas del usuario ======
+            $appointments = Appointment::where('client_email', $userEmail)
+                ->whereBetween('date', [$dateStart, $dateEnd])
+                ->select(['id', 'availability_id', 'date', 'start_time', 'end_time', 'client_name', 'client_email', 'client_phone', 'status', 'notes'])
+                ->orderBy('date')
+                ->orderBy('start_time')
+                ->get()
+                ->groupBy(fn($apt) => $apt->date->format('Y-m-d'));
+            
+            // ====== UNA SOLA query para disponibilidades + citas eager loaded ======
+            $availabilities = AppointmentAvailability::whereBetween('date', [$dateStart, $dateEnd])
+                ->whereIn('batch_id', $assignedBatchIds)
+                ->select(['id', 'batch_id', 'title', 'date', 'start_time', 'end_time', 'duration', 'category'])
+                ->with(['appointments' => function ($query) use ($dateStart, $dateEnd) {
+                    // Solo cargar citas activas del rango de fechas
+                    $query->whereBetween('date', [$dateStart, $dateEnd])
+                        ->whereIn('status', ['confirmed', 'pending'])
+                        ->select(['id', 'availability_id', 'date', 'start_time', 'end_time', 'client_name', 'client_email', 'status']);
+                }])
+                ->orderBy('date')
+                ->orderBy('start_time')
+                ->get()
+                ->groupBy(fn($avail) => $avail->date->format('Y-m-d'));
+            
+            // Generar slots por día
+            $allSlots = [];
+            foreach ($availabilities as $date => $dayAvailabilities) {
+                $allSlots[$date] = $this->generateDaySlots($date, $dayAvailabilities, $appointments[$date] ?? collect(), $userEmail, $assignedBatchIds);
+            }
         }
         
-        $availabilities = $availabilities->groupBy(function($availability) {
-            return $availability->date->format('Y-m-d');
-        });
-        
-        // Generar todos los slots (disponibles y ocupados) por día
-        $allSlots = [];
-        foreach ($availabilities as $date => $dayAvailabilities) {
-            $allSlots[$date] = $this->generateDaySlots($date, $dayAvailabilities, $appointments[$date] ?? collect(), $userEmail, $assignedBatchIds);
-        }
-        
-        // Datos para la navegación del calendario
+        // Datos del calendario
         $calendarData = [
             'currentMonth' => $currentDate,
             'monthName' => $currentDate->locale('es')->isoFormat('MMMM YYYY'),
             'daysInMonth' => $currentDate->daysInMonth,
-            'firstDayOfWeek' => $currentDate->copy()->startOfMonth()->dayOfWeekIso, // 1=Lunes, 7=Domingo
-            'appointments' => $appointments,
+            'firstDayOfWeek' => $currentDate->copy()->startOfMonth()->dayOfWeekIso,
+            'appointments' => $appointments instanceof \Illuminate\Support\Collection && $appointments->isEmpty() ? collect() : $appointments,
             'allSlots' => $allSlots,
             'today' => now()->format('Y-m-d'),
             'view' => $view,
@@ -117,26 +113,24 @@ class DashboardUserController extends Controller
             'weekEnd' => $weekEndDate ? $weekEndDate->format('Y-m-d') : now()->endOfWeek()->format('Y-m-d'),
         ];
         
-        // Datos del perfil del usuario
-        $user = Auth::user();
-        $user->load(['customerProfile.product', 'customerProfile.colorimetry', 'customerProfile.documents']);
-        $profile = $user->customerProfile;
-        
-        // Documentos del usuario
-        $documents = $profile ? $profile->documents()->orderBy('created_at', 'desc')->get() : collect();
-        
-        // Próxima cita del usuario
-        $nextAppointment = Appointment::where('client_email', $user->email)
+        // ====== Próxima cita - UNA query simple con select específico ======
+        $nextAppointment = Appointment::where('client_email', $userEmail)
             ->where('date', '>=', now()->toDateString())
             ->whereIn('status', ['confirmed', 'pending'])
-            ->with('availability')
+            ->with('availability:id,title,category,duration')
+            ->select(['id', 'availability_id', 'date', 'start_time', 'end_time', 'status'])
             ->orderBy('date')
             ->orderBy('start_time')
             ->first();
         
-        // Cuestionarios asignados
-        $assignedQuestionnairesCount = QuestionnaireUser::where('user_id', $user->id)->count();
-        $completedQuestionnairesCount = QuestionnaireUser::where('user_id', $user->id)->where('status', 'completed')->count();
+        // ====== Contar cuestionarios en UNA query con conditional aggregation ======
+        $questionnaireCounts = DB::table('questionnaire_user')
+            ->where('user_id', $userId)
+            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed')
+            ->first();
+        
+        $assignedQuestionnairesCount = $questionnaireCounts->total ?? 0;
+        $completedQuestionnairesCount = $questionnaireCounts->completed ?? 0;
         
         return view('dashboardUser.index', compact('calendarData', 'user', 'profile', 'nextAppointment', 'assignedQuestionnairesCount', 'completedQuestionnairesCount', 'documents'));
     }
@@ -266,6 +260,18 @@ class DashboardUserController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
         ]);
+
+        // Validar que si es hoy, la hora no haya pasado
+        $requestDate = Carbon::parse($request->date);
+        if ($requestDate->isToday()) {
+            $slotTime = Carbon::parse($request->start_time);
+            if ($slotTime->lte(now())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No puedes reservar un horario que ya ha pasado.',
+                ], 422);
+            }
+        }
 
         $user = Auth::user();
         $userEmail = $user->email;

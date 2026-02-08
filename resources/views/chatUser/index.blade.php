@@ -62,5 +62,85 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
     }
+    
+    /* ========================================
+       ESTILOS RESPONSIVE PARA MÓVILES
+       ======================================== */
+    
+    @media (max-width: 768px) {
+        /* Contenedor principal */
+        .container-fluid.py-3 {
+            padding: 0.5rem !important;
+        }
+        
+        /* Tarjetas de conversación - ocupan todo el ancho */
+        .col-md-6.col-lg-4 {
+            padding: 0 0.25rem !important;
+        }
+        
+        .col-md-6.col-lg-4.mb-3 {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .conversation-card {
+            border-radius: 16px !important;
+        }
+        
+        .conversation-card:hover {
+            transform: none !important;
+        }
+        
+        .conversation-card:active {
+            transform: scale(0.98) !important;
+        }
+        
+        .conversation-card .card-body {
+            padding: 0.85rem !important;
+        }
+        
+        .conversation-card .rounded-circle {
+            width: 44px !important;
+            height: 44px !important;
+        }
+        
+        .conversation-card h6 {
+            font-size: 0.9rem !important;
+        }
+        
+        .conversation-card p {
+            font-size: 0.8rem !important;
+        }
+        
+        .conversation-card .badge {
+            font-size: 0.7rem !important;
+            padding: 0.35rem 0.5rem !important;
+        }
+        
+        /* Estado vacío */
+        .card-body.text-center.py-5 {
+            padding: 3rem 1.5rem !important;
+        }
+        
+        .card-body.text-center.py-5 i {
+            font-size: 3rem !important;
+        }
+        
+        .card-body.text-center.py-5 h5 {
+            font-size: 1.1rem !important;
+        }
+        
+        .card-body.text-center.py-5 p {
+            font-size: 0.85rem !important;
+        }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 375px) {
+        .conversation-card .rounded-circle {
+            width: 40px !important;
+            height: 40px !important;
+            margin-right: 0.65rem !important;
+        }
+    }
 </style>
 @endpush

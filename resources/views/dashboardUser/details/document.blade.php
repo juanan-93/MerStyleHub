@@ -125,6 +125,113 @@
     .image-preview-overlay.active {
         display: flex;
     }
+    
+    /* ===== ESTILOS RESPONSIVE MÓVIL - DOCUMENTOS ===== */
+    @media (max-width: 768px) {
+        .documents-header .card-body {
+            padding: 0.75rem !important;
+        }
+        
+        .documents-header h4 {
+            font-size: 1rem;
+        }
+        
+        .documents-header p {
+            font-size: 0.75rem;
+            margin-bottom: 0 !important;
+        }
+        
+        .documents-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.4rem !important;
+        }
+        
+        .documents-count-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+        }
+        
+        /* Cards de documentos compactas */
+        .document-card {
+            padding: 0.6rem !important;
+        }
+        
+        .document-card .d-flex {
+            flex-wrap: wrap;
+            gap: 0.5rem !important;
+        }
+        
+        .document-icon-wrapper {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+        }
+        
+        .document-icon-wrapper i {
+            font-size: 1.1rem;
+        }
+        
+        .document-name {
+            font-size: 0.82rem;
+        }
+        
+        .document-meta {
+            font-size: 0.68rem;
+        }
+        
+        /* Botones de acción */
+        .document-card .d-flex.gap-2.flex-shrink-0 {
+            width: 100%;
+            margin-top: 0.25rem;
+            justify-content: flex-end;
+        }
+        
+        .btn-view-doc, .btn-download-doc {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.72rem;
+        }
+        
+        .documents-empty-state {
+            padding: 1.5rem 0.75rem;
+        }
+        
+        .documents-empty-state i {
+            font-size: 2.5rem;
+        }
+        
+        .documents-empty-state h5 {
+            font-size: 0.95rem;
+        }
+        
+        /* Espaciado entre documentos */
+        .row.g-3 {
+            --bs-gutter-y: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .documents-header h4 {
+            font-size: 0.9rem;
+        }
+        
+        .document-icon-wrapper {
+            width: 34px;
+            height: 34px;
+        }
+        
+        .document-card .flex-grow-1 {
+            min-width: 0;
+        }
+        
+        .btn-view-doc span {
+            display: none;
+        }
+        
+        .document-name {
+            font-size: 0.78rem;
+        }
+    }
 </style>
 @endpush
 

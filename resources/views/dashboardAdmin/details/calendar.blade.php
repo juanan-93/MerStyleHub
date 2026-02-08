@@ -194,6 +194,17 @@
                             
                             $isToday = $cellDate === $today;
                             $daySlots = $allSlots[$cellDate] ?? [];
+                            
+                            // Eliminar slots de días/horas pasados del calendario
+                            if ($cellDate < $today) {
+                                $daySlots = [];
+                            } elseif ($isToday) {
+                                $daySlots = array_filter($daySlots, function($slot) {
+                                    return !\Carbon\Carbon::parse($slot['start_time'])->lte(now());
+                                });
+                                $daySlots = array_values($daySlots);
+                            }
+                            
                             $slotsCount = count($daySlots);
                             $availableCount = collect($daySlots)->where('status', 'available')->count();
                             $bookedCount = $slotsCount - $availableCount;
@@ -231,15 +242,13 @@
                                             default => $slot['client_name'] ? Str::limit($slot['client_name'], 10) : 'Cita'
                                         };
                                         
-                                        // Verificar si la fecha ya pasó
-                                        $isPastDate = $cellDate < $today;
                                     @endphp
-                                    <div class="appointment-card {{ $statusClass }} {{ $isPastDate ? 'past-date past-clickable' : 'slot-clickable' }} small d-flex align-items-center justify-content-between px-2" 
+                                    <div class="appointment-card {{ $statusClass }} slot-clickable small d-flex align-items-center justify-content-between px-2" 
                                          data-slot='@json($slot)'
                                          data-date="{{ $cellDate }}"
                                          data-status="{{ $slot['status'] }}"
-                                         data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
-                                         title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}{{ $isPastDate ? ' (Pasado)' : '' }}">
+                                         data-is-past="false"
+                                         title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}">
                                         <div class="d-flex align-items-center gap-1 text-truncate">
                                             <span class="dot bg-{{ $statusColor }}"></span>
                                             <strong class="time">{{ $slot['start_time'] }}</strong>
@@ -298,9 +307,13 @@
                                     $isToday = $cellDate === $today;
                                     $hourStr = sprintf('%02d:00', $hour);
                                     
-                                    // Buscar slots para esta hora y día
+                                    // Buscar slots para esta hora y día (excluyendo pasados)
                                     $daySlots = $allSlots[$cellDate] ?? [];
-                                    $hourSlots = collect($daySlots)->filter(function($slot) use ($hourStr, $hour) {
+                                    $hourSlots = collect($daySlots)->filter(function($slot) use ($hourStr, $hour, $isPastDate, $isToday) {
+                                        // No mostrar slots de días pasados
+                                        if ($isPastDate) return false;
+                                        // No mostrar slots de horas pasadas del día actual
+                                        if ($isToday && \Carbon\Carbon::parse($slot['start_time'])->lte(now())) return false;
                                         $slotHour = (int)substr($slot['start_time'], 0, 2);
                                         return $slotHour === $hour;
                                     })->values()->all();
@@ -327,11 +340,11 @@
                                                     default => $slot['client_name'] ? Str::limit($slot['client_name'], 8) : 'Cita'
                                                 };
                                             @endphp
-                                            <div class="appointment-card week-appointment {{ $statusClass }} {{ $isPastDate ? 'past-date past-clickable' : 'slot-clickable' }} small" 
+                                            <div class="appointment-card week-appointment {{ $statusClass }} slot-clickable small" 
                                                  data-slot='@json($slot)'
                                                  data-date="{{ $cellDate }}"
                                                  data-status="{{ $slot['status'] }}"
-                                                 data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
+                                                 data-is-past="false"
                                                  title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}">
                                                 <div class="d-flex align-items-center gap-1">
                                                     <span class="dot bg-{{ $statusColor }}"></span>
@@ -795,6 +808,70 @@
         .week-cell { min-height: 40px; }
         .week-appointment { font-size: 0.55rem; padding: 1px 2px; }
     }
+    
+    /* ===== Select2 dentro del modal de cita ===== */
+    #appointmentModal .select2-container { width: 100% !important; }
+    #appointmentModal .select2-container--default .select2-selection--single {
+        border: 1px solid var(--color-border-cal) !important;
+        border-radius: 6px !important;
+        height: 34px !important;
+        background-color: #fff !important;
+    }
+    #appointmentModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--color-secondary-cal) !important;
+        font-size: 0.875rem !important;
+        padding: 4px 12px !important;
+        line-height: 26px !important;
+    }
+    #appointmentModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px !important;
+    }
+    #appointmentModal .select2-container--default.select2-container--focus .select2-selection--single,
+    #appointmentModal .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: var(--color-primary-cal) !important;
+        box-shadow: 0 0 0 0.2rem rgba(160, 138, 122, 0.25) !important;
+    }
+    #appointmentModal .select2-container--default.select2-container--disabled .select2-selection--single {
+        background-color: #f8f9fa !important;
+        opacity: 0.7;
+    }
+    .select2-dropdown.select2-dropdown--calendar {
+        border: 1px solid var(--color-border-cal, #D9D4CE) !important;
+        border-radius: 6px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+        z-index: 99999 !important;
+    }
+    .select2-dropdown.select2-dropdown--calendar .select2-results__option {
+        padding: 8px 12px !important;
+        font-size: 0.875rem !important;
+    }
+    .select2-dropdown.select2-dropdown--calendar .select2-results__option--highlighted[aria-selected] {
+        background-color: rgba(160, 138, 122, 0.15) !important;
+        color: var(--color-secondary-cal, #343434) !important;
+    }
+    .select2-dropdown.select2-dropdown--calendar .select2-results__option[aria-selected=true] {
+        background-color: rgba(160, 138, 122, 0.1) !important;
+        color: var(--color-primary-cal, #A08A7A) !important;
+        font-weight: 500 !important;
+    }
+    .select2-dropdown.select2-dropdown--calendar .select2-search--dropdown .select2-search__field {
+        border: 1px solid var(--color-border-cal, #D9D4CE) !important;
+        border-radius: 4px !important;
+        padding: 6px 8px !important;
+        font-size: 0.85rem !important;
+    }
+    .select2-dropdown.select2-dropdown--calendar .select2-search--dropdown .select2-search__field:focus {
+        border-color: var(--color-primary-cal, #A08A7A) !important;
+        outline: none !important;
+    }
+    .select2-dropdown.select2-dropdown--calendar .select2-results__group {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        font-weight: 600 !important;
+        color: var(--color-primary-cal, #A08A7A) !important;
+        background-color: var(--color-light-cal, #F5F3F0) !important;
+        border-top: 1px solid var(--color-border-cal, #D9D4CE) !important;
+    }
 </style>
 
 @push('scripts')
@@ -1159,6 +1236,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const select = document.getElementById('newDate');
         select.innerHTML = '<option value="">{{ __("Cargando fechas...") }}</option>';
         
+        // Destruir Select2 antes de modificar opciones
+        if ($(select).hasClass('select2-hidden-accessible')) {
+            $(select).select2('destroy');
+        }
+        
         fetch(`{{ route('dashboardAdmin.getAvailableDates') }}`)
             .then(response => response.json())
             .then(data => {
@@ -1168,18 +1250,50 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.dates.forEach(dateInfo => {
                         const option = document.createElement('option');
                         option.value = dateInfo.date;
-                        option.textContent = `${dateInfo.day_name}`;
+                        // Mostrar fecha + títulos de eventos disponibles
+                        const label = dateInfo.titles ? `${dateInfo.day_name} — ${dateInfo.titles}` : dateInfo.day_name;
+                        option.textContent = label;
                         select.appendChild(option);
                     });
                 } else {
                     select.innerHTML = '<option value="">{{ __("No hay fechas disponibles") }}</option>';
                 }
+                // Inicializar Select2 después de cargar opciones
+                initSelect2Date();
             })
             .catch(error => {
                 console.error('Error:', error);
                 select.innerHTML = '<option value="">{{ __("Error al cargar fechas") }}</option>';
+                initSelect2Date();
             });
     }
+    
+    // Inicializar Select2 en #newDate
+    function initSelect2Date() {
+        $('#newDate').select2({
+            width: '100%',
+            dropdownParent: $('#appointmentModal'),
+            dropdownCssClass: 'select2-dropdown--calendar',
+            placeholder: '{{ __("Selecciona una fecha") }}'
+        });
+    }
+    
+    // Inicializar Select2 en #newTimeSlot
+    function initSelect2Time() {
+        if ($('#newTimeSlot').hasClass('select2-hidden-accessible')) {
+            $('#newTimeSlot').select2('destroy');
+        }
+        $('#newTimeSlot').select2({
+            minimumResultsForSearch: Infinity,
+            width: '100%',
+            dropdownParent: $('#appointmentModal'),
+            dropdownCssClass: 'select2-dropdown--calendar',
+            placeholder: '{{ __("Selecciona un horario") }}'
+        });
+    }
+    
+    // Inicializar Select2 del time slot al cargar
+    initSelect2Time();
     
     document.querySelectorAll('.status-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1209,11 +1323,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!date) {
             document.getElementById('newTimeSlot').innerHTML = '<option value="">{{ __("Selecciona una fecha primero") }}</option>';
             document.getElementById('newTimeSlot').disabled = true;
+            initSelect2Time();
             return;
         }
         const select = document.getElementById('newTimeSlot');
         select.innerHTML = '<option value="">{{ __("Cargando horarios...") }}</option>';
         select.disabled = true;
+        
+        // Destruir Select2 antes de modificar opciones
+        if ($('#newTimeSlot').hasClass('select2-hidden-accessible')) {
+            $('#newTimeSlot').select2('destroy');
+        }
         
         fetch(`{{ route('dashboardAdmin.getAvailableSlots') }}?date=${date}`)
             .then(response => response.json())
@@ -1221,25 +1341,62 @@ document.addEventListener('DOMContentLoaded', function() {
                 select.innerHTML = '';
                 if (data.slots && data.slots.length > 0) {
                     select.innerHTML = '<option value="">{{ __("Selecciona un horario") }}</option>';
+                    
+                    // Agrupar slots por título del evento/servicio
+                    const grouped = {};
                     data.slots.forEach(slot => {
-                        const option = document.createElement('option');
-                        option.value = `${slot.start_time}|${slot.end_time}`;
-                        option.textContent = `${slot.start_time} - ${slot.end_time}`;
-                        select.appendChild(option);
+                        const key = slot.title || 'Sin título';
+                        if (!grouped[key]) grouped[key] = [];
+                        grouped[key].push(slot);
                     });
+                    
+                    const groupKeys = Object.keys(grouped);
+                    if (groupKeys.length > 1) {
+                        // Múltiples eventos: usar optgroup para separar
+                        groupKeys.forEach(title => {
+                            const optgroup = document.createElement('optgroup');
+                            optgroup.label = title;
+                            grouped[title].forEach(slot => {
+                                const option = document.createElement('option');
+                                option.value = `${slot.start_time}|${slot.end_time}`;
+                                option.textContent = `${slot.start_time} - ${slot.end_time}`;
+                                optgroup.appendChild(option);
+                            });
+                            select.appendChild(optgroup);
+                        });
+                    } else {
+                        // Un solo evento: opciones simples
+                        data.slots.forEach(slot => {
+                            const option = document.createElement('option');
+                            option.value = `${slot.start_time}|${slot.end_time}`;
+                            option.textContent = `${slot.start_time} - ${slot.end_time}`;
+                            select.appendChild(option);
+                        });
+                    }
                     select.disabled = false;
                 } else {
                     select.innerHTML = '<option value="">{{ __("No hay horarios disponibles en esta fecha") }}</option>';
                 }
+                initSelect2Time();
             })
             .catch(error => {
                 console.error('Error:', error);
                 select.innerHTML = '<option value="">{{ __("Error al cargar horarios") }}</option>';
+                initSelect2Time();
             });
     });
     
     document.getElementById('newTimeSlot').addEventListener('change', function() {
         document.getElementById('confirmMoveBtn').disabled = !this.value;
+    });
+    
+    // También escuchar el evento select2:select para el time slot
+    $('#newTimeSlot').on('select2:select select2:unselect', function() {
+        document.getElementById('confirmMoveBtn').disabled = !this.value;
+    });
+    $('#newDate').on('select2:select select2:unselect', function() {
+        // Disparar el change nativo para que se carguen los horarios
+        this.dispatchEvent(new Event('change'));
     });
     
     document.getElementById('confirmMoveBtn').addEventListener('click', function() {

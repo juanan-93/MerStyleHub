@@ -23,18 +23,25 @@
 
 <div class="card shadow-sm border-0 animate__animated animate__fadeIn" id="calendarContainer">
     <!-- Header del Calendario -->
-    <div class="card-header bg-white py-4 border-bottom d-flex flex-column gap-3">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-            <div>
+    <div class="card-header bg-white py-3 py-md-4 border-bottom d-flex flex-column gap-2 gap-md-3">
+        <div class="d-flex flex-row justify-content-between align-items-center gap-2 gap-md-3">
+            <div class="d-none d-md-block">
                 <h4 class="mb-0 fw-bold text-primary-custom">
                     <i class="ti ti-calendar me-2"></i>{{ __('Mis Citas') }}
                 </h4>
                 <p class="text-muted small mb-0">{{ __('Visualiza tu calendario de citas') }}</p>
             </div>
             
+            <!-- Título compacto móvil -->
+            <div class="d-block d-md-none">
+                <h5 class="mb-0 fw-bold text-primary-custom">
+                    <i class="ti ti-calendar me-1"></i>{{ __('Mis Citas') }}
+                </h5>
+            </div>
+            
             <div class="d-flex align-items-center flex-wrap gap-2">
-                <!-- Buscador rápido -->
-                <div class="input-group input-group-sm shadow-sm" style="width: 250px;">
+                <!-- Buscador rápido (oculto en móvil) -->
+                <div class="input-group input-group-sm shadow-sm d-none d-md-flex" style="width: 250px;">
                     <span class="input-group-text bg-white border-end-0">
                         <i class="ti ti-search text-muted"></i>
                     </span>
@@ -42,8 +49,8 @@
                 </div>
 
                 <div class="dropdown" id="filterDropdown">
-                    <button class="btn btn-outline-secondary btn-sm px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                        <i class="ti ti-filter me-1"></i>{{ __('Filtros') }} <span id="filterCount" class="badge bg-primary-custom ms-1" style="display: none;">0</span>
+                    <button class="btn btn-outline-secondary btn-sm px-2 px-md-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                        <i class="ti ti-filter me-md-1"></i><span class="d-none d-md-inline">{{ __('Filtros') }}</span> <span id="filterCount" class="badge bg-primary-custom ms-1" style="display: none;">0</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="min-width: 200px;">
                         <li><h6 class="dropdown-header">{{ __('Estado de Cita') }}</h6></li>
@@ -79,15 +86,15 @@
         </div>
 
         <!-- Toolbar de Navegación y Leyenda -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pt-2">
-            <div class="d-flex align-items-center gap-3">
+        <div class="d-flex flex-row justify-content-between align-items-center gap-2 gap-md-3 pt-1 pt-md-2">
+            <div class="d-flex align-items-center gap-2 gap-md-3">
                 <!-- Toggle Vista Mensual/Semanal -->
                 <div class="btn-group shadow-sm" role="group" aria-label="Vista del calendario">
                     <button type="button" class="btn btn-sm {{ $currentView === 'month' ? 'btn-primary-custom active' : 'btn-outline-primary-custom' }}" id="viewMonthBtn" data-view="month">
-                        <i class="ti ti-calendar-month me-1"></i>{{ __('Mes') }}
+                        <i class="ti ti-calendar-month me-md-1"></i><span class="d-none d-md-inline">{{ __('Mes') }}</span>
                     </button>
                     <button type="button" class="btn btn-sm {{ $currentView === 'week' ? 'btn-primary-custom active' : 'btn-outline-primary-custom' }}" id="viewWeekBtn" data-view="week">
-                        <i class="ti ti-calendar-week me-1"></i>{{ __('Semana') }}
+                        <i class="ti ti-calendar-week me-md-1"></i><span class="d-none d-md-inline">{{ __('Semana') }}</span>
                     </button>
                 </div>
                 
@@ -96,9 +103,9 @@
                     <button class="btn btn-icon btn-sm rounded-circle hover-bg-white border-0" id="prevMonth">
                         <i class="ti ti-chevron-left text-secondary"></i>
                     </button>
-                    <span class="px-3 fw-bold text-secondary text-capitalize" id="currentMonthLabel" style="min-width: 200px; text-align: center;">
+                    <span class="px-2 px-md-3 fw-bold text-secondary text-capitalize" id="currentMonthLabel" style="min-width: 100px; text-align: center; font-size: 0.8rem;">
                         @if($currentView === 'week')
-                            {{ $weekStart->locale('es')->isoFormat('D MMM') }} - {{ $weekEnd->locale('es')->isoFormat('D MMM YYYY') }}
+                            {{ $weekStart->locale('es')->isoFormat('D MMM') }} - {{ $weekEnd->locale('es')->isoFormat('D MMM YY') }}
                         @else
                             {{ $calendarData['monthName'] }}
                         @endif
@@ -109,7 +116,7 @@
                 </div>
             </div>
 
-            <!-- Leyenda de Estados -->
+            <!-- Leyenda de Estados (Desktop) -->
             <div class="d-none d-lg-flex align-items-center gap-3">
                 <div class="d-flex align-items-center gap-1">
                     <span class="dot bg-info"></span>
@@ -127,6 +134,26 @@
                     <span class="dot bg-danger"></span>
                     <span class="small text-muted" style="font-size: 0.75rem;">{{ __('Cancelada') }}</span>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Leyenda compacta para móviles -->
+        <div class="d-flex d-lg-none justify-content-center gap-3 flex-wrap pb-1">
+            <div class="d-flex align-items-center gap-1">
+                <span class="dot bg-info"></span>
+                <span style="font-size: 0.6rem;" class="text-muted">Disp.</span>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <span class="dot bg-warning"></span>
+                <span style="font-size: 0.6rem;" class="text-muted">Pend.</span>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <span class="dot bg-success"></span>
+                <span style="font-size: 0.6rem;" class="text-muted">Conf.</span>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <span class="dot bg-danger"></span>
+                <span style="font-size: 0.6rem;" class="text-muted">Canc.</span>
             </div>
         </div>
     </div>
@@ -179,6 +206,17 @@
                             
                             $isToday = $cellDate === $today;
                             $daySlots = $allSlots[$cellDate] ?? [];
+                            
+                            // Eliminar slots de días/horas pasados del calendario
+                            if ($cellDate < $today) {
+                                $daySlots = [];
+                            } elseif ($isToday) {
+                                $daySlots = array_filter($daySlots, function($slot) {
+                                    return !\Carbon\Carbon::parse($slot['start_time'])->lte(now());
+                                });
+                                $daySlots = array_values($daySlots);
+                            }
+                            
                             $slotsCount = count($daySlots);
                             $availableCount = collect($daySlots)->where('status', 'available')->count();
                             $bookedCount = $slotsCount - $availableCount;
@@ -221,22 +259,19 @@
                                         // No usar clase especial, todas son disponibles para el usuario
                                         $assignedClass = '';
                                         
-                                        // Verificar si la fecha ya pasó
-                                        $isPastDate = $cellDate < $today;
-                                        
                                         // Solo clickeable si es del usuario o está disponible (NO si está ocupado)
                                         $isClickable = ($slot['is_user_appointment'] || $slot['status'] === 'available') && $slot['status'] !== 'occupied';
                                     @endphp
                                     @if($slot['is_user_appointment'] || $slot['status'] === 'available' || $slot['status'] === 'occupied')
-                                        <div class="appointment-card {{ $statusClass }} {{ $assignedClass }} {{ $isPastDate ? 'past-date' : '' }} {{ $isClickable && !$isPastDate ? 'slot-clickable' : '' }} {{ $isPastDate && $slot['is_user_appointment'] ? 'past-clickable' : '' }} small d-flex align-items-center justify-content-between px-2" 
+                                        <div class="appointment-card {{ $statusClass }} {{ $assignedClass }} {{ $isClickable ? 'slot-clickable' : '' }} small d-flex align-items-center justify-content-between px-2" 
                                              @if($slot['status'] !== 'occupied')
                                              data-slot='@json($slot)'
                                              data-date="{{ $cellDate }}"
                                              data-status="{{ $slot['status'] }}"
-                                             data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
+                                             data-is-past="false"
                                              data-is-assigned="{{ $slot['is_assigned_to_user'] ? 'true' : 'false' }}"
                                              @endif
-                                             title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}{{ $isPastDate ? ' (Pasado)' : '' }}">
+                                             title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}">
                                             <div class="d-flex align-items-center gap-1 text-truncate">
                                                 <span class="dot bg-{{ $statusColor }}"></span>
                                                 <strong class="time">{{ $slot['start_time'] }}</strong>
@@ -296,9 +331,13 @@
                                     $isToday = $cellDate === $today;
                                     $hourStr = sprintf('%02d:00', $hour);
                                     
-                                    // Buscar slots para esta hora y día
+                                    // Buscar slots para esta hora y día (excluyendo pasados)
                                     $daySlots = $allSlots[$cellDate] ?? [];
-                                    $hourSlots = collect($daySlots)->filter(function($slot) use ($hourStr, $hour) {
+                                    $hourSlots = collect($daySlots)->filter(function($slot) use ($hourStr, $hour, $isPastDate, $isToday) {
+                                        // No mostrar slots de días pasados
+                                        if ($isPastDate) return false;
+                                        // No mostrar slots de horas pasadas del día actual
+                                        if ($isToday && \Carbon\Carbon::parse($slot['start_time'])->lte(now())) return false;
                                         $slotHour = (int)substr($slot['start_time'], 0, 2);
                                         return $slotHour === $hour;
                                     })->values()->all();
@@ -326,15 +365,16 @@
                                                 };
                                                 
                                                 $assignedClass = '';
+                                                
                                                 $isClickable = ($slot['is_user_appointment'] || $slot['status'] === 'available') && $slot['status'] !== 'occupied';
                                             @endphp
                                             @if($slot['is_user_appointment'] || $slot['status'] === 'available' || $slot['status'] === 'occupied')
-                                                <div class="appointment-card week-appointment {{ $statusClass }} {{ $assignedClass }} {{ $isPastDate ? 'past-date' : '' }} {{ $isClickable && !$isPastDate ? 'slot-clickable' : '' }} {{ $isPastDate && $slot['is_user_appointment'] ? 'past-clickable' : '' }} small" 
+                                                <div class="appointment-card week-appointment {{ $statusClass }} {{ $assignedClass }} {{ $isClickable ? 'slot-clickable' : '' }} small" 
                                                      @if($slot['status'] !== 'occupied')
                                                      data-slot='@json($slot)'
                                                      data-date="{{ $cellDate }}"
                                                      data-status="{{ $slot['status'] }}"
-                                                     data-is-past="{{ $isPastDate ? 'true' : 'false' }}"
+                                                     data-is-past="false"
                                                      data-is-assigned="{{ $slot['is_assigned_to_user'] ? 'true' : 'false' }}"
                                                      @endif
                                                      title="{{ $slot['start_time'] }} - {{ $slot['end_time'] }}: {{ $displayText }}">
@@ -570,9 +610,286 @@
         font-weight: 600;
     }
     
+    /* ===== ESTILOS RESPONSIVE MÓVIL - CALENDARIO ===== */
     @media (max-width: 768px) {
-        .calendar-cell { height: 100px !important; }
-        .appointment-list { max-height: 70px !important; }
+        /* ---- Quitar padding extra del card del calendario ---- */
+        #calendarContainer {
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+        
+        #calendarContainer > .card-header {
+            padding: 0.5rem 0.4rem !important;
+            border-radius: 0 !important;
+        }
+        
+        #calendarContainer > .card-header h4,
+        #calendarContainer > .card-header h5 {
+            font-size: 0.95rem;
+        }
+        
+        /* Toggle mes/semana - solo iconos */
+        #viewMonthBtn span, #viewWeekBtn span {
+            display: none;
+        }
+        
+        #viewMonthBtn i, #viewWeekBtn i {
+            margin: 0 !important;
+        }
+        
+        .btn-group.shadow-sm .btn {
+            padding: 0.3rem 0.5rem !important;
+            font-size: 0.8rem;
+        }
+        
+        /* Navegación del mes */
+        #currentMonthLabel {
+            min-width: 95px !important;
+            font-size: 0.72rem !important;
+            padding-left: 0.3rem !important;
+            padding-right: 0.3rem !important;
+        }
+        
+        /* ======= VISTA MENSUAL MÓVIL ======= */
+        /* CLAVE: tabla con ancho mínimo para scroll horizontal */
+        #monthView {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        #monthView .calendar-grid {
+            min-width: 520px;
+        }
+        
+        .calendar-grid th {
+            padding: 0.3rem 0.15rem !important;
+        }
+        
+        .calendar-grid th span {
+            font-size: 0.6rem !important;
+        }
+        
+        .calendar-cell {
+            height: 90px !important;
+            padding: 3px !important;
+            vertical-align: top !important;
+        }
+        
+        .calendar-cell .day-number {
+            font-size: 0.7rem !important;
+            width: 20px !important;
+            height: 20px !important;
+        }
+        
+        .calendar-cell .badge {
+            font-size: 0.5rem !important;
+            padding: 1px 3px !important;
+        }
+        
+        .calendar-cell > div:first-child {
+            margin-bottom: 2px !important;
+        }
+        
+        /* Lista de citas scrolleable con suficiente espacio */
+        .appointment-list {
+            max-height: 60px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch;
+            gap: 2px !important;
+        }
+        
+        /* Tarjetas de citas legibles */
+        .appointment-card {
+            padding: 3px 5px !important;
+            font-size: 0.6rem !important;
+            min-height: 18px !important;
+            border-radius: 3px !important;
+            white-space: nowrap !important;
+        }
+        
+        .appointment-card .time {
+            font-size: 0.6rem !important;
+            font-weight: 700 !important;
+        }
+        
+        .appointment-card .client {
+            font-size: 0.55rem !important;
+        }
+        
+        .appointment-card .dot {
+            width: 5px !important;
+            height: 5px !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* ======= VISTA SEMANAL MÓVIL ======= */
+        #weekView {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        #weekView .weekly-grid {
+            min-width: 560px;
+        }
+        
+        .weekly-grid th {
+            min-width: 58px !important;
+            padding: 0.2rem 0.1rem !important;
+        }
+        
+        .weekly-grid th:first-child {
+            min-width: 48px !important;
+            width: 48px !important;
+        }
+        
+        .weekly-grid th span.day-number {
+            font-size: 0.65rem !important;
+        }
+        
+        .weekly-grid th span:first-child {
+            font-size: 0.55rem !important;
+        }
+        
+        .week-cell {
+            height: 48px !important;
+            padding: 2px !important;
+        }
+        
+        .week-row td:first-child small {
+            font-size: 0.55rem !important;
+        }
+        
+        .week-appointment {
+            padding: 2px 4px !important;
+            font-size: 0.55rem !important;
+            min-height: 18px !important;
+        }
+        
+        .week-appointment .time {
+            font-size: 0.55rem !important;
+        }
+        
+        .week-appointment .client {
+            display: none !important;
+        }
+        
+        .week-appointments {
+            min-height: 42px !important;
+            max-height: 42px !important;
+            overflow-y: auto !important;
+        }
+        
+        /* Filtros compactos */
+        #filterDropdown .btn {
+            padding: 0.25rem 0.4rem !important;
+            font-size: 0.7rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        #monthView .calendar-grid {
+            min-width: 480px;
+        }
+        
+        #weekView .weekly-grid {
+            min-width: 520px;
+        }
+        
+        .calendar-cell {
+            height: 85px !important;
+        }
+        
+        .appointment-list {
+            max-height: 55px !important;
+        }
+        
+        .appointment-card {
+            padding: 2px 4px !important;
+            font-size: 0.55rem !important;
+            min-height: 16px !important;
+        }
+        
+        .appointment-card .client {
+            display: none !important;
+        }
+        
+        #currentMonthLabel {
+            min-width: 85px !important;
+            font-size: 0.68rem !important;
+        }
+    }
+    
+    @media (max-width: 375px) {
+        #monthView .calendar-grid {
+            min-width: 460px;
+        }
+        
+        .calendar-cell {
+            height: 80px !important;
+        }
+        
+        .calendar-cell .day-number {
+            font-size: 0.6rem !important;
+            width: 17px !important;
+            height: 17px !important;
+        }
+        
+        .appointment-list {
+            max-height: 50px !important;
+        }
+        
+        .appointment-card {
+            padding: 2px 3px !important;
+            font-size: 0.5rem !important;
+            min-height: 15px !important;
+        }
+        
+        .appointment-card .dot {
+            width: 4px !important;
+            height: 4px !important;
+        }
+    }
+    
+    /* Modal responsive */
+    @media (max-width: 768px) {
+        #appointmentModal .modal-dialog {
+            margin: 0.5rem;
+            max-width: calc(100% - 1rem);
+        }
+        
+        #appointmentModal .modal-content {
+            border-radius: 12px;
+        }
+        
+        #appointmentModal .modal-header {
+            padding: 0.75rem 1rem;
+        }
+        
+        #appointmentModal .modal-body {
+            padding: 1rem;
+        }
+        
+        #appointmentModal .avatar-circle {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+        }
+        
+        #appointmentModal .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        #bookBtn {
+            width: 100%;
+            padding: 0.75rem !important;
+            font-size: 1rem !important;
+        }
+        
+        #cancelAppointmentBtn {
+            width: 100%;
+            padding: 0.75rem !important;
+        }
     }
 </style>
 
@@ -987,57 +1304,82 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // ===== FILTROS =====
+    // ===== FILTROS Y BUSCADOR (combinados) =====
+    let selectedFilters = [];
     const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
-    const clearFiltersBtn = document.getElementById('clearFilters');
+    const searchInput = document.getElementById('searchAppointments');
     const filterCountBadge = document.getElementById('filterCount');
-    
+    const clearFiltersBtn = document.getElementById('clearFilters');
+
+    function updateFilterCount() {
+        const count = selectedFilters.length;
+        if (count > 0) {
+            filterCountBadge.textContent = count;
+            filterCountBadge.style.display = 'inline-block';
+        } else {
+            filterCountBadge.style.display = 'none';
+        }
+    }
+
     filterCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', applyFilters);
-    });
-    
-    clearFiltersBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        filterCheckboxes.forEach(cb => cb.checked = false);
-        applyFilters();
-    });
-    
-    function applyFilters() {
-        const selectedStatuses = Array.from(filterCheckboxes)
-            .filter(cb => cb.checked)
-            .map(cb => cb.dataset.status);
-        
-        filterCountBadge.textContent = selectedStatuses.length;
-        filterCountBadge.style.display = selectedStatuses.length > 0 ? 'inline' : 'none';
-        
-        document.querySelectorAll('.appointment-card').forEach(card => {
-            const status = card.dataset.status;
-            
-            if (selectedStatuses.length === 0) {
-                card.style.display = 'flex';
+        checkbox.addEventListener('change', function() {
+            const status = this.getAttribute('data-status');
+            if (this.checked) {
+                if (!selectedFilters.includes(status)) {
+                    selectedFilters.push(status);
+                }
             } else {
-                card.style.display = selectedStatuses.includes(status) ? 'flex' : 'none';
+                selectedFilters = selectedFilters.filter(f => f !== status);
+            }
+            updateFilterCount();
+            applyFilters();
+        });
+    });
+
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectedFilters = [];
+            filterCheckboxes.forEach(cb => cb.checked = false);
+            updateFilterCount();
+            applyFilters();
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            applyFilters();
+        });
+    }
+
+    function applyFilters() {
+        const searchValue = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        // Seleccionar solo tarjetas con data-status (excluye occupied sin atributos)
+        const allCards = document.querySelectorAll('#calendarContainer .slot-clickable, #calendarContainer .past-clickable');
+
+        allCards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            const cardText = card.textContent.toLowerCase();
+
+            // Filtro de estado: si no hay filtros, mostrar todo; si hay, verificar inclusión
+            const matchesStatus = (selectedFilters.length === 0) || selectedFilters.includes(cardStatus);
+
+            // Filtro de búsqueda
+            const matchesSearch = (searchValue === '') || cardText.includes(searchValue);
+
+            if (matchesStatus && matchesSearch) {
+                card.style.cssText = 'display: flex !important;';
+            } else {
+                card.style.cssText = 'display: none !important;';
             }
         });
     }
-    
-    // ===== BUSCADOR =====
-    const searchInput = document.getElementById('searchAppointments');
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        
-        document.querySelectorAll('.appointment-card').forEach(card => {
-            const slot = JSON.parse(card.dataset.slot);
-            const clientName = slot.client_name ? slot.client_name.toLowerCase() : '';
-            const availabilityTitle = slot.availability_title ? slot.availability_title.toLowerCase() : '';
-            
-            if (clientName.includes(searchTerm) || availabilityTitle.includes(searchTerm)) {
-                card.style.display = 'flex';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    });
+
+    // Aplicar filtro inicial
+    setTimeout(function() {
+        applyFilters();
+    }, 100);
 });
 </script>
 @endpush

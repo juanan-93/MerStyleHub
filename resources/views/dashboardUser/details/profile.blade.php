@@ -101,6 +101,128 @@
         background-color: var(--color-light);
         border-radius: 0 10px 10px 0;
     }
+    
+    /* ===== ESTILOS RESPONSIVE MÓVIL - PERFIL ===== */
+    @media (max-width: 768px) {
+        .profile-header-card .card-body {
+            padding: 0.75rem !important;
+        }
+        
+        .profile-avatar, .profile-avatar-placeholder {
+            width: 64px;
+            height: 64px;
+            font-size: 1.5rem;
+            border-width: 3px;
+        }
+        
+        .profile-header-card h3 {
+            font-size: 1.05rem;
+        }
+        
+        .profile-header-card p {
+            font-size: 0.75rem;
+        }
+        
+        .service-badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+        }
+        
+        /* Estadísticas compactas */
+        .profile-stat-card {
+            padding: 0.6rem;
+        }
+        
+        .profile-stat-number {
+            font-size: 1.2rem;
+        }
+        
+        .profile-stat-label {
+            font-size: 0.65rem;
+        }
+        
+        /* Cards de info compactas */
+        .profile-info-card {
+            padding: 0.6rem !important;
+        }
+        
+        .profile-info-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+        }
+        
+        .profile-info-icon i {
+            font-size: 0.95rem;
+        }
+        
+        .profile-info-label {
+            font-size: 0.65rem;
+        }
+        
+        .profile-info-value {
+            font-size: 0.82rem;
+        }
+        
+        /* Próxima cita compacta */
+        .next-appointment-card {
+            padding: 0.6rem !important;
+        }
+        
+        .next-appointment-card .d-flex.flex-wrap.gap-3 {
+            gap: 0.35rem !important;
+            flex-direction: column;
+        }
+        
+        .next-appointment-card h6 {
+            font-size: 0.85rem;
+        }
+        
+        .next-appointment-card .badge {
+            align-self: flex-start;
+            font-size: 0.7rem;
+        }
+        
+        /* Sección títulos */
+        h5.fw-semibold {
+            font-size: 0.95rem;
+        }
+        
+        /* Menos gap en grids */
+        .row.g-3 {
+            --bs-gutter-y: 0.5rem;
+            --bs-gutter-x: 0.5rem;
+        }
+        
+        .row.mb-4 {
+            margin-bottom: 0.75rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .profile-avatar, .profile-avatar-placeholder {
+            width: 56px;
+            height: 56px;
+            font-size: 1.35rem;
+        }
+        
+        .profile-header-card h3 {
+            font-size: 0.95rem;
+        }
+        
+        .profile-stat-number {
+            font-size: 1.05rem;
+        }
+        
+        .profile-info-icon {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .profile-info-value {
+            font-size: 0.78rem;
+        }
+    }
 </style>
 @endpush
 

@@ -475,20 +475,18 @@ class DashboardAdminController extends Controller
      */
     public function getAvailableDates()
     {
-        // Obtener todas las fechas con disponibilidades (pasadas y futuras)
-        $dates = AppointmentAvailability::orderBy('date')
+        // Solo fechas desde hoy en adelante
+        $dates = AppointmentAvailability::where('date', '>=', now()->toDateString())
+            ->orderBy('date')
             ->select('date', 'title')
-            ->distinct('date')
             ->get()
             ->groupBy('date')
             ->map(function ($group) {
-                $isPast = $group->first()->date->lt(now()->startOfDay());
                 return [
                     'date' => $group->first()->date->format('Y-m-d'),
                     'date_formatted' => $group->first()->date->format('d/m/Y'),
-                    'day_name' => ucfirst($group->first()->date->translatedFormat('l d F')),
+                    'day_name' => ucfirst($group->first()->date->locale('es')->isoFormat('dddd D [de] MMMM')),
                     'titles' => $group->pluck('title')->unique()->implode(', '),
-                    'is_past' => $isPast
                 ];
             })
             ->values();
@@ -554,9 +552,12 @@ class DashboardAdminController extends Controller
     public function getAvailableSlots(Request $request)
     {
         $date = $request->get('date');
+        $isToday = Carbon::parse($date)->isToday();
         
         // Obtener disponibilidades para esa fecha
-        $availabilities = AppointmentAvailability::whereDate('date', $date)->get();
+        $availabilities = AppointmentAvailability::whereDate('date', $date)
+            ->orderBy('start_time')
+            ->get();
         
         // Obtener citas existentes para esa fecha (excluyendo canceladas)
         // Las citas bloqueadas también ocupan el slot
@@ -575,9 +576,16 @@ class DashboardAdminController extends Controller
                 $slotStart = $startTime->format('H:i');
                 $slotEnd = $startTime->copy()->addMinutes($duration)->format('H:i');
                 
+                // Filtrar horas pasadas si es hoy
+                if ($isToday && $startTime->lte(now())) {
+                    $startTime->addMinutes($duration);
+                    continue;
+                }
+                
                 // Verificar si el slot está ocupado (por cita normal o bloqueada)
-                $isBooked = $existingAppointments->contains(function($apt) use ($slotStart) {
-                    return substr($apt->start_time, 0, 5) === $slotStart;
+                $isBooked = $existingAppointments->contains(function($apt) use ($slotStart, $availability) {
+                    return substr($apt->start_time, 0, 5) === $slotStart
+                        && $apt->availability_id === $availability->id;
                 });
 
                 if (!$isBooked) {
@@ -585,6 +593,8 @@ class DashboardAdminController extends Controller
                         'start_time' => $slotStart,
                         'end_time' => $slotEnd,
                         'availability_id' => $availability->id,
+                        'title' => $availability->title,
+                        'category' => $availability->category,
                     ];
                 }
 
