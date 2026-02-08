@@ -95,17 +95,6 @@
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                                    <i class="ti ti-user me-2"></i>Mi Perfil
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="#">
-                                    <i class="ti ti-settings me-2"></i>Configuración
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
                                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                                     @csrf
                                     <button type="submit" class="dropdown-item text-danger">
