@@ -10,6 +10,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class CalendarController extends Controller
 {
@@ -111,7 +113,26 @@ class CalendarController extends Controller
             'client_name' => 'required|string|max:255',
             'client_email' => 'required|email|max:255',
             'client_phone' => 'required|string|max:20',
+            'cf-turnstile-response' => 'required|string',
         ]);
+
+        // Verificar Cloudflare Turnstile
+        $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret' => config('services.turnstile.secret_key'),
+            'response' => $request->input('cf-turnstile-response'),
+            'remoteip' => $request->ip(),
+        ]);
+
+        if (!$turnstileResponse->json('success')) {
+            Log::warning('Turnstile verification failed', [
+                'ip' => $request->ip(),
+                'errors' => $turnstileResponse->json('error-codes'),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'La verificación de seguridad ha fallado. Por favor, inténtalo de nuevo.',
+            ], 422);
+        }
 
         // Verificar si el email ya tiene una cita activa (ANTES de la transacción)
         $existingAppointment = Appointment::where('client_email', $request->client_email)

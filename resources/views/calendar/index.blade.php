@@ -71,19 +71,20 @@
         }
 
         .navbar-brand img {
-            height: 32px;
+            height: 50px;
+            width: auto;
             transition: all 0.3s ease;
         }
 
         @media (min-width: 576px) {
             .navbar-brand img {
-                height: 36px;
+                height: 60px;
             }
         }
 
         @media (min-width: 992px) {
             .navbar-brand img {
-                height: 40px;
+                height: 80px;
             }
         }
 
@@ -2001,6 +2002,40 @@
         .no-appointment-msg i {
             font-size: 1.1rem;
         }
+
+        /* ========== CLOUDFLARE TURNSTILE ========== */
+        .turnstile-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .turnstile-wrapper iframe {
+            max-width: 100% !important;
+        }
+
+        #turnstile-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .turnstile-error {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 6px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+
+        /* Ajuste en móviles pequeños para que el widget no desborde */
+        @media (max-width: 374px) {
+            #turnstile-container {
+                transform: scale(0.85);
+                transform-origin: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -2211,6 +2246,13 @@
                         <label class="form-label">{{ __('Teléfono') }}</label>
                         <input type="tel" name="client_phone" class="form-control" placeholder="+34 600 000 000">
                     </div>
+
+                    <!-- Cloudflare Turnstile -->
+                    <div class="form-group turnstile-wrapper">
+                        <div id="turnstile-container"></div>
+                        <p class="turnstile-error" id="turnstile-error" style="display: none;">Por favor, completa la verificación de seguridad</p>
+                    </div>
+
                     <button type="button" class="btn-confirm" id="mobile-btn-confirm">
                         <i class="ti ti-check"></i>
                         {{ __('Confirmar Reserva') }}
@@ -2230,9 +2272,7 @@
                         Tu aliada en el camino hacia una imagen auténtica y un estilo que te represente.
                     </p>
                     <div class="social-icons mt-3">
-                        <a href="#"><i class="ti ti-brand-instagram"></i></a>
-                        <a href="#"><i class="ti ti-brand-facebook"></i></a>
-                        <a href="#"><i class="ti ti-brand-pinterest"></i></a>
+                        <a href="https://www.instagram.com/merstylehub?igsh=MW9vYnR6YWxhY2wwZQ=="><i class="ti ti-brand-instagram"></i></a>
                     </div>
                 </div>
                 <div class="col-6 col-lg-2">
@@ -2256,15 +2296,12 @@
                     <ul class="footer-links">
                         <li>
                             <i class="ti ti-mail me-2" style="color: var(--color-primary);"></i>
-                            <a href="mailto:hola@merstylehub.com">hola@merstylehub.com</a>
+                            <a href="mailto:hola@merstylehub.com">info@merstylehub.es</a>
                         </li>
-                        <li>
-                            <i class="ti ti-phone me-2" style="color: var(--color-primary);"></i>
-                            <a href="tel:+34600000000">+34 600 000 000</a>
-                        </li>
+                        
                         <li>
                             <i class="ti ti-map-pin me-2" style="color: var(--color-primary);"></i>
-                            <span style="color: rgba(255, 255, 255, 0.7);">Madrid, España</span>
+                            <span style="color: rgba(255, 255, 255, 0.7);">Palma, España</span>
                         </li>
                     </ul>
                 </div>
@@ -2276,6 +2313,7 @@
     </footer>
 
     <!-- ========== SCRIPTS ========== -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
@@ -2476,6 +2514,9 @@
                 DOM.selectedTimeInfo.textContent = `a las ${slot.start}`;
                 DOM.mobileModal.classList.add('show');
                 document.body.style.overflow = 'hidden';
+
+                // Inicializar/resetear Turnstile
+                initTurnstile();
             }
 
             // ========== MODAL HANDLERS ==========
@@ -2495,6 +2536,35 @@
                 if (e.key === 'Escape' && DOM.mobileModal.classList.contains('show')) closeModal();
             });
 
+            // ========== CLOUDFLARE TURNSTILE ==========
+            let turnstileWidgetId = null;
+            let turnstileToken = null;
+
+            function initTurnstile() {
+                if (typeof turnstile === 'undefined') {
+                    setTimeout(initTurnstile, 200);
+                    return;
+                }
+                if (turnstileWidgetId !== null) {
+                    turnstile.reset(turnstileWidgetId);
+                    return;
+                }
+                turnstileWidgetId = turnstile.render('#turnstile-container', {
+                    sitekey: '{{ config("services.turnstile.site_key") }}',
+                    theme: 'light',
+                    callback: function(token) {
+                        turnstileToken = token;
+                        document.getElementById('turnstile-error').style.display = 'none';
+                    },
+                    'expired-callback': function() {
+                        turnstileToken = null;
+                    },
+                    'error-callback': function() {
+                        turnstileToken = null;
+                    }
+                });
+            }
+
             // ========== CONFIRMAR RESERVA ==========
             async function confirmBooking(form, button) {
                 const formData = new FormData(form);
@@ -2502,6 +2572,17 @@
                     return Swal.fire({
                         title: 'Campos requeridos',
                         text: 'Por favor completa tu nombre y email',
+                        icon: 'warning',
+                        confirmButtonColor: '#A08A7A'
+                    });
+                }
+
+                // Verificar Turnstile
+                if (!turnstileToken) {
+                    document.getElementById('turnstile-error').style.display = 'block';
+                    return Swal.fire({
+                        title: 'Verificación requerida',
+                        text: 'Por favor completa la verificación de seguridad antes de continuar.',
                         icon: 'warning',
                         confirmButtonColor: '#A08A7A'
                     });
@@ -2525,7 +2606,8 @@
                             start_time: state.selectedSlot.start,
                             client_name: formData.get('client_name'),
                             client_email: formData.get('client_email'),
-                            client_phone: formData.get('client_phone')
+                            client_phone: formData.get('client_phone'),
+                            'cf-turnstile-response': turnstileToken
                         })
                     });
                     const data = await res.json();
@@ -2561,6 +2643,12 @@
                         icon: 'error',
                         confirmButtonColor: '#A08A7A'
                     });
+                } finally {
+                    // Resetear Turnstile para siguiente intento
+                    turnstileToken = null;
+                    if (turnstileWidgetId !== null && typeof turnstile !== 'undefined') {
+                        turnstile.reset(turnstileWidgetId);
+                    }
                 }
             }
 

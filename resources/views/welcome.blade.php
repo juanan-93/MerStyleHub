@@ -58,8 +58,21 @@
         }
 
         .navbar-brand img {
-            height: 40px;
+            height: 50px;
+            width: auto;
             transition: all 0.3s ease;
+        }
+
+        @media (min-width: 576px) {
+            .navbar-brand img {
+                height: 60px;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .navbar-brand img {
+                height: 80px;
+            }
         }
 
         /* Mejorar toggle en móvil */
@@ -1405,7 +1418,7 @@
                         Tu aliada en el camino hacia una imagen auténtica y un estilo que te represente.
                     </p>
                     <div class="social-icons mt-3">
-                        <a href="#"><i class="ti ti-brand-instagram"></i></a>  
+                        <a href="https://www.instagram.com/merstylehub?igsh=MW9vYnR6YWxhY2wwZQ=="><i class="ti ti-brand-instagram"></i></a>  
                     </div>
                 </div>
                 <div class="col-6 col-lg-2">
@@ -1431,7 +1444,7 @@
                     <ul class="footer-links">
                         <li>
                             <i class="ti ti-mail me-2" style="color: var(--color-primary);"></i>
-                            <a href="mailto:hola@merstylehub.com">info@merstylehub.com</a>
+                            <a href="mailto:hola@merstylehub.com">info@merstylehub.es</a>
                         </li>
                         
                         <li>
