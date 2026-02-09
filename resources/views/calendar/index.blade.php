@@ -2313,7 +2313,22 @@
     </footer>
 
     <!-- ========== SCRIPTS ========== -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script>
+        // Flag global para saber cuándo Turnstile está listo
+        var turnstileReady = false;
+        var turnstilePendingInit = false;
+        function onTurnstileLoad() {
+            turnstileReady = true;
+            // Si el modal ya estaba abierto esperando, inicializar ahora
+            if (turnstilePendingInit) {
+                turnstilePendingInit = false;
+                if (typeof initTurnstileWidget === 'function') {
+                    initTurnstileWidget();
+                }
+            }
+        }
+    </script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileLoad" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
@@ -2540,29 +2555,40 @@
             let turnstileWidgetId = null;
             let turnstileToken = null;
 
-            function initTurnstile() {
-                if (typeof turnstile === 'undefined') {
-                    setTimeout(initTurnstile, 200);
+            // Función global accesible desde el callback onload
+            window.initTurnstileWidget = function() {
+                if (!turnstileReady || typeof turnstile === 'undefined') {
+                    // Marcar como pendiente; se ejecutará cuando onTurnstileLoad() dispare
+                    turnstilePendingInit = true;
                     return;
                 }
-                if (turnstileWidgetId !== null) {
-                    turnstile.reset(turnstileWidgetId);
-                    return;
-                }
-                turnstileWidgetId = turnstile.render('#turnstile-container', {
-                    sitekey: '{{ config("services.turnstile.site_key") }}',
-                    theme: 'light',
-                    callback: function(token) {
-                        turnstileToken = token;
-                        document.getElementById('turnstile-error').style.display = 'none';
-                    },
-                    'expired-callback': function() {
-                        turnstileToken = null;
-                    },
-                    'error-callback': function() {
-                        turnstileToken = null;
+                try {
+                    if (turnstileWidgetId !== null) {
+                        turnstile.reset(turnstileWidgetId);
+                        return;
                     }
-                });
+                    turnstileWidgetId = turnstile.render('#turnstile-container', {
+                        sitekey: '{{ config("services.turnstile.site_key") }}',
+                        theme: 'light',
+                        callback: function(token) {
+                            turnstileToken = token;
+                            document.getElementById('turnstile-error').style.display = 'none';
+                        },
+                        'expired-callback': function() {
+                            turnstileToken = null;
+                        },
+                        'error-callback': function(errorCode) {
+                            console.warn('Turnstile error:', errorCode);
+                            turnstileToken = null;
+                        }
+                    });
+                } catch (e) {
+                    console.error('Turnstile render error:', e);
+                }
+            };
+
+            function initTurnstile() {
+                window.initTurnstileWidget();
             }
 
             // ========== CONFIRMAR RESERVA ==========
