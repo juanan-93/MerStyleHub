@@ -1252,12 +1252,8 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="hero-image-container text-center animate__animated animate__fadeInRight">
-                        <!-- Placeholder para imagen hero -->
-                        <div class="hero-image bg-light d-flex align-items-center justify-content-center" style="height: 500px; border-radius: 20px;">
-                            <div class="text-center p-5">
-                                <i class="ti ti-photo" style="font-size: 4rem; color: var(--color-primary); opacity: 0.5;"></i>
-                                <p class="mt-3 text-muted">Imagen Principal</p>
-                            </div>
+                        <div style="height: 500px; border-radius: 20px; overflow: hidden;">
+                            <img src="{{ asset('images/landing/mer.jpeg') }}" alt="Mercedes - Asesora de Imagen" class="hero-image" style="width: 100%; height: 100%; object-fit: cover; object-position: center top; border-radius: 20px;">
                         </div>
                         
                         <!-- Floating Cards -->
@@ -1273,10 +1269,10 @@
                         
                         <div class="floating-card card-2">
                             <div class="d-flex align-items-center">
-                                <i class="ti ti-star-filled me-2" style="color: #FFD700; font-size: 1.5rem;"></i>
+                                <i class="ti ti-palette me-2" style="color: var(--color-primary); font-size: 1.5rem;"></i>
                                 <div class="text-start">
-                                    <strong class="d-block">+500 clientas</strong>
-                                    <small class="text-muted">satisfechas</small>
+                                    <strong class="d-block">100% personalizado</strong>
+                                    <small class="text-muted">a tu medida</small>
                                 </div>
                             </div>
                         </div>
@@ -1337,12 +1333,8 @@
             <div class="row align-items-center">
                 <div class="col-lg-6 mb-5 mb-lg-0">
                     <div class="fade-up">
-                        <!-- Placeholder para imagen -->
-                        <div class="about-image bg-light d-flex align-items-center justify-content-center" style="height: 450px; border-radius: 20px;">
-                            <div class="text-center p-5">
-                                <i class="ti ti-user-circle" style="font-size: 4rem; color: var(--color-primary); opacity: 0.5;"></i>
-                                <p class="mt-3 text-muted">Foto del equipo</p>
-                            </div>
+                        <div style="height: 450px; border-radius: 20px; overflow: hidden;">
+                            <img src="{{ asset('images/landing/Gemini_Generated_Image_a5p17pa5p17pa5p1.png') }}" alt="Asesoría de imagen - MerStyleHub" class="about-image" style="width: 100%; height: 100%; object-fit: cover; object-position: center; border-radius: 20px;">
                         </div>
                     </div>
                 </div>
