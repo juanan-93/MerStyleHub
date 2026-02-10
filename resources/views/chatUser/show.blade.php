@@ -79,12 +79,7 @@
                                         {{-- Información del remitente --}}
                                         <div>
                                             <div class="fw-bold" style="color: var(--color-secondary); font-size: 0.95rem;">
-                                                {{ $isMe ? 'Tú' : 'Tu asesora' }}
-                                                @if($isMe)
-                                                    <span class="badge bg-primary ms-2" style="font-size: 0.65rem;">Cliente</span>
-                                                @else
-                                                    <span class="badge bg-secondary ms-2" style="font-size: 0.65rem;">Asesora</span>
-                                                @endif
+                                                {{ $isMe ? 'Tú' : $conversation->admin->name }}
                                             </div>
                                             <div class="text-muted" style="font-size: 0.8rem;">
                                                 {{ $message->created_at->format('d M Y - H:i') }}
@@ -432,11 +427,7 @@
             font-size: 0.7rem !important;
         }
         
-        .email-header .badge {
-            font-size: 0.55rem !important;
-            padding: 0.2em 0.5em !important;
-            margin-left: 0.35rem !important;
-        }
+
         
         .email-body {
             padding: 0.75rem !important;
@@ -574,9 +565,7 @@
     
     /* Extra small devices (phones < 375px) */
     @media (max-width: 375px) {
-        .email-header .badge {
-            display: none !important; /* Ocultar badges en pantallas muy pequeñas */
-        }
+
         
         .compose-content .btn-sm span,
         .compose-content .btn-sm .me-1 + span {
@@ -781,10 +770,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Formato de correo electrónico
         const bodyHtml = msg.body ? `<div class="message-content" style="font-size: 0.95rem; line-height: 1.6; color: var(--color-secondary);">${msg.body}</div>` : '';
-        const senderName = isMe ? 'Tú' : 'Tu asesora';
+        const senderName = isMe ? 'Tú' : '{{ $conversation->admin->name }}';
         const senderAvatar = isMe ? '{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}' : 'A';
         const avatarBg = isMe ? 'var(--color-primary)' : 'var(--color-secondary)';
-        const roleBadge = isMe ? '<span class="badge bg-primary ms-2" style="font-size: 0.65rem;">Cliente</span>' : '<span class="badge bg-secondary ms-2" style="font-size: 0.65rem;">Asesora</span>';
+        const roleBadge = '';
         const date = new Date(msg.created_at);
         const dateStr = date.toLocaleDateString('es-ES') + ' - ' + date.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
         
