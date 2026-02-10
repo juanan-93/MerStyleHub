@@ -1195,7 +1195,7 @@
     <nav class="navbar navbar-expand-lg navbar-landing fixed-top" id="mainNavbar">
         <div class="container">
             <a class="navbar-brand" href="#">
-                <img src="{{ asset('images/logos/logo.png') }}" alt="MerStyleHub">
+                <img src="{{ asset('images/logos/edit.png') }}" alt="MerStyleHub">
             </a>
             <button class="navbar-toggler" type="button" id="navbarToggler" aria-controls="navbarNav" aria-expanded="false" aria-label="Abrir menú de navegación">
                 <i class="ti ti-menu-2"></i>
@@ -1405,7 +1405,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-4 mb-4 mb-lg-0">
-                    <img src="{{ asset('images/logos/logo.png') }}" alt="MerStyleHub" height="40" class="mb-3" style="filter: brightness(0) invert(1);">
+                    <img src="{{ asset('images/logos/edit.png') }}" alt="MerStyleHub" height="80" class="mb-3">
                     <p style="color: rgba(255, 255, 255, 0.7); line-height: 1.8;">
                         Tu aliada en el camino hacia una imagen auténtica y un estilo que te represente.
                     </p>
