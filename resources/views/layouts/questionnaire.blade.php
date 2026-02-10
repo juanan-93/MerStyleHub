@@ -6,6 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Cuestionario' }} - MerStyleHub</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/png">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
